@@ -11,6 +11,7 @@ import type { Item } from "./types";
 import { BottomBar } from "./components/BottomBar";
 import { Card } from "./components/Card";
 import { Composer } from "./components/Composer";
+import { Icon } from "./components/Icon";
 import { Lightbox } from "./components/Lightbox";
 import { Masonry } from "./components/Masonry";
 import { NoteOverlay } from "./components/NoteOverlay";
@@ -20,7 +21,7 @@ import { SearchBox } from "./components/SearchBox";
 const PAGE = 100;
 
 export function App() {
-	const { app, index, settings, bus, leaf } = useTelegrid();
+	const { app, index, settings, bus, leaf, setStandalone } = useTelegrid();
 	const [chips, setChips] = useState<Chip[]>([]);
 	const [draft, setDraft] = useState("");
 	const [version, setVersion] = useState(0);
@@ -251,6 +252,16 @@ export function App() {
 						}}
 					/>
 				</Sheet>
+			)}
+
+			{Platform.isMobile && (
+				<button
+					className={`telegrid-standalone-toggle${settings.standalone ? " is-on" : ""}`}
+					aria-label={settings.standalone ? "Leave standalone mode" : "Standalone mode"}
+					onClick={() => void setStandalone(!settings.standalone)}
+				>
+					<Icon name={settings.standalone ? "minimize" : "maximize"} />
+				</button>
 			)}
 
 			{Platform.isMobile && <BottomBar />}

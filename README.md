@@ -81,6 +81,10 @@ line names the note, the whole of it is the body, and the card drops into the gr
 Files still come in through the composer's own Add files, through drag and drop, or from the share
 sheet.
 
+A phone also carries a round toggle above those places for standalone mode, which otherwise hides
+the navbar and puts Obsidian's own settings a long way off. It is there for trying the mode out, and
+nothing but mobile shows it.
+
 Along the bottom of a phone sit three places — everything, spaces, serendipity — as placeholders.
 They are deliberately not wired up to anything yet.
 

@@ -11,6 +11,8 @@ export interface TelegridContextValue {
 	leaf: WorkspaceLeaf;
 	bus: Bus;
 	saveSettings: () => Promise<void>;
+	/** Turns standalone mode on or off and applies it at once. */
+	setStandalone: (on: boolean) => Promise<void>;
 }
 
 export const TelegridContext = createContext<TelegridContextValue | null>(null);

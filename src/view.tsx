@@ -52,6 +52,11 @@ export class TelegridView extends ItemView {
 						leaf: this.leaf,
 						bus: this.plugin.bus,
 						saveSettings: () => this.plugin.saveSettings(),
+						setStandalone: async (on: boolean) => {
+							this.plugin.settings.standalone = on;
+							await this.plugin.saveSettings();
+							this.plugin.applyStandalone();
+						},
 					}}
 				>
 					<Telegrid />
