@@ -1,0 +1,619 @@
+/* ---------------------------------------------------------------- *
+ * Telegrid — a masonry search pane over the vault.
+ * Everything is drawn with Obsidian's own CSS variables, so the
+ * plugin follows whatever theme the vault is wearing.
+ * ---------------------------------------------------------------- */
+
+/* react-grid-layout's own positioning and slide transitions. */
+.react-grid-layout {
+	position: relative;
+	transition: height 200ms ease;
+}
+
+.react-grid-item {
+	transition: all 220ms ease;
+	transition-property: left, top, width, height;
+}
+
+.react-grid-item.cssTransforms {
+	transition-property: transform, width, height;
+}
+
+.react-grid-item img {
+	pointer-events: none;
+	user-select: none;
+}
+
+/* ---- the pane ---------------------------------------------------- */
+
+.telegrid-content {
+	padding: 0;
+	overflow-y: auto;
+	overflow-x: hidden;
+	height: 100%;
+}
+
+.telegrid-root {
+	position: relative;
+	padding: 24px 20px 96px;
+	min-height: 100%;
+	box-sizing: border-box;
+}
+
+.telegrid-root.is-dropping::after {
+	content: "";
+	position: absolute;
+	inset: 8px;
+	border: 2px dashed var(--interactive-accent);
+	border-radius: var(--radius-l);
+	pointer-events: none;
+}
+
+/* ---- window dragging --------------------------------------------- */
+
+/*
+ * In a frameless window Obsidian's draggable region is the tab header bar,
+ * which standalone mode hides — leaving the window nowhere to be dragged by.
+ * This band across the top of the pane takes that job. Where the titlebar is
+ * draggable too, the band simply adds to it; on Android it stays out.
+ */
+.telegrid-drag {
+	display: none;
+}
+
+body.telegrid-standalone:not(.is-mobile) .telegrid-drag {
+	display: block;
+	height: var(--titlebar-height, 32px);
+	margin: -24px -20px 12px;
+	-webkit-app-region: drag;
+	app-region: drag;
+}
+
+/*
+ * A CSS drag region never hands its clicks back, so where the window can be
+ * moved from the page the band follows the pointer itself and keeps them —
+ * that is what makes double-clicking to maximize possible.
+ */
+body.telegrid-window .telegrid-drag {
+	-webkit-app-region: no-drag;
+	app-region: no-drag;
+}
+
+/* ---- search box -------------------------------------------------- */
+
+.telegrid-search {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	padding: 14px 18px;
+	margin-bottom: 24px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-l);
+	background: var(--background-primary-alt);
+	cursor: text;
+	transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.telegrid-search:focus-within {
+	border-color: var(--interactive-accent);
+	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+}
+
+.telegrid-search-input {
+	flex: 1 1 10ch;
+	min-width: 10ch;
+	border: none;
+	outline: none;
+	background: transparent;
+	box-shadow: none;
+	padding: 0;
+	font-size: 1.6em;
+	line-height: 1.4;
+	color: var(--text-normal);
+	font-family: inherit;
+}
+
+.telegrid-search-input::placeholder {
+	font-style: italic;
+	color: var(--text-faint);
+}
+
+.telegrid-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px 6px 4px 12px;
+	border-radius: 999px;
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	font-size: 1.05em;
+	line-height: 1.3;
+	animation: telegrid-pop 160ms ease both;
+}
+
+.telegrid-chip-remove {
+	all: unset;
+	cursor: pointer;
+	display: grid;
+	place-items: center;
+	width: 1.3em;
+	height: 1.3em;
+	border-radius: 50%;
+	font-size: 1em;
+	opacity: 0.75;
+}
+
+.telegrid-chip-remove:hover {
+	opacity: 1;
+	background: var(--background-modifier-hover);
+}
+
+/* ---- cards ------------------------------------------------------- */
+
+.telegrid-cell {
+	position: relative;
+}
+
+.telegrid-cell-inner {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: auto;
+}
+
+.telegrid-card {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	background: var(--background-primary);
+	cursor: pointer;
+	transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+
+.telegrid-card:hover,
+.telegrid-card:focus-visible {
+	border-color: var(--interactive-accent);
+	box-shadow: 0 2px 14px rgba(0, 0, 0, 0.14);
+	outline: none;
+}
+
+.telegrid-card.is-fresh {
+	animation: telegrid-fade-in 260ms ease both;
+}
+
+.telegrid-card-image {
+	display: block;
+	width: 100%;
+	height: auto;
+	object-fit: cover;
+}
+
+.telegrid-card-body {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 12px 14px 14px;
+}
+
+.telegrid-card-title {
+	font-weight: 600;
+	line-height: 1.3;
+	color: var(--text-normal);
+}
+
+.telegrid-card-excerpt {
+	font-size: var(--font-ui-smaller);
+	line-height: 1.5;
+	color: var(--text-muted);
+	display: -webkit-box;
+	-webkit-line-clamp: 6;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.telegrid-card-tags,
+.telegrid-meta-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.telegrid-tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	padding: 1px 8px;
+	border-radius: 999px;
+	background: var(--background-modifier-hover);
+	color: var(--text-accent);
+	font-size: var(--font-ui-smaller);
+}
+
+.telegrid-empty {
+	color: var(--text-faint);
+	font-style: italic;
+	text-align: center;
+	padding: 48px 0;
+}
+
+.telegrid-sentinel {
+	height: 1px;
+}
+
+/* ---- plus button ------------------------------------------------- */
+
+.telegrid-plus {
+	position: fixed;
+	right: 24px;
+	bottom: 24px;
+	width: 52px;
+	height: 52px;
+	border-radius: 50%;
+	border: none;
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	font-size: 28px;
+	line-height: 1;
+	cursor: pointer;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+	z-index: 20;
+}
+
+.telegrid-plus:hover {
+	background: var(--interactive-accent-hover);
+}
+
+.telegrid-picker {
+	display: none;
+}
+
+/* ---- the way back ------------------------------------------------ */
+
+.telegrid-back {
+	position: fixed;
+	left: 16px;
+	bottom: 16px;
+	z-index: 40;
+	display: none;
+}
+
+.telegrid-back.is-visible {
+	display: block;
+}
+
+.telegrid-back button {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 14px;
+	border-radius: 999px;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-primary);
+	color: var(--text-normal);
+	cursor: pointer;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.telegrid-back button:hover {
+	background: var(--background-modifier-hover);
+}
+
+.telegrid-back-icon {
+	display: flex;
+}
+
+/* ---- expanded card ----------------------------------------------- */
+
+.telegrid-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 30;
+	display: grid;
+	place-items: center;
+	padding: 24px;
+	background: rgba(0, 0, 0, 0.45);
+}
+
+.telegrid-expanded {
+	view-transition-name: telegrid-expanding;
+	display: flex;
+	flex-direction: column;
+	width: min(1100px, 100%);
+	height: min(840px, 100%);
+	overflow: hidden;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-l);
+	background: var(--background-primary);
+	box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
+}
+
+.telegrid-expanded-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 12px 16px;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.telegrid-expanded-head h2 {
+	margin: 0;
+	font-size: 1.2em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.telegrid-expanded-actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex: 0 0 auto;
+}
+
+.telegrid-close {
+	font-size: 1.1em;
+	line-height: 1;
+}
+
+.telegrid-expanded-body {
+	display: flex;
+	min-height: 0;
+	flex: 1 1 auto;
+}
+
+.telegrid-editor {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: auto;
+	padding: 8px 4px;
+}
+
+.telegrid-editor .cm-editor {
+	height: 100%;
+	background: transparent;
+}
+
+.telegrid-editor .cm-content {
+	font-family: var(--font-text);
+	font-size: var(--font-text-size);
+}
+
+/* Obsidian's own editor, borrowed into the overlay. */
+.telegrid-editor.is-borrowed {
+	display: flex;
+	padding: 0;
+	overflow: hidden;
+}
+
+.telegrid-editor .workspace-leaf-content {
+	flex: 1 1 auto;
+	min-width: 0;
+	height: 100%;
+}
+
+.telegrid-editor .view-content {
+	height: 100%;
+}
+
+/* The overlay's own header carries the title and the actions. */
+.telegrid-editor .view-header,
+.telegrid-editor .inline-title {
+	display: none;
+}
+
+/* The leaf whose view is borrowed is left empty: keep it out of sight. */
+.workspace-split.mod-right-split .workspace-tabs:not(:has(.workspace-leaf-content)) {
+	display: none;
+}
+
+.telegrid-lightbox-main {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-width: 0;
+	gap: 12px;
+	padding: 16px;
+}
+
+.telegrid-lightbox-image {
+	flex: 1 1 auto;
+	min-height: 0;
+	max-width: 100%;
+	object-fit: contain;
+	border-radius: var(--radius-m);
+	background: var(--background-secondary);
+}
+
+.telegrid-thoughts {
+	flex: 0 0 auto;
+	height: 120px;
+	resize: vertical;
+	font-family: var(--font-text);
+}
+
+/* ---- metadata box ------------------------------------------------ */
+
+.telegrid-meta {
+	flex: 0 0 280px;
+	overflow-y: auto;
+	padding: 16px;
+	border-left: 1px solid var(--background-modifier-border);
+	background: var(--background-secondary);
+	font-size: var(--font-ui-small);
+}
+
+.telegrid-meta-section + .telegrid-meta-section {
+	margin-top: 20px;
+}
+
+.telegrid-meta h4 {
+	margin: 0 0 8px;
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+}
+
+.telegrid-meta-none {
+	color: var(--text-faint);
+	font-style: italic;
+}
+
+.telegrid-meta-input {
+	width: 100%;
+	margin-top: 8px;
+}
+
+.telegrid-meta-properties div {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 2px 0;
+}
+
+.telegrid-meta-properties dt {
+	color: var(--text-muted);
+}
+
+.telegrid-meta-properties dd {
+	margin: 0;
+	text-align: right;
+	word-break: break-word;
+}
+
+.telegrid-meta-list {
+	margin: 0;
+	padding-left: 18px;
+}
+
+.telegrid-meta-list a {
+	cursor: pointer;
+}
+
+/* ---- animation --------------------------------------------------- */
+
+@keyframes telegrid-fade-in {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@keyframes telegrid-pop {
+	from {
+		opacity: 0;
+		transform: scale(0.9);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+/* The clicked card and the overlay share a name; nothing else cross-fades. */
+::view-transition-group(root) {
+	animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.react-grid-item,
+	.telegrid-card,
+	.telegrid-card.is-fresh,
+	.telegrid-chip {
+		transition: none;
+		animation: none;
+	}
+}
+
+/* ---- standalone -------------------------------------------------- */
+
+body.telegrid-standalone .workspace-ribbon,
+body.telegrid-standalone .workspace-tabs .workspace-tab-header-container,
+body.telegrid-standalone .workspace-split.mod-left-split,
+body.telegrid-standalone .workspace-split.mod-right-split,
+body.telegrid-standalone .status-bar {
+	display: none !important;
+}
+
+body.telegrid-standalone.is-mobile .mobile-navbar,
+body.telegrid-standalone.is-mobile .workspace-drawer {
+	display: none !important;
+}
+
+/*
+ * The grid keeps no history, so the titlebar's arrows have nowhere to go, and
+ * the sidebar toggles have nothing to toggle: standalone mode hides both
+ * sidebars already.
+ */
+body.telegrid-standalone .titlebar-button.mod-back,
+body.telegrid-standalone .titlebar-button.mod-forward,
+body.telegrid-standalone .sidebar-toggle-button {
+	display: none !important;
+}
+
+/*
+ * The grid's own view header is a second title bar with arrows that have
+ * nowhere to walk; the pane's top band takes that space instead. A note opened
+ * in Obsidian keeps its header, which is where the way back lives.
+ */
+body.telegrid-standalone .workspace-leaf-content[data-type="telegrid-search-view"] > .view-header {
+	display: none;
+}
+
+/* The window buttons wait out of sight until the pointer reaches the top. */
+body.telegrid-standalone .titlebar-button-container {
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 160ms ease;
+}
+
+body.telegrid-standalone.telegrid-top-edge .titlebar-button-container,
+body.telegrid-standalone .titlebar-button-container:focus-within {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+/* ---- mobile ------------------------------------------------------ */
+
+.is-mobile .telegrid-root {
+	padding: 16px 12px 96px;
+}
+
+.is-mobile .telegrid-search-input {
+	font-size: 1.3em;
+}
+
+.is-mobile .telegrid-overlay {
+	padding: 0;
+}
+
+.is-mobile .telegrid-expanded {
+	width: 100%;
+	height: 100%;
+	border: none;
+	border-radius: 0;
+}
+
+.is-mobile .telegrid-expanded-body {
+	flex-direction: column;
+	overflow-y: auto;
+}
+
+.is-mobile .telegrid-meta {
+	flex: 0 0 auto;
+	border-left: none;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+.is-mobile .telegrid-lightbox-image {
+	max-height: 50vh;
+}
