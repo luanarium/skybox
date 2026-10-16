@@ -4,6 +4,9 @@ import type { Item } from "./types";
 export const ROW_HEIGHT = 8;
 export const MARGIN: readonly [number, number] = [14, 14];
 const MIN_COLUMN = 240;
+/** On a narrow screen cards may be narrower, so a phone still gets a grid. */
+const MIN_COLUMN_NARROW = 160;
+const NARROW = 560;
 const MAX_COLUMNS = 6;
 
 /**
@@ -35,7 +38,8 @@ export function shortestColumnCompactor(order: Map<string, number>): Compactor {
 
 export function columnsFor(width: number): number {
 	if (width <= 0) return 1;
-	return Math.max(1, Math.min(MAX_COLUMNS, Math.floor(width / MIN_COLUMN)));
+	const minimum = width < NARROW ? MIN_COLUMN_NARROW : MIN_COLUMN;
+	return Math.max(1, Math.min(MAX_COLUMNS, Math.floor(width / minimum)));
 }
 
 /** Grid rows a pixel height occupies, given the row height and margin. */

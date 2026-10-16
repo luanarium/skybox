@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
-import { Menu } from "obsidian";
+import { Menu, Platform } from "obsidian";
 import { ask } from "./confirm";
 import { useTelegrid } from "./context";
 import { createNote, ingest } from "./ingest";
@@ -11,6 +11,7 @@ import { Card } from "./components/Card";
 import { Lightbox } from "./components/Lightbox";
 import { Masonry } from "./components/Masonry";
 import { NoteOverlay } from "./components/NoteOverlay";
+import { Sheet } from "./components/Sheet";
 import { SearchBox } from "./components/SearchBox";
 
 const PAGE = 100;
@@ -155,6 +156,15 @@ export function App() {
 		[app, index, settings, open]
 	);
 
+	const dismiss = useCallback(() => close(), [close]);
+
+	const card = (item: Item) =>
+		item.kind === "image" ? (
+			<Lightbox item={item} onClose={close} onOpenPath={openPath} />
+		) : (
+			<NoteOverlay item={item} onClose={close} onOpenPath={openPath} />
+		);
+
 	const shown = useMemo(() => results.slice(0, limit), [results, limit]);
 	const expanded = expandedId ? results.find((item) => item.id === expandedId) ?? index.get(expandedId) : undefined;
 
@@ -215,12 +225,7 @@ export function App() {
 				}}
 			/>
 
-			{expanded?.kind === "note" && (
-				<NoteOverlay item={expanded} onClose={close} onOpenPath={openPath} />
-			)}
-			{expanded?.kind === "image" && (
-				<Lightbox item={expanded} onClose={close} onOpenPath={openPath} />
-			)}
+			{expanded && (Platform.isMobile ? <Sheet onClose={dismiss}>{card(expanded)}</Sheet> : card(expanded))}
 		</div>
 	);
 }

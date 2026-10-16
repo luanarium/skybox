@@ -592,28 +592,95 @@ body.telegrid-standalone .titlebar-button-container:focus-within {
 	font-size: 1.3em;
 }
 
-.is-mobile .telegrid-overlay {
+/*
+ * The expanded card is one of Obsidian's own modals on a phone: a full-screen
+ * sheet that the back gesture closes. The card fills it, so the overlay's own
+ * backdrop steps out of the way.
+ */
+.telegrid-sheet {
+	width: 100%;
+	max-width: none;
+	height: 100%;
+	max-height: none;
+	border-radius: 0;
 	padding: 0;
 }
 
-.is-mobile .telegrid-expanded {
+.telegrid-sheet .modal-content {
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+}
+
+.telegrid-sheet .modal-close-button {
+	display: none;
+}
+
+.telegrid-sheet .telegrid-overlay {
+	position: static;
+	display: block;
+	padding: 0;
+	background: none;
+}
+
+.telegrid-sheet .telegrid-expanded {
 	width: 100%;
 	height: 100%;
 	border: none;
 	border-radius: 0;
+	box-shadow: none;
 }
 
+.is-mobile .telegrid-back-arrow {
+	display: flex;
+	align-items: center;
+	padding: 6px 8px;
+	background: transparent;
+	box-shadow: none;
+	color: var(--text-normal);
+}
+
+/* One way back is enough, and on Android it is the arrow. */
+.is-mobile .telegrid-close {
+	display: none;
+}
+
+/*
+ * Plain block flow down the sheet, so nothing is asked to shrink and the
+ * whole thing scrolls: the editor or image first, then the side pane below.
+ */
 .is-mobile .telegrid-expanded-body {
-	flex-direction: column;
+	display: block;
 	overflow-y: auto;
+	-webkit-overflow-scrolling: touch;
 }
 
-.is-mobile .telegrid-meta {
-	flex: 0 0 auto;
-	border-left: none;
-	border-top: 1px solid var(--background-modifier-border);
+.is-mobile .telegrid-editor {
+	height: 70vh;
+	padding: 0;
+}
+
+.is-mobile .telegrid-lightbox-main {
+	display: block;
+	padding: 12px;
 }
 
 .is-mobile .telegrid-lightbox-image {
-	max-height: 50vh;
+	width: 100%;
+	max-height: 45vh;
+	object-fit: contain;
+}
+
+.is-mobile .telegrid-thoughts {
+	width: 100%;
+	height: 22vh;
+	min-height: 88px;
+	margin-top: 12px;
+}
+
+.is-mobile .telegrid-meta {
+	width: auto;
+	border-left: none;
+	border-top: 1px solid var(--background-modifier-border);
 }

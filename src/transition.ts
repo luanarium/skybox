@@ -1,4 +1,5 @@
 import { flushSync } from "react-dom";
+import { Platform } from "obsidian";
 
 /**
  * The View Transitions API, with an instant fallback where it is missing and
@@ -22,7 +23,7 @@ export function supportsViewTransitions(): boolean {
  */
 export function withTransition(update: () => void): Promise<void> {
 	const doc = document as TransitionDocument;
-	if (!doc.startViewTransition || prefersReducedMotion()) {
+	if (!doc.startViewTransition || prefersReducedMotion() || Platform.isMobile) {
 		update();
 		return Promise.resolve();
 	}

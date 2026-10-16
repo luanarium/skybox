@@ -69,6 +69,19 @@ corner appears whenever the grid is up but something else is in front of it. Bot
 the grid *and* make it the active pane — revealing alone leaves the pill hanging around until
 something is clicked.
 
+## On a phone
+
+Fewer columns, from the container width: a narrow screen may pack cards into 160px columns rather
+than 240px, so a phone still gets a grid instead of one card per screen.
+
+The expanded card is hosted in one of Obsidian's own modals, rendered into it through a portal. A
+modal is a history handler, so the Android back gesture closes the card instead of leaving the app,
+a tap outside closes it, and it arrives as a full-screen sheet with Obsidian's own animation — which
+is why the shared-element view transition sits out on mobile. The header carries a back arrow where
+an Android reader looks for one, and the × steps aside. Down the sheet it is plain block flow — the
+editor or the image, then the side pane below it — so nothing is asked to shrink and the whole sheet
+scrolls.
+
 ## Trying it on a phone
 
 The plugin is three files — `main.js`, `manifest.json`, `styles.css` — copied into

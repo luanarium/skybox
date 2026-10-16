@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import type { TFile } from "obsidian";
+import { Platform, type TFile } from "obsidian";
 import { useTelegrid } from "../context";
 import { ensureSidecar, readBody, writeBody } from "../sidecar";
 import type { Item } from "../types";
+import { Icon } from "./Icon";
 import { MetadataBox } from "./MetadataBox";
 
 const SAVE_DELAY = 600;
@@ -77,6 +78,15 @@ export function Lightbox({ item, onClose, onOpenPath }: LightboxProps) {
 		>
 			<div className="telegrid-expanded is-lightbox">
 				<header className="telegrid-expanded-head">
+					{Platform.isMobile && (
+						<button
+							className="telegrid-back-arrow"
+							aria-label="Back to the grid"
+							onClick={() => onClose()}
+						>
+							<Icon name="arrow-left" />
+						</button>
+					)}
 					<h2>{item.title}</h2>
 					<div className="telegrid-expanded-actions">
 						<button className="telegrid-close" aria-label="Close" onClick={() => onClose()}>

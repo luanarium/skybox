@@ -1,8 +1,9 @@
 import { useEffect } from "react";
-import { ItemView } from "obsidian";
+import { ItemView, Platform } from "obsidian";
 import { useTelegrid } from "../context";
 import type { Item } from "../types";
 import { Editor } from "./Editor";
+import { Icon } from "./Icon";
 import { MetadataBox } from "./MetadataBox";
 
 interface NoteOverlayProps {
@@ -49,6 +50,15 @@ export function NoteOverlay({ item, onClose, onOpenPath }: NoteOverlayProps) {
 		>
 			<div className="telegrid-expanded">
 				<header className="telegrid-expanded-head">
+					{Platform.isMobile && (
+						<button
+							className="telegrid-back-arrow"
+							aria-label="Back to the grid"
+							onClick={() => onClose()}
+						>
+							<Icon name="arrow-left" />
+						</button>
+					)}
 					<h2>{item.title}</h2>
 					<div className="telegrid-expanded-actions">
 						<button
