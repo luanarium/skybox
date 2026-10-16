@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTelegrid } from "../context";
 import { plainExcerpt } from "../search";
 import type { Item } from "../types";
@@ -11,12 +11,14 @@ interface CardProps {
 	named: boolean;
 	/** Newly surfaced by the current chip set, so it fades in. */
 	fresh: boolean;
-	/** Just made by the composer, so it drops in. */
+	/** Just arrived, so it drops in. */
 	dropped: boolean;
 	onOpen: (item: Item) => void;
+	/** A long press, or a right click: what can be done with this one. */
+	onMenu: (item: Item, x: number, y: number) => void;
 }
 
-export function Card({ item, index, named, fresh, dropped, onOpen }: CardProps) {
+export function Card({ item, index, named, fresh, dropped, onOpen, onMenu }: CardProps) {
 	const { app, index: vaultIndex } = useTelegrid();
 	const [excerpt, setExcerpt] = useState("");
 
@@ -34,6 +36,24 @@ export function Card({ item, index, named, fresh, dropped, onOpen }: CardProps) 
 		};
 	}, [item.id, item.mtime, vaultIndex]);
 
+	const held = useRef<number | null>(null);
+	const wasHeld = useRef(false);
+
+	const hold = (x: number, y: number) => {
+		wasHeld.current = false;
+		held.current = window.setTimeout(() => {
+			wasHeld.current = true;
+			held.current = null;
+			onMenu(item, x, y);
+		}, 450);
+	};
+
+	const letGo = () => {
+		if (held.current === null) return;
+		window.clearTimeout(held.current);
+		held.current = null;
+	};
+
 	const style = {
 		animationDelay: `${Math.min(index, 20) * 24}ms`,
 		viewTransitionName: named ? "telegrid-expanding" : undefined,
@@ -47,7 +67,25 @@ export function Card({ item, index, named, fresh, dropped, onOpen }: CardProps) 
 			style={style}
 			role="button"
 			tabIndex={0}
-			onClick={() => onOpen(item)}
+			onClick={() => {
+				// The press that opened the menu is not also a tap.
+				if (wasHeld.current) {
+					wasHeld.current = false;
+					return;
+				}
+				onOpen(item);
+			}}
+			onContextMenu={(event) => {
+				event.preventDefault();
+				onMenu(item, event.clientX, event.clientY);
+			}}
+			onTouchStart={(event) => {
+				const touch = event.touches[0];
+				if (touch) hold(touch.clientX, touch.clientY);
+			}}
+			onTouchMove={letGo}
+			onTouchEnd={letGo}
+			onTouchCancel={letGo}
 			onKeyDown={(event) => {
 				if (event.key === "Enter" || event.key === " ") {
 					event.preventDefault();

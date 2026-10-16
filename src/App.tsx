@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { Menu, Platform } from "obsidian";
+import { copyItem } from "./clipboard";
 import { ask } from "./confirm";
 import { useTelegrid } from "./context";
 import { createNote, ingest } from "./ingest";
@@ -172,6 +173,40 @@ export function App() {
 		[app, index, settings, open, landed]
 	);
 
+	/** A long press or a right click: copy the card, or throw it away. */
+	const itemMenu = useCallback(
+		(item: Item, x: number, y: number) => {
+			const menu = new Menu();
+			menu.addItem((entry) =>
+				entry
+					.setTitle("Copy")
+					.setIcon("copy")
+					.onClick(() => void copyItem(app, item))
+			);
+			menu.addItem((entry) =>
+				entry
+					.setTitle("Delete")
+					.setIcon("trash-2")
+					.onClick(async () => {
+						const sure = await ask(app, {
+							title: "Delete",
+							message: `“${item.title}” goes to the trash, with its notes beside it.`,
+							confirm: "Delete",
+							cancel: "Keep it",
+							destructive: true,
+						});
+						if (!sure) return;
+						if (expandedId === item.id) close();
+						// The sidecar is part of the card, so it goes too.
+						if (item.sidecar) await app.fileManager.trashFile(item.sidecar);
+						await app.fileManager.trashFile(item.file);
+					})
+			);
+			menu.showAtPosition({ x, y });
+		},
+		[app, close, expandedId]
+	);
+
 	/** New note, or add files: the two ways in, on both platforms. */
 	const plusMenu = useCallback(
 		(event: React.MouseEvent) => {
@@ -261,6 +296,7 @@ export function App() {
 							fresh={fresh.has(item.id)}
 							dropped={dropped.has(item.id)}
 							onOpen={open}
+							onMenu={itemMenu}
 						/>
 					)}
 				</Masonry>

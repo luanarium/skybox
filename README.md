@@ -81,6 +81,11 @@ writes a note into the intake folder and expands it straight into its editor, an
 which opens the file picker. Files also arrive by drag and drop or from the share sheet, and a card
 for a file that has just arrived drops into the grid.
 
+A long press on a card, or a right click, offers **Copy** and **Delete**. Copy takes a note's text,
+or the image itself where the clipboard will have it and its path where it will not. Delete asks
+first and goes through `trashFile`, so it honours the vault's own deleted-files setting, and it
+takes an image's sidecar with it.
+
 A phone also carries a round toggle above those places for standalone mode, which otherwise hides
 the navbar and puts Obsidian's own settings a long way off. It is there for trying the mode out, and
 nothing but mobile shows it.

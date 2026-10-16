@@ -165,18 +165,30 @@ body.telegrid-window .telegrid-drag {
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 8px;
-	padding: 14px 18px;
+	padding: 7px 14px;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--radius-l);
 	background: var(--background-primary-alt);
 	cursor: text;
 }
 
-.telegrid-search-input:focus,
-.telegrid-search-input:focus-visible {
+/*
+ * Obsidian draws a ring around a focused input, and `input[type='text']:focus`
+ * outweighs a class on its own, so the selector has to say both.
+ */
+.telegrid-search,
+input[type="text"].telegrid-search-input,
+input[type="text"].telegrid-search-input:focus,
+input[type="text"].telegrid-search-input:focus-visible,
+input[type="text"].telegrid-search-input:active {
 	border: none;
 	outline: none;
 	box-shadow: none;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.telegrid-search {
+	border: 1px solid var(--background-modifier-border);
 }
 
 .telegrid-search-input {
@@ -187,7 +199,7 @@ body.telegrid-window .telegrid-drag {
 	background: transparent;
 	box-shadow: none;
 	padding: 0;
-	font-size: 1.6em;
+	font-size: 1.25em;
 	line-height: 1.4;
 	color: var(--text-normal);
 	font-family: inherit;
@@ -330,13 +342,13 @@ body.telegrid-window .telegrid-drag {
 	align-self: stretch;
 	/* Obsidian gives every button a fixed height, which stretch cannot beat. */
 	height: auto;
-	width: 58px;
+	width: 48px;
 	padding: 0;
 	border: none;
 	border-radius: 8px;
 	background: var(--telegrid-create);
 	color: #ffffff;
-	font-size: 26px;
+	font-size: 22px;
 	line-height: 1;
 	cursor: pointer;
 	box-shadow: none;
@@ -812,16 +824,18 @@ body.telegrid-standalone .titlebar-button-container:focus-within {
 /* ---- mobile ------------------------------------------------------ */
 
 .is-mobile .telegrid-root {
-	padding: 16px 12px 96px;
+	padding: 0 12px 96px;
 }
 
+/*
+ * Nothing sits above the head, so it is already where it sticks and the
+ * reader never sees it travel. Its own background covers the cards passing
+ * behind it.
+ */
 .is-mobile .telegrid-head {
-	margin-bottom: 14px;
-}
-
-.is-mobile .telegrid-plus {
-	width: 48px;
-	font-size: 24px;
+	margin: 0 -12px 12px;
+	padding: 10px 12px;
+	background: var(--background-primary);
 }
 
 /* Obsidian's own sheet animation is plenty on a phone. */
@@ -839,12 +853,17 @@ body.telegrid-standalone .titlebar-button-container:focus-within {
 }
 
 .is-mobile .telegrid-search {
-	padding: 8px 14px;
+	padding: 5px 12px;
 	gap: 6px;
 }
 
 .is-mobile .telegrid-search-input {
-	font-size: 1.1em;
+	font-size: 1em;
+}
+
+.is-mobile .telegrid-plus {
+	width: 42px;
+	font-size: 20px;
 }
 
 /*
@@ -868,8 +887,10 @@ body.telegrid-standalone .titlebar-button-container:focus-within {
 	overflow: hidden;
 }
 
-.telegrid-sheet .modal-close-button {
-	display: none;
+.telegrid-sheet .modal-close-button,
+.is-mobile .telegrid-sheet .modal-close-button,
+.is-mobile .telegrid-sheet .modal-title {
+	display: none !important;
 }
 
 .telegrid-sheet .telegrid-overlay {
@@ -898,7 +919,7 @@ body.telegrid-standalone .titlebar-button-container:focus-within {
 
 /* One way back is enough, and on Android it is the arrow. */
 .is-mobile .telegrid-close {
-	display: none;
+	display: none !important;
 }
 
 /*
