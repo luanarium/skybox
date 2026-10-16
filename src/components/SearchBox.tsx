@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { Platform } from "obsidian";
 import { type Chip, chipLabel, toChip } from "../search";
 
 interface SearchBoxProps {
@@ -53,7 +54,9 @@ export function SearchBox({ chips, draft, onDraftChange, onChipsChange }: Search
 				type="text"
 				value={draft}
 				placeholder={chips.length ? "" : "search my vault"}
-				autoFocus
+				// A phone brings its keyboard up with the cursor, over the grid
+				// the reader came to scroll.
+				autoFocus={!Platform.isMobile}
 				spellCheck={false}
 				onChange={(event) => {
 					const value = event.target.value;

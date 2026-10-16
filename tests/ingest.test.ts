@@ -1,5 +1,5 @@
 import * as assert from "node:assert";
-import { ingest } from "../src/ingest";
+import { ingest, quickNoteTitle } from "../src/ingest";
 import { isWriting } from "../src/writes";
 import type { VaultIndex } from "../src/index";
 import type { App } from "obsidian";
@@ -14,6 +14,7 @@ const settings: TelegridSettings = {
 	standalone: false,
 	expandOnShare: false,
 	focusEditor: false,
+	mobileColumns: "auto",
 };
 
 const existing = { id: "shots/cat.png", title: "cat.png", kind: "image" } as Item;
@@ -156,3 +157,15 @@ function indexWith(item?: Item): VaultIndex {
 		hashes: () => (item ? new Map([[PNG_HASH, item]]) : new Map<string, Item>()),
 	} as unknown as VaultIndex;
 }
+
+// The composer names a note after its first line.
+assert.strictEqual(quickNoteTitle("# Shopping\n\nmilk"), "Shopping", "heading marks come off");
+assert.strictEqual(quickNoteTitle("\n\n  a thought  \nmore"), "a thought", "blank lines are skipped");
+assert.strictEqual(quickNoteTitle("- buy milk"), "buy milk", "so do list marks");
+assert.strictEqual(
+	quickNoteTitle('why/when: "this" <that> #tag'),
+	"why when this that tag",
+	"anything a filename cannot hold is dropped"
+);
+assert.strictEqual(quickNoteTitle("   "), "Untitled", "nothing typed still names the note");
+assert.strictEqual(quickNoteTitle("x".repeat(90)).length, 60, "a long first line is cut short");

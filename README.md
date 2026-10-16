@@ -69,10 +69,30 @@ corner appears whenever the grid is up but something else is in front of it. Bot
 the grid *and* make it the active pane — revealing alone leaves the pill hanging around until
 something is clicked.
 
+## The head, the composer and the places
+
+The search box and the plus button hold the top of the pane while the grid scrolls under them, on
+both platforms; in a standalone window the drag band rides along with them, so the window can still
+be moved once the grid has been scrolled.
+
+The plus button is square, beside the search box, and opens the composer: a sheet with × on the
+left, "create a new note" across the middle and SAVE on the right, over a plain text area. Its first
+line names the note, the whole of it is the body, and the card drops into the grid when it saves.
+Files still come in through the composer's own Add files, through drag and drop, or from the share
+sheet.
+
+Along the bottom of a phone sit three places — everything, spaces, serendipity — as placeholders.
+They are deliberately not wired up to anything yet.
+
 ## On a phone
 
 Fewer columns, from the container width: a narrow screen may pack cards into 160px columns rather
-than 240px, so a phone still gets a grid instead of one card per screen.
+than 240px, so a phone gets a two-column grid in portrait instead of one card per screen. **Columns
+on a phone** in the settings pins it to one or two instead.
+
+The search box does not take the cursor on a phone, because the keyboard would come up over a grid
+the reader opened to scroll. Obsidian's own sheet animation is the only movement on mobile — the
+card transitions and the staggered fade sit out — except the drop-in the composer earns.
 
 The expanded card is hosted in one of Obsidian's own modals, rendered into it through a portal. A
 modal is a history handler, so the Android back gesture closes the card instead of leaving the app,

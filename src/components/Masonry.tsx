@@ -9,6 +9,8 @@ import {
 	rowsFor,
 	shortestColumnCompactor,
 } from "../compact";
+import { Platform } from "obsidian";
+import { useTelegrid } from "../context";
 import type { Item } from "../types";
 
 interface MasonryProps {
@@ -17,6 +19,7 @@ interface MasonryProps {
 }
 
 export function Masonry({ items, children }: MasonryProps) {
+	const { settings } = useTelegrid();
 	const { width, mounted, containerRef } = useContainerWidth({
 		measureBeforeMount: true,
 		debounceTimeout: 60,
@@ -76,7 +79,11 @@ export function Masonry({ items, children }: MasonryProps) {
 		[items]
 	);
 	const compactor = useMemo(() => shortestColumnCompactor(order), [order]);
-	const cols = columnsFor(width);
+	const asked =
+		Platform.isMobile && settings.mobileColumns !== "auto"
+			? Number(settings.mobileColumns)
+			: undefined;
+	const cols = columnsFor(width, asked);
 
 	const layout = useMemo<Layout>(
 		() =>

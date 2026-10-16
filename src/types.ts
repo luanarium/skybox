@@ -30,6 +30,8 @@ export interface TelegridSettings {
 	expandOnShare: boolean;
 	/** Put the cursor in the note as it opens, rather than waiting for a click. */
 	focusEditor: boolean;
+	/** Columns on a phone: from the screen's width, or a number you pick. */
+	mobileColumns: "auto" | "1" | "2";
 }
 
 export const DEFAULT_SETTINGS: TelegridSettings = {
@@ -38,6 +40,7 @@ export const DEFAULT_SETTINGS: TelegridSettings = {
 	standalone: false,
 	expandOnShare: false,
 	focusEditor: false,
+	mobileColumns: "auto",
 };
 
 export const VIEW_TYPE_TELEGRID = "telegrid-search-view";

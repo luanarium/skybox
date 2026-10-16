@@ -49,6 +49,19 @@ export class TelegridSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
+			.setName("Columns on a phone")
+			.setDesc("How many columns the grid packs into on a phone, whichever way it is held.")
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOptions({ auto: "From the screen's width", "1": "One", "2": "Two" })
+					.setValue(this.plugin.settings.mobileColumns)
+					.onChange(async (value) => {
+						this.plugin.settings.mobileColumns = value as "auto" | "1" | "2";
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
 			.setName("Window controls")
 			.setDesc(
 				hasWindowHandle()

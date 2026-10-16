@@ -36,8 +36,9 @@ export function shortestColumnCompactor(order: Map<string, number>): Compactor {
 	};
 }
 
-export function columnsFor(width: number): number {
+export function columnsFor(width: number, asked?: number): number {
 	if (width <= 0) return 1;
+	if (asked) return Math.max(1, Math.min(MAX_COLUMNS, asked));
 	const minimum = width < NARROW ? MIN_COLUMN_NARROW : MIN_COLUMN;
 	return Math.max(1, Math.min(MAX_COLUMNS, Math.floor(width / minimum)));
 }

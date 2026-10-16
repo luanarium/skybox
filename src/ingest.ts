@@ -61,17 +61,38 @@ export async function ingest(
 	});
 }
 
-/** A new, empty note in the intake folder. */
-export async function createNote(
+/**
+ * A note from the composer: its first line names it, the whole of what was
+ * typed is its body.
+ */
+export async function createQuickNote(
 	app: App,
 	settings: TelegridSettings,
-	title = "Untitled"
+	text: string
 ): Promise<TFile> {
 	return guarded(async () => {
 		const folder = await ensureFolder(app, settings.intakeFolder);
-		const path = await uniquePath(app, folder, `${title}.md`);
-		return app.vault.create(path, "");
+		const path = await uniquePath(app, folder, `${quickNoteTitle(text)}.md`);
+		return app.vault.create(path, text.endsWith("\n") ? text : `${text}\n`);
 	});
+}
+
+/**
+ * The first line, less its heading marks, with anything a filename cannot
+ * hold turned into a space.
+ */
+export function quickNoteTitle(text: string): string {
+	const first = text
+		.split("\n")
+		.map((line) => line.trim())
+		.find(Boolean);
+	const cleaned = (first ?? "")
+		.replace(/^#+\s*/, "")
+		.replace(/^[-*>]\s*/, "")
+		.replace(/[\\/:*?"<>|#^[\]]/g, " ")
+		.replace(/\s+/g, " ")
+		.trim();
+	return cleaned.slice(0, 60).trim() || "Untitled";
 }
 
 /** Hash of a file already in the vault, for sidecars written before dedupe. */

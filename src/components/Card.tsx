@@ -11,10 +11,12 @@ interface CardProps {
 	named: boolean;
 	/** Newly surfaced by the current chip set, so it fades in. */
 	fresh: boolean;
+	/** Just made by the composer, so it drops in. */
+	dropped: boolean;
 	onOpen: (item: Item) => void;
 }
 
-export function Card({ item, index, named, fresh, onOpen }: CardProps) {
+export function Card({ item, index, named, fresh, dropped, onOpen }: CardProps) {
 	const { app, index: vaultIndex } = useTelegrid();
 	const [excerpt, setExcerpt] = useState("");
 
@@ -39,7 +41,9 @@ export function Card({ item, index, named, fresh, onOpen }: CardProps) {
 
 	return (
 		<div
-			className={`telegrid-card is-${item.kind}${fresh ? " is-fresh" : ""}`}
+			className={`telegrid-card is-${item.kind}${fresh ? " is-fresh" : ""}${
+				dropped ? " is-dropped" : ""
+			}`}
 			style={style}
 			role="button"
 			tabIndex={0}

@@ -10,7 +10,16 @@ import { useTelegrid } from "../context";
  * app. The card itself is rendered into the modal through a portal, so the
  * same components serve both platforms.
  */
-export function Sheet({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
+export function Sheet({
+	onClose,
+	cls,
+	children,
+}: {
+	onClose: () => void;
+	/** An extra class on the modal, for styling one kind of sheet. */
+	cls?: string;
+	children: React.ReactNode;
+}) {
 	const { app } = useTelegrid();
 	const [host, setHost] = useState<HTMLElement | null>(null);
 
@@ -18,6 +27,7 @@ export function Sheet({ onClose, children }: { onClose: () => void; children: Re
 		let ours = false;
 		const modal = new Modal(app);
 		modal.modalEl.addClass("telegrid-sheet");
+		if (cls) modal.modalEl.addClass(cls);
 		modal.onClose = () => {
 			setHost(null);
 			// Back, or a tap outside: the grid has to be told.
@@ -29,7 +39,7 @@ export function Sheet({ onClose, children }: { onClose: () => void; children: Re
 			ours = true;
 			modal.close();
 		};
-	}, [app, onClose]);
+	}, [app, cls, onClose]);
 
 	return host ? createPortal(children, host) : null;
 }

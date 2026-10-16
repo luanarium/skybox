@@ -49,6 +49,34 @@
 	pointer-events: none;
 }
 
+/* ---- the head that stays put ------------------------------------- */
+
+/*
+ * The search box and the plus button hold the top of the pane while the grid
+ * scrolls under them. The drag band rides along, so a standalone window can
+ * still be moved once the grid has been scrolled.
+ */
+.telegrid-head {
+	position: sticky;
+	top: 0;
+	z-index: 12;
+	margin: -24px -20px 20px;
+	padding: 24px 20px 12px;
+	background: var(--background-primary);
+}
+
+.telegrid-bar {
+	display: flex;
+	align-items: stretch;
+	gap: 10px;
+}
+
+.telegrid-bar .telegrid-search {
+	flex: 1 1 auto;
+	min-width: 0;
+	margin-bottom: 0;
+}
+
 /* ---- window dragging --------------------------------------------- */
 
 /*
@@ -65,6 +93,7 @@ body.telegrid-standalone:not(.is-mobile) .telegrid-drag {
 	display: block;
 	height: var(--titlebar-height, 32px);
 	margin: -24px -20px 12px;
+	position: relative;
 	-webkit-app-region: drag;
 	app-region: drag;
 }
@@ -87,7 +116,6 @@ body.telegrid-window .telegrid-drag {
 	align-items: center;
 	gap: 8px;
 	padding: 14px 18px;
-	margin-bottom: 24px;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--radius-l);
 	background: var(--background-primary-alt);
@@ -247,20 +275,16 @@ body.telegrid-window .telegrid-drag {
 /* ---- plus button ------------------------------------------------- */
 
 .telegrid-plus {
-	position: fixed;
-	right: 24px;
-	bottom: 24px;
-	width: 52px;
-	height: 52px;
-	border-radius: 50%;
+	flex: 0 0 auto;
+	width: 56px;
 	border: none;
+	border-radius: var(--radius-l);
 	background: var(--interactive-accent);
 	color: var(--text-on-accent);
 	font-size: 28px;
 	line-height: 1;
 	cursor: pointer;
-	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-	z-index: 20;
+	box-shadow: none;
 }
 
 .telegrid-plus:hover {
@@ -436,6 +460,115 @@ body.telegrid-window .telegrid-drag {
 	font-family: var(--font-text);
 }
 
+/* ---- the composer ------------------------------------------------ */
+
+.telegrid-composer-sheet {
+	width: min(620px, 100%);
+}
+
+.telegrid-composer {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 320px;
+}
+
+.telegrid-composer-head {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 4px 0 14px;
+}
+
+.telegrid-composer-title {
+	flex: 1 1 auto;
+	text-align: center;
+	color: var(--text-muted);
+}
+
+.telegrid-composer-close {
+	display: flex;
+	padding: 6px;
+	background: transparent;
+	box-shadow: none;
+	color: var(--text-muted);
+}
+
+.telegrid-composer-save {
+	letter-spacing: 0.08em;
+	font-weight: 600;
+	background: transparent;
+	box-shadow: none;
+	color: var(--text-accent);
+}
+
+.telegrid-composer-save:disabled {
+	color: var(--text-faint);
+	cursor: default;
+}
+
+.telegrid-composer-text {
+	flex: 1 1 auto;
+	min-height: 180px;
+	resize: none;
+	border: none;
+	box-shadow: none;
+	padding: 0;
+	background: transparent;
+	font-family: var(--font-text);
+	font-size: var(--font-text-size);
+	line-height: 1.6;
+}
+
+.telegrid-composer-text:focus {
+	box-shadow: none;
+}
+
+.telegrid-composer-foot {
+	display: flex;
+	padding-top: 12px;
+}
+
+.telegrid-composer-files {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	background: transparent;
+	box-shadow: none;
+	color: var(--text-muted);
+}
+
+/* ---- the places along the bottom --------------------------------- */
+
+.telegrid-bottom {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 15;
+	display: flex;
+	justify-content: space-around;
+	padding: 6px 0 max(var(--safe-area-inset-bottom), 6px);
+	border-top: 1px solid var(--background-modifier-border);
+	background: var(--background-primary);
+}
+
+.telegrid-bottom-item {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+	padding: 4px 12px;
+	background: transparent;
+	box-shadow: none;
+	color: var(--text-faint);
+	font-size: var(--font-ui-smaller);
+}
+
+.telegrid-bottom-item.is-current {
+	color: var(--text-normal);
+}
+
 /* ---- metadata box ------------------------------------------------ */
 
 .telegrid-meta {
@@ -503,6 +636,26 @@ body.telegrid-window .telegrid-drag {
 		transform: translateY(6px);
 	}
 	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+/* A saved note drops into the grid. */
+.telegrid-card.is-dropped {
+	animation: telegrid-drop-in 520ms cubic-bezier(0.2, 0.9, 0.25, 1.1) both;
+}
+
+@keyframes telegrid-drop-in {
+	0% {
+		opacity: 0;
+		transform: translateY(-18px) scale(0.96);
+	}
+	60% {
+		opacity: 1;
+		transform: translateY(2px) scale(1.01);
+	}
+	100% {
 		opacity: 1;
 		transform: none;
 	}
@@ -588,6 +741,30 @@ body.telegrid-standalone .titlebar-button-container:focus-within {
 	padding: 16px 12px 96px;
 }
 
+.is-mobile .telegrid-head {
+	margin: -16px -12px 16px;
+	padding: 16px 12px 10px;
+}
+
+.is-mobile .telegrid-plus {
+	width: 48px;
+	font-size: 24px;
+}
+
+/* Obsidian's own sheet animation is plenty on a phone. */
+.is-mobile .react-grid-item,
+.is-mobile .telegrid-card,
+.is-mobile .telegrid-card.is-fresh,
+.is-mobile .telegrid-chip {
+	transition: none;
+	animation: none;
+}
+
+/* Except the one the composer earns. */
+.is-mobile .telegrid-card.is-dropped {
+	animation: telegrid-drop-in 520ms cubic-bezier(0.2, 0.9, 0.25, 1.1) both;
+}
+
 .is-mobile .telegrid-search-input {
 	font-size: 1.3em;
 }
@@ -647,13 +824,26 @@ body.telegrid-standalone .titlebar-button-container:focus-within {
 }
 
 /*
- * Plain block flow down the sheet, so nothing is asked to shrink and the
- * whole thing scrolls: the editor or image first, then the side pane below.
+ * Down the sheet rather than across it, nothing asked to shrink, and the whole
+ * thing scrolling. A note puts its tags and properties above the editor, where
+ * they can be read without scrolling to the bottom of the screen; an image
+ * keeps them under the picture and its thoughts.
  */
 .is-mobile .telegrid-expanded-body {
-	display: block;
+	display: flex;
+	flex-direction: column;
 	overflow-y: auto;
 	-webkit-overflow-scrolling: touch;
+}
+
+.is-mobile .telegrid-expanded-body > * {
+	flex: 0 0 auto;
+}
+
+.is-mobile .telegrid-expanded:not(.is-lightbox) .telegrid-meta {
+	order: -1;
+	border-top: none;
+	border-bottom: 1px solid var(--background-modifier-border);
 }
 
 .is-mobile .telegrid-editor {
