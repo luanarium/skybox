@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Modal } from "obsidian";
 import { useTelegrid } from "../context";
+import { themeClass } from "../types";
 
 /**
  * On a phone the expanded card lives in one of Obsidian's own modals: it
@@ -20,7 +21,7 @@ export function Sheet({
 	cls?: string;
 	children: React.ReactNode;
 }) {
-	const { app } = useTelegrid();
+	const { app, settings } = useTelegrid();
 	const [host, setHost] = useState<HTMLElement | null>(null);
 
 	useEffect(() => {
@@ -28,6 +29,9 @@ export function Sheet({
 		const modal = new Modal(app);
 		modal.modalEl.addClass("telegrid-sheet");
 		if (cls) modal.modalEl.addClass(cls);
+		// A modal is Obsidian's, not the pane's, so it is dressed to match.
+		const dressed = themeClass(settings);
+		if (dressed) modal.modalEl.addClass(dressed);
 		modal.onClose = () => {
 			setHost(null);
 			// Back, or a tap outside: the grid has to be told.
@@ -39,7 +43,7 @@ export function Sheet({
 			ours = true;
 			modal.close();
 		};
-	}, [app, cls, onClose]);
+	}, [app, cls, onClose, settings]);
 
 	return host ? createPortal(children, host) : null;
 }

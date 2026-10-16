@@ -4,6 +4,7 @@ import { Platform } from "obsidian";
 import { ask } from "./confirm";
 import { useTelegrid } from "./context";
 import { createQuickNote, ingest } from "./ingest";
+import { openPluginSettings } from "./preferences";
 import { type Chip, search } from "./search";
 import { withTransition } from "./transition";
 import type { Item } from "./types";
@@ -181,7 +182,14 @@ export function App() {
 			}}
 		>
 			<div className="telegrid-head">
-				<div className="telegrid-drag" />
+				<div className="telegrid-drag">
+					<button
+						className="telegrid-settings"
+						onClick={() => openPluginSettings(app, "telegrid")}
+					>
+						settings
+					</button>
+				</div>
 				<div className="telegrid-bar">
 					<SearchBox
 						chips={chips}

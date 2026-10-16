@@ -49,6 +49,22 @@ export class TelegridSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
+			.setName("Appearance")
+			.setDesc(
+				"Dress the pane light or dark on its own, or let it wear whatever Obsidian is " +
+					"wearing. A community theme that colours itself through the body may not follow."
+			)
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOptions({ follow: "Follow Obsidian", dark: "Dark", light: "Light" })
+					.setValue(this.plugin.settings.theme)
+					.onChange(async (value) => {
+						this.plugin.settings.theme = value as "follow" | "dark" | "light";
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
 			.setName("Columns on a phone")
 			.setDesc("How many columns the grid packs into on a phone, whichever way it is held.")
 			.addDropdown((dropdown) =>

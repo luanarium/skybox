@@ -15,6 +15,7 @@ const settings: TelegridSettings = {
 	expandOnShare: false,
 	focusEditor: false,
 	mobileColumns: "auto",
+	theme: "follow",
 };
 
 const existing = { id: "shots/cat.png", title: "cat.png", kind: "image" } as Item;

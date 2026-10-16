@@ -32,6 +32,8 @@ export interface TelegridSettings {
 	focusEditor: boolean;
 	/** Columns on a phone: from the screen's width, or a number you pick. */
 	mobileColumns: "auto" | "1" | "2";
+	/** Light or dark for the pane alone, or whatever Obsidian is wearing. */
+	theme: "follow" | "dark" | "light";
 }
 
 export const DEFAULT_SETTINGS: TelegridSettings = {
@@ -41,9 +43,20 @@ export const DEFAULT_SETTINGS: TelegridSettings = {
 	expandOnShare: false,
 	focusEditor: false,
 	mobileColumns: "auto",
+	theme: "follow",
 };
 
 export const VIEW_TYPE_TELEGRID = "telegrid-search-view";
+
+/**
+ * Obsidian defines its colours on `.theme-dark` and `.theme-light`, so putting
+ * one of those classes on the pane dresses it independently of the app.
+ */
+export function themeClass(settings: TelegridSettings): string | null {
+	if (settings.theme === "dark") return "theme-dark";
+	if (settings.theme === "light") return "theme-light";
+	return null;
+}
 
 export function isImageExtension(ext: string): boolean {
 	return IMAGE_EXTENSIONS.includes(ext.toLowerCase());

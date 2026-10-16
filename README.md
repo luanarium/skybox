@@ -141,6 +141,16 @@ in it that is there to be clicked is left alone. The grid's view header is hidde
 along with the titlebar arrows and the sidebar toggles: no history to walk, no sidebar to toggle. A
 note opened in Obsidian keeps its header, which is where the way back lives.
 
+In the middle of that band sits the way to the settings, arriving and leaving with the window
+buttons, because standalone mode hides every other route to them. The settings window is not part of
+the public API, so if `app.setting` is ever not there the button says where to look instead of
+failing quietly.
+
+**Appearance** in the settings dresses the pane light or dark on its own: Obsidian defines its
+colours on `.theme-dark` and `.theme-light`, both plain class selectors, so one of those classes on
+the pane — and on the sheets, which are Obsidian's own modals and live outside it — redefines them
+for that subtree alone. A community theme that colours itself through `body` may not follow.
+
 Moving and maximizing go through Electron's window, the way Obsidian's own titlebar buttons do —
 `src/window.ts`, the single place the plugin steps outside Obsidian's API and the browser. It is
 desktop-only and feature-detected, the settings tab says whether this window handed a handle over,

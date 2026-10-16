@@ -4,7 +4,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { App as Telegrid } from "./App";
 import { TelegridContext } from "./context";
 import type TelegridPlugin from "./main";
-import { VIEW_TYPE_TELEGRID } from "./types";
+import { themeClass, VIEW_TYPE_TELEGRID } from "./types";
 
 export class TelegridView extends ItemView {
 	private root: Root | null = null;
@@ -37,6 +37,9 @@ export class TelegridView extends ItemView {
 
 	/** Re-renders with the current settings. */
 	render(): void {
+		this.contentEl.removeClasses(["theme-dark", "theme-light"]);
+		const dressed = themeClass(this.plugin.settings);
+		if (dressed) this.contentEl.addClass(dressed);
 		this.root?.render(
 			<StrictMode>
 				<TelegridContext.Provider
