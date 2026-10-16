@@ -146,10 +146,14 @@ buttons, because standalone mode hides every other route to them. The settings w
 the public API, so if `app.setting` is ever not there the button says where to look instead of
 failing quietly.
 
-**Appearance** in the settings dresses the pane light or dark on its own: Obsidian defines its
-colours on `.theme-dark` and `.theme-light`, both plain class selectors, so one of those classes on
-the pane — and on the sheets, which are Obsidian's own modals and live outside it — redefines them
-for that subtree alone. A community theme that colours itself through `body` may not follow.
+**Appearance** in the settings dresses the pane light or dark on its own. `.theme-dark` and
+`.theme-light` are plain class selectors, so one of those on the pane — and on the sheets, which are
+Obsidian's own modals and live outside it — gives that subtree the other palette. That alone changes
+nothing visible, though: the palette is the `--color-base-*` ramp, while the names everything is
+drawn with (`--background-primary` and the rest) are declared on `body` in terms of the ramp, so
+they resolve there and inherit down already decided. The stylesheet therefore re-declares the names
+the pane uses inside that scope, so they recompute from the ramp it now has. A community theme that
+colours itself through `body` may still not follow.
 
 Moving and maximizing go through Electron's window, the way Obsidian's own titlebar buttons do —
 `src/window.ts`, the single place the plugin steps outside Obsidian's API and the browser. It is

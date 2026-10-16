@@ -24,6 +24,39 @@
 	user-select: none;
 }
 
+/*
+ * Dressing the pane on its own.
+ *
+ * Obsidian's `.theme-dark` and `.theme-light` carry the palette — the
+ * `--color-base-*` ramp — but the names everything is drawn with are declared
+ * on `body` in terms of that ramp, so they resolve there and inherit down
+ * already decided. Putting a theme class on the pane therefore changes the
+ * ramp and nothing else; these declarations are what make the pane recompute
+ * the names it uses from the ramp it now has.
+ */
+.telegrid-content.theme-dark,
+.telegrid-content.theme-light,
+.telegrid-sheet.theme-dark,
+.telegrid-sheet.theme-light {
+	--background-primary: var(--color-base-00);
+	--background-primary-alt: var(--color-base-10);
+	--background-secondary: var(--color-base-20);
+	--background-secondary-alt: var(--color-base-05);
+	--background-modifier-border: var(--color-base-30);
+	--background-modifier-border-hover: var(--color-base-35);
+	--background-modifier-border-focus: var(--color-base-40);
+	--background-modifier-hover: color-mix(in oklch, var(--mono-100) 6.7%, transparent);
+	--text-normal: var(--color-base-100);
+	--text-muted: var(--color-base-70);
+	--text-faint: var(--color-base-50);
+	--text-accent: var(--color-accent);
+	--text-accent-hover: var(--color-accent-2);
+	--interactive-accent: var(--color-accent-1);
+	--interactive-accent-hover: var(--color-accent-2);
+	background-color: var(--background-primary);
+	color: var(--text-normal);
+}
+
 /* ---- the pane ---------------------------------------------------- */
 
 .telegrid-content {
@@ -34,6 +67,9 @@
 }
 
 .telegrid-root {
+	/* A neutral orange, the one colour of its own the pane keeps. */
+	--telegrid-create: #d97f3d;
+	--telegrid-create-hover: #c76f30;
 	position: relative;
 	padding: 24px 20px 96px;
 	min-height: 100%;
@@ -60,15 +96,18 @@
 	position: sticky;
 	top: 0;
 	z-index: 12;
-	margin: -24px -20px 20px;
-	padding: 24px 20px 12px;
-	background: var(--background-primary);
+	margin-bottom: 18px;
 }
 
 .telegrid-bar {
 	display: flex;
 	align-items: stretch;
 	gap: 10px;
+}
+
+/* Both controls are the height of the box, and in line with it. */
+.telegrid-bar > * {
+	align-self: stretch;
 }
 
 .telegrid-bar .telegrid-search {
@@ -94,7 +133,7 @@ body.telegrid-standalone:not(.is-mobile) .telegrid-drag {
 	align-items: center;
 	justify-content: center;
 	height: var(--titlebar-height, 32px);
-	margin: -24px -20px 12px;
+	margin-bottom: 10px;
 	position: relative;
 	-webkit-app-region: drag;
 	app-region: drag;
@@ -278,19 +317,21 @@ body.telegrid-window .telegrid-drag {
 
 .telegrid-plus {
 	flex: 0 0 auto;
-	width: 56px;
+	align-self: stretch;
+	width: 58px;
+	padding: 0;
 	border: none;
-	border-radius: var(--radius-l);
-	background: var(--interactive-accent);
-	color: var(--text-on-accent);
-	font-size: 28px;
+	border-radius: 8px;
+	background: var(--telegrid-create);
+	color: #ffffff;
+	font-size: 26px;
 	line-height: 1;
 	cursor: pointer;
 	box-shadow: none;
 }
 
 .telegrid-plus:hover {
-	background: var(--interactive-accent-hover);
+	background: var(--telegrid-create-hover);
 }
 
 .telegrid-picker {
@@ -783,8 +824,7 @@ body.telegrid-standalone .titlebar-button-container:focus-within {
 }
 
 .is-mobile .telegrid-head {
-	margin: -16px -12px 16px;
-	padding: 16px 12px 10px;
+	margin-bottom: 14px;
 }
 
 .is-mobile .telegrid-plus {
