@@ -90,6 +90,31 @@ const png = () => new File([new Uint8Array([1, 2, 3, 4])], "cat.png", { type: "i
 	assert.strictEqual(files.size, 0);
 }
 
+// A browser that will not hash still takes the file in, without a hash.
+{
+	const { app, files } = fakeVault();
+	const digest = crypto.subtle.digest;
+	const complain = console.error;
+	(crypto.subtle as { digest: unknown }).digest = () => {
+		throw new Error("no secure context");
+	};
+	// The failure is the point of this one, so it need not be reported.
+	console.error = () => undefined;
+	try {
+		const result = await ingest(app, indexWith(existing), settings, png(), async () => false);
+		assert.ok(result?.created, "the file is still written");
+		assert.strictEqual(result?.duplicate, null, "with nothing to compare it against");
+		assert.strictEqual(
+			files.get("cat.png.md"),
+			"---\ntags: []\n---\n\n",
+			"and its sidecar carries no hash"
+		);
+	} finally {
+		(crypto.subtle as { digest: unknown }).digest = digest;
+		console.error = complain;
+	}
+}
+
 assert.strictEqual(isWriting(), false, "the write guard comes back down");
 
 /** A vault that remembers what was written to it. */

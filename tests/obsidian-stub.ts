@@ -17,6 +17,10 @@ export function getAllTags(): string[] {
 	return [];
 }
 
+export class Notice {
+	constructor(public message: string) {}
+}
+
 export class TFile {}
 
 export class TFolder {}

@@ -1,4 +1,4 @@
-import { type App, TFile, TFolder, normalizePath } from "obsidian";
+import { type App, Notice, TFile, TFolder, normalizePath } from "obsidian";
 import type { VaultIndex } from "./index";
 import { isImageExtension, sidecarPathFor, type Item, type TelegridSettings } from "./types";
 import { guarded } from "./writes";
@@ -21,6 +21,9 @@ export type DuplicateAnswer = (existing: Item) => Promise<boolean>;
  * asked whether to add it again; without an answer to ask for, the existing
  * card stands and nothing is written. Returns null for anything that is
  * neither an image nor a note.
+ *
+ * Where the content cannot be hashed, the file is still taken in — without a
+ * hash, and so without dedupe.
  */
 export async function ingest(
 	app: App,
@@ -37,7 +40,7 @@ export async function ingest(
 	const data = await file.arrayBuffer();
 	const hash = await sha256(data);
 
-	const known = index.hashes().get(hash) ?? null;
+	const known = hash ? index.hashes().get(hash) ?? null : null;
 	if (known && !(askAnyway && (await askAnyway(known)))) {
 		return { path: known.id, created: false, duplicate: known };
 	}
@@ -72,19 +75,36 @@ export async function createNote(
 }
 
 /** Hash of a file already in the vault, for sidecars written before dedupe. */
-export async function hashOf(app: App, file: TFile): Promise<string> {
+export async function hashOf(app: App, file: TFile): Promise<string | null> {
 	return sha256(await app.vault.readBinary(file));
 }
 
-export async function sha256(data: ArrayBuffer): Promise<string> {
-	const digest = await crypto.subtle.digest("SHA-256", data);
-	return [...new Uint8Array(digest)]
-		.map((byte) => byte.toString(16).padStart(2, "0"))
-		.join("");
+/** Said once, where the browser will not hash. */
+let warned = false;
+
+/**
+ * The content hash every intake route dedupes by. `crypto.subtle` needs a
+ * secure context, which Obsidian's own windows are; somewhere it is missing,
+ * this says so once and returns null rather than swallowing the import.
+ */
+export async function sha256(data: ArrayBuffer): Promise<string | null> {
+	try {
+		const digest = await crypto.subtle.digest("SHA-256", data);
+		return [...new Uint8Array(digest)]
+			.map((byte) => byte.toString(16).padStart(2, "0"))
+			.join("");
+	} catch (error) {
+		console.error("Telegrid: this browser will not hash content", error);
+		if (!warned) {
+			warned = true;
+			new Notice("Telegrid cannot hash content here, so duplicates will not be spotted.");
+		}
+		return null;
+	}
 }
 
-function sidecarNote(hash: string): string {
-	return `---\ntags: []\nhash: ${hash}\n---\n\n`;
+export function sidecarNote(hash: string | null): string {
+	return hash ? `---\ntags: []\nhash: ${hash}\n---\n\n` : "---\ntags: []\n---\n\n";
 }
 
 function extensionOf(name: string): string {

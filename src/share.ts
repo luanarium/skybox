@@ -69,7 +69,7 @@ export class ShareIntake {
 		if (!isImageExtension(file.extension)) return;
 
 		const hash = await hashOf(this.app, file);
-		const known = this.index.hashes().get(hash);
+		const known = hash ? this.index.hashes().get(hash) : undefined;
 		if (known && known.id !== file.path) {
 			// Obsidian's share target has already written the copy, so the
 			// question is whether to keep it. Dismissing the modal keeps it.

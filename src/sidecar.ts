@@ -1,5 +1,5 @@
 import type { App, TFile } from "obsidian";
-import { hashOf } from "./ingest";
+import { hashOf, sidecarNote } from "./ingest";
 import { sidecarPathFor } from "./types";
 import { guarded } from "./writes";
 
@@ -9,7 +9,7 @@ export async function ensureSidecar(app: App, image: TFile): Promise<TFile> {
 	const existing = app.vault.getAbstractFileByPath(path);
 	if (existing) return existing as TFile;
 	const hash = await hashOf(app, image);
-	return guarded(() => app.vault.create(path, `---\ntags: []\nhash: ${hash}\n---\n\n`));
+	return guarded(() => app.vault.create(path, sidecarNote(hash)));
 }
 
 /** The note's text below its frontmatter. */

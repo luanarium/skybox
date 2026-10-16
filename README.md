@@ -69,6 +69,17 @@ corner appears whenever the grid is up but something else is in front of it. Bot
 the grid *and* make it the active pane — revealing alone leaves the pill hanging around until
 something is clicked.
 
+## Trying it on a phone
+
+The plugin is three files — `main.js`, `manifest.json`, `styles.css` — copied into
+`<vault>/.obsidian/plugins/telegrid/` on the device, with Restricted mode off and Telegrid enabled
+in Community plugins. `npm run build` then a copy is the whole loop; Obsidian Sync with installed
+plugins turned on, or a tagged GitHub release through BRAT, saves doing it by hand.
+
+Content hashing needs `crypto.subtle` and so a secure context. Obsidian's own windows are one, but
+where it is missing the intake says so once and takes the file in without a hash rather than
+swallowing it — dedupe is what degrades, not the import.
+
 ## Tags
 
 The tag box writes to frontmatter, so Obsidian's own tag pane sees everything added here. A tag
