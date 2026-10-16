@@ -3,6 +3,7 @@ import { isBorrowing } from "./borrowed";
 import { Bus } from "./bus";
 import { VaultIndex } from "./index";
 import { TelegridSettingTab } from "./settings";
+import { applyScopedTheme, forgetScopedTheme } from "./theme";
 import { ShareIntake } from "./share";
 import { DEFAULT_SETTINGS, VIEW_TYPE_TELEGRID, type TelegridSettings } from "./types";
 import { TelegridView } from "./view";
@@ -65,6 +66,14 @@ export default class TelegridPlugin extends Plugin {
 			// Tags and headings read as empty until the cache has resolved, so
 			// the index is taken again once it has.
 			this.registerEvent(this.app.metadataCache.on("resolved", () => this.index.build()));
+			// A theme or snippet change rewrites what the pane reads its own
+			// colours out of.
+			this.registerEvent(
+				this.app.workspace.on("css-change", () => {
+					forgetScopedTheme();
+					this.redraw();
+				})
+			);
 			this.register(this.share.watchForeground());
 			this.mountBack();
 			this.watchTopBar();
@@ -74,6 +83,7 @@ export default class TelegridPlugin extends Plugin {
 	}
 
 	onunload(): void {
+		applyScopedTheme("follow");
 		document.body.removeClass("telegrid-standalone");
 		document.body.removeClass("telegrid-top-edge");
 		document.body.removeClass("telegrid-window");
@@ -234,6 +244,10 @@ export default class TelegridPlugin extends Plugin {
 
 	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
+		this.redraw();
+	}
+
+	private redraw(): void {
 		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_TELEGRID)) {
 			const view = leaf.view;
 			if (view instanceof TelegridView) view.render();

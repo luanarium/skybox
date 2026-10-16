@@ -99,6 +99,14 @@
 	margin-bottom: 18px;
 }
 
+/*
+ * The drag band holds the top edge of the window, so the band the pointer has
+ * to reach for the window buttons and the settings is the band they are in.
+ */
+body.telegrid-standalone:not(.is-mobile) .telegrid-head {
+	margin-top: -24px;
+}
+
 .telegrid-bar {
 	display: flex;
 	align-items: stretch;
@@ -161,12 +169,13 @@ body.telegrid-window .telegrid-drag {
 	border-radius: var(--radius-l);
 	background: var(--background-primary-alt);
 	cursor: text;
-	transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
-.telegrid-search:focus-within {
-	border-color: var(--interactive-accent);
-	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+.telegrid-search-input:focus,
+.telegrid-search-input:focus-visible {
+	border: none;
+	outline: none;
+	box-shadow: none;
 }
 
 .telegrid-search-input {
