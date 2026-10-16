@@ -64,7 +64,8 @@ While a leaf is on loan it counts as Obsidian's active leaf, so the plugin treat
 as the grid rather than as somewhere else, and closing the overlay hands the active leaf back.
 
 "Open in Obsidian" puts the note in its own tab and adds a **Back to Telegrid** action to that tab's
-header. In standalone mode, where the ribbon and tab bar are hidden, a pill in the bottom-left
+header. It is desktop only: a phone has no tabs to open into, so the note would take the grid's own
+leaf and leave the sheet sitting over nothing. In standalone mode, where the ribbon and tab bar are hidden, a pill in the bottom-left
 corner appears whenever the grid is up but something else is in front of it. Both ways back reveal
 the grid *and* make it the active pane — revealing alone leaves the pill hanging around until
 something is clicked.

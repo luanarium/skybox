@@ -61,13 +61,19 @@ export function NoteOverlay({ item, onClose, onOpenPath }: NoteOverlayProps) {
 					)}
 					<h2>{item.title}</h2>
 					<div className="telegrid-expanded-actions">
-						<button
-							onClick={() => {
-								void openInObsidian();
-							}}
-						>
-							Open in Obsidian
-						</button>
+						{/*
+						 * A phone has no tabs to open into: the note would take
+						 * the grid's own leaf and leave the sheet over nothing.
+						 */}
+						{!Platform.isMobile && (
+							<button
+								onClick={() => {
+									void openInObsidian();
+								}}
+							>
+								Open in Obsidian
+							</button>
+						)}
 						<button className="telegrid-close" aria-label="Close" onClick={() => onClose()}>
 							×
 						</button>
