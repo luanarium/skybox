@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Notice, TFile } from "obsidian";
+import { Notice, Platform, TFile } from "obsidian";
 import { useTelegrid } from "../context";
 import { guarded } from "../writes";
 
@@ -35,7 +35,7 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 	const written = new Set(frontmatterTags(frontmatter));
 
 	const suggestions = useMemo(
-		() => index.tags().filter((tag) => !shown.includes(tag)),
+		() => (Platform.isMobile ? [] : index.tags().filter((tag) => !shown.includes(tag))),
 		[index, shown, signature]
 	);
 
@@ -131,7 +131,9 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 					className="telegrid-meta-input"
 					placeholder="add a tag"
 					value={draft}
-					list={TAG_SUGGESTIONS}
+					// Android turns a datalist into a full-height picker, over the
+					// box being typed into.
+					list={Platform.isMobile ? undefined : TAG_SUGGESTIONS}
 					onChange={(event) => setDraft(event.target.value)}
 					onKeyDown={(event) => {
 						if (event.key === "Enter") {
@@ -140,11 +142,13 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 						}
 					}}
 				/>
-				<datalist id={TAG_SUGGESTIONS}>
-					{suggestions.map((tag) => (
-						<option value={tag} key={tag} />
-					))}
-				</datalist>
+				{!Platform.isMobile && (
+					<datalist id={TAG_SUGGESTIONS}>
+						{suggestions.map((tag) => (
+							<option value={tag} key={tag} />
+						))}
+					</datalist>
+				)}
 			</section>
 
 			{properties.length > 0 && (
