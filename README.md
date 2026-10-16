@@ -23,6 +23,7 @@ the pane or sharing them to Obsidian from your phone.
 | `src/sidecar.ts` | `<name>.<ext>.md` beside an image: its tags and thoughts |
 | `src/writes.ts` | The flag that tells the plugin's own writes from a shared file |
 | `src/components/` | Search box, card, masonry, note overlay, lightbox, metadata box, editor |
+| `tests/` | What can be checked without a workspace, run with `npm test` |
 | `src/confirm.ts` | The yes-or-no modal duplicates are asked about |
 | `src/borrowed.ts` | The flag that says the overlay has one of Obsidian's leaves on loan |
 | `src/window.ts` | Toggling maximize, the one call that leaves Obsidian's API behind |
@@ -38,6 +39,12 @@ touch .hotreload                                       # Hot Reload reloads on r
 
 `npm run build` typechecks and writes a minified `main.js`. `app.emulateMobile(true)` in the
 developer console previews the mobile layout.
+
+`npm test` runs `tests/`: esbuild bundles each `*.test.ts` with the `obsidian` import pointed at
+`tests/obsidian-stub.ts`, node runs it, and a file that throws fails. Obsidian cannot be driven from
+a shell, so these cover the modules that need no workspace — the compactor and card geometry, the
+sidecar and frontmatter rules, chips and search, and `ingest`'s duplicate branches against a fake
+vault. Everything about views, transitions and window chrome still has to be looked at in the app.
 
 ## The expanded note
 
