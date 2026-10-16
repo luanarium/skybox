@@ -61,19 +61,16 @@ export async function ingest(
 	});
 }
 
-/**
- * A note from the composer: its first line names it, the whole of what was
- * typed is its body.
- */
-export async function createQuickNote(
+/** A new note in the intake folder, named after its first line if it has one. */
+export async function createNote(
 	app: App,
 	settings: TelegridSettings,
-	text: string
+	text = ""
 ): Promise<TFile> {
 	return guarded(async () => {
 		const folder = await ensureFolder(app, settings.intakeFolder);
-		const path = await uniquePath(app, folder, `${quickNoteTitle(text)}.md`);
-		return app.vault.create(path, text.endsWith("\n") ? text : `${text}\n`);
+		const path = await uniquePath(app, folder, `${noteTitle(text)}.md`);
+		return app.vault.create(path, text && !text.endsWith("\n") ? `${text}\n` : text);
 	});
 }
 
@@ -81,7 +78,7 @@ export async function createQuickNote(
  * The first line, less its heading marks, with anything a filename cannot
  * hold turned into a space.
  */
-export function quickNoteTitle(text: string): string {
+export function noteTitle(text: string): string {
 	const first = text
 		.split("\n")
 		.map((line) => line.trim())

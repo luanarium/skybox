@@ -1,5 +1,5 @@
 import * as assert from "node:assert";
-import { ingest, quickNoteTitle } from "../src/ingest";
+import { ingest, noteTitle } from "../src/ingest";
 import { isWriting } from "../src/writes";
 import type { VaultIndex } from "../src/index";
 import type { App } from "obsidian";
@@ -159,14 +159,14 @@ function indexWith(item?: Item): VaultIndex {
 	} as unknown as VaultIndex;
 }
 
-// The composer names a note after its first line.
-assert.strictEqual(quickNoteTitle("# Shopping\n\nmilk"), "Shopping", "heading marks come off");
-assert.strictEqual(quickNoteTitle("\n\n  a thought  \nmore"), "a thought", "blank lines are skipped");
-assert.strictEqual(quickNoteTitle("- buy milk"), "buy milk", "so do list marks");
+// A new note is named after its first line.
+assert.strictEqual(noteTitle("# Shopping\n\nmilk"), "Shopping", "heading marks come off");
+assert.strictEqual(noteTitle("\n\n  a thought  \nmore"), "a thought", "blank lines are skipped");
+assert.strictEqual(noteTitle("- buy milk"), "buy milk", "so do list marks");
 assert.strictEqual(
-	quickNoteTitle('why/when: "this" <that> #tag'),
+	noteTitle('why/when: "this" <that> #tag'),
 	"why when this that tag",
 	"anything a filename cannot hold is dropped"
 );
-assert.strictEqual(quickNoteTitle("   "), "Untitled", "nothing typed still names the note");
-assert.strictEqual(quickNoteTitle("x".repeat(90)).length, 60, "a long first line is cut short");
+assert.strictEqual(noteTitle("   "), "Untitled", "nothing typed still names the note");
+assert.strictEqual(noteTitle("x".repeat(90)).length, 60, "a long first line is cut short");

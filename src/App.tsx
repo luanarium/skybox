@@ -1,16 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
-import { Platform } from "obsidian";
+import { Menu, Platform } from "obsidian";
 import { ask } from "./confirm";
 import { useTelegrid } from "./context";
-import { createQuickNote, ingest } from "./ingest";
+import { createNote, ingest } from "./ingest";
 import { openPluginSettings } from "./preferences";
 import { type Chip, search } from "./search";
 import { withTransition } from "./transition";
 import type { Item } from "./types";
 import { BottomBar } from "./components/BottomBar";
 import { Card } from "./components/Card";
-import { Composer } from "./components/Composer";
 import { Icon } from "./components/Icon";
 import { Lightbox } from "./components/Lightbox";
 import { Masonry } from "./components/Masonry";
@@ -30,8 +29,7 @@ export function App() {
 	const [expandedId, setExpandedId] = useState<string | null>(null);
 	const [namedId, setNamedId] = useState<string | null>(null);
 	const [dropping, setDropping] = useState(false);
-	const [composing, setComposing] = useState(false);
-	const [dropped, setDropped] = useState<string | null>(null);
+	const [dropped, setDropped] = useState<Set<string>>(new Set());
 	const [typing, setTyping] = useState(false);
 	const [fresh, setFresh] = useState<Set<string>>(new Set());
 	const seen = useRef(new Set<string>());
@@ -139,8 +137,16 @@ export function App() {
 		[app, bus, index, open]
 	);
 
+	/** Cards for files that have just arrived drop into the grid, then settle. */
+	const landed = useCallback((paths: string[]) => {
+		if (paths.length === 0) return;
+		setDropped(new Set(paths));
+		window.setTimeout(() => setDropped(new Set()), 900);
+	}, []);
+
 	const take = useCallback(
 		async (files: File[]) => {
+			const written: string[] = [];
 			let existing: string | null = null;
 			for (const file of files) {
 				const result = await ingest(app, index, settings, file, (duplicate) =>
@@ -151,32 +157,44 @@ export function App() {
 						cancel: "Open the one I have",
 					})
 				);
+				if (!result) continue;
+				if (result.created) written.push(result.path);
 				// Declined: the card the content already made is the answer.
-				if (result && !result.created) existing = result.path;
+				else existing = result.path;
 			}
+			landed(written);
 			if (existing) {
 				const file = app.vault.getAbstractFileByPath(existing);
 				const item = file ? index.itemFor(file) : undefined;
 				if (item) open(item);
 			}
 		},
-		[app, index, settings, open]
+		[app, index, settings, open, landed]
 	);
 
-	/** A note the composer just made drops into the grid, then settles. */
-	const landed = useCallback((path: string) => {
-		setDropped(path);
-		window.setTimeout(() => setDropped((current) => (current === path ? null : current)), 900);
-	}, []);
-
-	const saveNote = useCallback(
-		async (text: string) => {
-			setComposing(false);
-			const file = await createQuickNote(app, settings, text);
-			index.ensure(file);
-			landed(file.path);
+	/** New note, or add files: the two ways in, on both platforms. */
+	const plusMenu = useCallback(
+		(event: React.MouseEvent) => {
+			const menu = new Menu();
+			menu.addItem((entry) =>
+				entry
+					.setTitle("New note")
+					.setIcon("file-plus")
+					.onClick(async () => {
+						const file = await createNote(app, settings);
+						const item = index.ensure(file);
+						if (item) open(item);
+					})
+			);
+			menu.addItem((entry) =>
+				entry
+					.setTitle("Add files")
+					.setIcon("image-plus")
+					.onClick(() => picker.current?.click())
+			);
+			menu.showAtMouseEvent(event.nativeEvent);
 		},
-		[app, index, settings, landed]
+		[app, index, settings, open]
 	);
 
 	const dismiss = useCallback(() => close(), [close]);
@@ -225,11 +243,7 @@ export function App() {
 						onDraftChange={setDraft}
 						onChipsChange={setChips}
 					/>
-					<button
-						className="telegrid-plus"
-						aria-label="Create a new note"
-						onClick={() => setComposing(true)}
-					>
+					<button className="telegrid-plus" aria-label="Add" onClick={plusMenu}>
 						+
 					</button>
 				</div>
@@ -245,7 +259,7 @@ export function App() {
 							index={position}
 							named={namedId === item.id && expandedId !== item.id}
 							fresh={fresh.has(item.id)}
-							dropped={dropped === item.id}
+							dropped={dropped.has(item.id)}
 							onOpen={open}
 						/>
 					)}
@@ -267,19 +281,6 @@ export function App() {
 
 			{expanded &&
 				(Platform.isMobile ? <Sheet onClose={dismiss}>{card(expanded)}</Sheet> : card(expanded))}
-
-			{composing && (
-				<Sheet cls="telegrid-composer-sheet" onClose={() => setComposing(false)}>
-					<Composer
-						onSave={(text) => void saveNote(text)}
-						onClose={() => setComposing(false)}
-						onAddFiles={() => {
-							setComposing(false);
-							picker.current?.click();
-						}}
-					/>
-				</Sheet>
-			)}
 
 			{Platform.isMobile && (
 				<button

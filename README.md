@@ -75,11 +75,10 @@ The search box and the plus button hold the top of the pane while the grid scrol
 both platforms; in a standalone window the drag band rides along with them, so the window can still
 be moved once the grid has been scrolled.
 
-The plus button is square, beside the search box, and opens the composer: a sheet with × on the
-left, "create a new note" across the middle and SAVE on the right, over a plain text area. Its first
-line names the note, the whole of it is the body, and the card drops into the grid when it saves.
-Files still come in through the composer's own Add files, through drag and drop, or from the share
-sheet.
+The plus button is square, beside the search box, and offers the two ways in: **New note**, which
+writes a note into the intake folder and expands it straight into its editor, and **Add files**,
+which opens the file picker. Files also arrive by drag and drop or from the share sheet, and a card
+for a file that has just arrived drops into the grid.
 
 A phone also carries a round toggle above those places for standalone mode, which otherwise hides
 the navbar and puts Obsidian's own settings a long way off. It is there for trying the mode out, and

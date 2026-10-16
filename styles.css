@@ -554,84 +554,6 @@ body.telegrid-standalone .telegrid-settings:focus-visible {
 	color: var(--text-normal);
 }
 
-/* ---- the composer ------------------------------------------------ */
-
-.telegrid-composer-sheet {
-	width: min(620px, 100%);
-}
-
-.telegrid-composer {
-	display: flex;
-	flex-direction: column;
-	height: 100%;
-	min-height: 320px;
-}
-
-.telegrid-composer-head {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-	padding: 4px 0 14px;
-}
-
-.telegrid-composer-title {
-	flex: 1 1 auto;
-	text-align: center;
-	color: var(--text-muted);
-}
-
-.telegrid-composer-close {
-	display: flex;
-	padding: 6px;
-	background: transparent;
-	box-shadow: none;
-	color: var(--text-muted);
-}
-
-.telegrid-composer-save {
-	letter-spacing: 0.08em;
-	font-weight: 600;
-	background: transparent;
-	box-shadow: none;
-	color: var(--text-accent);
-}
-
-.telegrid-composer-save:disabled {
-	color: var(--text-faint);
-	cursor: default;
-}
-
-.telegrid-composer-text {
-	flex: 1 1 auto;
-	min-height: 180px;
-	resize: none;
-	border: none;
-	box-shadow: none;
-	padding: 0;
-	background: transparent;
-	font-family: var(--font-text);
-	font-size: var(--font-text-size);
-	line-height: 1.6;
-}
-
-.telegrid-composer-text:focus {
-	box-shadow: none;
-}
-
-.telegrid-composer-foot {
-	display: flex;
-	padding-top: 12px;
-}
-
-.telegrid-composer-files {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-	background: transparent;
-	box-shadow: none;
-	color: var(--text-muted);
-}
-
 /* Icons carry their own size: an unsized SVG lays itself out at 300x150. */
 .telegrid-icon {
 	display: inline-flex;
@@ -793,7 +715,7 @@ body.telegrid-standalone .telegrid-settings:focus-visible {
 	}
 }
 
-/* A saved note drops into the grid. */
+/* A file that has just arrived drops into the grid. */
 .telegrid-card.is-dropped {
 	animation: telegrid-drop-in 520ms cubic-bezier(0.2, 0.9, 0.25, 1.1) both;
 }
