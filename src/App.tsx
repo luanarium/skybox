@@ -32,6 +32,7 @@ export function App() {
 	const [dropping, setDropping] = useState(false);
 	const [composing, setComposing] = useState(false);
 	const [dropped, setDropped] = useState<string | null>(null);
+	const [typing, setTyping] = useState(false);
 	const [fresh, setFresh] = useState<Set<string>>(new Set());
 	const seen = useRef(new Set<string>());
 	const sentinel = useRef<HTMLDivElement>(null);
@@ -54,6 +55,30 @@ export function App() {
 	}, [index, chips, version]);
 
 	useEffect(() => setLimit(PAGE), [chips]);
+
+	/*
+	 * A phone's keyboard shrinks the window rather than covering it, which
+	 * carries anything pinned to the bottom up into the middle of the screen.
+	 * While a field has the cursor, that furniture stands down.
+	 */
+	useEffect(() => {
+		const isField = (node: unknown): boolean =>
+			node instanceof HTMLElement &&
+			(node.tagName === "INPUT" || node.tagName === "TEXTAREA" || node.isContentEditable);
+		const onIn = (event: FocusEvent) => {
+			if (isField(event.target)) setTyping(true);
+		};
+		const onOut = () => {
+			// Focus may be on its way to another field.
+			window.setTimeout(() => setTyping(isField(document.activeElement)), 0);
+		};
+		document.addEventListener("focusin", onIn);
+		document.addEventListener("focusout", onOut);
+		return () => {
+			document.removeEventListener("focusin", onIn);
+			document.removeEventListener("focusout", onOut);
+		};
+	}, []);
 
 	// More on scroll.
 	useEffect(() => {
@@ -168,7 +193,9 @@ export function App() {
 
 	return (
 		<div
-			className={`telegrid-root${dropping ? " is-dropping" : ""}`}
+			className={`telegrid-root${dropping ? " is-dropping" : ""}${
+				typing ? " is-typing" : ""
+			}`}
 			onDragOver={(event) => {
 				event.preventDefault();
 				setDropping(true);
