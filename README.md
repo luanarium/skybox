@@ -106,8 +106,15 @@ scrolls.
 
 The plugin is three files — `main.js`, `manifest.json`, `styles.css` — copied into
 `<vault>/.obsidian/plugins/telegrid/` on the device, with Restricted mode off and Telegrid enabled
-in Community plugins. `npm run build` then a copy is the whole loop; Obsidian Sync with installed
-plugins turned on, or a tagged GitHub release through BRAT, saves doing it by hand.
+in Community plugins.
+
+```sh
+npm run deploy                              # builds, then copies into ./dist/telegrid
+TELEGRID_DEST=~/Music/telegrid-dist npm run deploy
+```
+
+That leaves a plain `telegrid` folder to drag across — over FTP, say. Obsidian Sync with installed
+plugins turned on, or a tagged GitHub release through BRAT, saves doing it by hand at all.
 
 Content hashing needs `crypto.subtle` and so a secure context. Obsidian's own windows are one, but
 where it is missing the intake says so once and takes the file in without a hash rather than
