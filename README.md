@@ -159,6 +159,13 @@ microseconds-since-1601 timestamps Chromium writes.
 It is one way and additive. A bookmark deleted in the browser leaves its note alone, because the
 vault is where curating happens.
 
+Left unconfigured, it does nothing at all. The switch is off, no path is set, no file is read and no
+note is written, so a vault that never visits these settings carries on bookmarking exactly as it
+did. What a bookmark note holds is a title, a link, a date and the folders it came from. If you want
+the page's text, author and description today rather than when the list above gets built, Obsidian's
+own [Web Clipper](https://obsidian.md/clipper) does that, and since these notes carry its
+properties, the two sit side by side: neither imports a page the other has already saved.
+
 ### Where this is going
 
 What is there now is the drop-in: a note with a title, a URL and the folders it came from. The

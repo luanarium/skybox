@@ -33,8 +33,12 @@ export class SkyboxSettingTab extends PluginSettingTab {
 				"Bookmark pages in your browser as you always have, and Skybox writes a note for " +
 					"each new one. It reads one file, the Chromium bookmarks file named below, and " +
 					"nothing else; it only ever adds, so a bookmark deleted in the browser leaves " +
-					"its note where it is. The notes carry the properties Obsidian's own Web " +
-					"Clipper writes, so a page saved either way is the same kind of note."
+					"its note where it is. Leave this unconfigured and nothing happens: no file is " +
+					"read, no note is written, and your bookmarking carries on as it is. A " +
+					"bookmark note holds a title, a link and the folders it came from; if you want " +
+					"the page's text, author and description as well, Obsidian's own Web Clipper " +
+					"does that today, and these notes carry its properties, so the two sit side " +
+					"by side and neither imports a page the other already saved."
 			);
 
 		new Setting(containerEl)
