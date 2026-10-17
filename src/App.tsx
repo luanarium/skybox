@@ -134,6 +134,21 @@ export function App() {
 		[app, index, open]
 	);
 
+	/*
+	 * A card's id is its path, so renaming the file renames the card. That
+	 * happens while a card is open — the pane names a new note after its
+	 * first line a moment after the typing stops — and the open card has to
+	 * follow it, or the overlay is left holding an id the index has dropped
+	 * and closes over the note being written.
+	 */
+	useEffect(() => {
+		const ref = app.vault.on("rename", (file, oldPath) => {
+			setExpandedId((id) => (id === oldPath ? file.path : id));
+			setNamedId((id) => (id === oldPath ? file.path : id));
+		});
+		return () => app.vault.offref(ref);
+	}, [app]);
+
 	// Share intake and commands ask for a card.
 	useEffect(
 		() =>

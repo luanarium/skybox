@@ -79,7 +79,10 @@ export function Editor({ file }: { file: TFile }) {
 		});
 
 		return close;
-	}, [app, file.path, borrowed, settings.focusEditor]);
+		// The file itself, not its path: a rename keeps the same `TFile`, and
+		// the borrowed view follows it on its own. Watching the path would
+		// tear the editor down and build it again mid-sentence.
+	}, [app, file, borrowed, settings.focusEditor]);
 
 	if (!borrowed) return <SourceEditor file={file} />;
 	return <div className="skybox-editor is-borrowed" ref={host} />;
