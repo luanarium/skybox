@@ -38,17 +38,17 @@ export class SkyboxSettingTab extends PluginSettingTab {
 			.addToggle((toggle) =>
 				toggle.setValue(this.plugin.settings.bookmarksEnabled).onChange(async (value) => {
 					this.plugin.settings.bookmarksEnabled = value;
-					if (value && !this.plugin.settings.bookmarksPath) {
-						this.plugin.settings.bookmarksPath = findBookmarkFiles()[0] ?? "";
-					}
 					await this.plugin.saveSettings();
 					this.display();
-					if (value) void this.plugin.bookmarks.syncAloud();
 				})
 			);
 
-		if (!this.plugin.settings.bookmarksEnabled) return;
-
+		/*
+		 * The path is set before anything is read, and read only when asked
+		 * or once the switch is on. Filling it in from what is lying around
+		 * and importing straight away would take whichever browser profile
+		 * came first alphabetically, which is nobody's intention.
+		 */
 		const found = findBookmarkFiles();
 		new Setting(containerEl)
 			.setName("Bookmarks file")
@@ -64,6 +64,17 @@ export class SkyboxSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.bookmarksPath = value;
 						await this.plugin.saveSettings();
+					})
+			)
+			.addExtraButton((button) =>
+				button
+					.setIcon("search")
+					.setTooltip(found.length > 0 ? `Use ${found[0]}` : "Nothing found to use")
+					.onClick(async () => {
+						if (found.length === 0) return;
+						this.plugin.settings.bookmarksPath = found[0];
+						await this.plugin.saveSettings();
+						this.display();
 					})
 			)
 			.addButton((button) =>
