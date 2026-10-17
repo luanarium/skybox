@@ -268,7 +268,7 @@ export function App() {
 				<div className="skybox-drag">
 					<button
 						className="skybox-band-button"
-						onClick={(event) => showVaultMenu(app, event.nativeEvent)}
+						onClick={(event) => showVaultMenu(app, settings, event.nativeEvent)}
 					>
 						vaults
 					</button>

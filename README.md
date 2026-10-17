@@ -171,9 +171,14 @@ settings window is not part of the public API, so if `app.setting` is ever not t
 where to look instead of failing quietly.
 
 **vaults** drops a menu of the vaults Obsidian remembers, most recently opened first, with a check
-against the one you are in; choosing another opens it in a window of its own and leaves this one
-alone. Making a vault needs a name and a place to put it, which is Obsidian's own vault window's
-job, so that is what the menu's last item opens.
+against the one you are in. A vault belongs to the window it opened in — `app.vault` and everything
+hanging off it, the index, the metadata cache, the borrowed editor — so nothing can swap one vault
+for another underneath a running pane, and choosing one is a new window either way. **Choosing
+another vault** in the settings decides what happens to this window once the other is up: closing it
+hands the screen over, which reads as the app changing vault, and keeping it open is for working in
+two vaults at once. The close waits on the main process confirming the other vault opened, so a
+vault that has been moved leaves this window where it is. Making a vault needs a name and a place to
+put it, which is Obsidian's own vault window's job, so that is what the menu's last item opens.
 
 **Appearance** in the settings dresses the pane light or dark on its own. `.theme-dark` and
 `.theme-light` go on the pane and on the sheets, which are Obsidian's own modals and live outside

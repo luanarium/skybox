@@ -34,6 +34,11 @@ export interface SkyboxSettings {
 	mobileColumns: "auto" | "1" | "2";
 	/** Light or dark for the pane alone, or whatever Obsidian is wearing. */
 	theme: "follow" | "dark" | "light";
+	/**
+	 * Choosing a vault from the band: hand the screen over to it, or leave
+	 * this window where it is and let the other open beside it.
+	 */
+	vaultSwitch: "replace" | "beside";
 }
 
 export const DEFAULT_SETTINGS: SkyboxSettings = {
@@ -44,6 +49,7 @@ export const DEFAULT_SETTINGS: SkyboxSettings = {
 	focusEditor: false,
 	mobileColumns: "auto",
 	theme: "follow",
+	vaultSwitch: "replace",
 };
 
 export const VIEW_TYPE_SKYBOX = "skybox-search-view";

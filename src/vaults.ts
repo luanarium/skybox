@@ -1,4 +1,5 @@
 import { type App, Menu, Notice, Platform } from "obsidian";
+import type { SkyboxSettings } from "./types";
 
 /**
  * Switching vaults is the application's business rather than a vault's, so
@@ -64,14 +65,24 @@ export function knownVaults(app: App): KnownVault[] {
 }
 
 /**
- * Opens a vault in its own window, the way Obsidian's switcher does — this
- * window stays as it is, so nothing unsaved goes anywhere.
+ * A vault is bound to a window when the window starts — `app.vault` and
+ * everything hanging off it is that one folder — so no plugin can swap the
+ * vault underneath itself. Obsidian's own switcher opens the other vault in a
+ * new window and, in switch mode, closes the one it was called from: the
+ * screen is handed over, which is the nearest thing to changing vault in
+ * place. `replace` does that; `beside` leaves this window standing.
+ *
+ * The close only happens once the main process has confirmed the other vault
+ * opened, so a vault that has been moved or renamed leaves this window alone.
  */
-function openVault(path: string): void {
+function openVault(path: string, replace: boolean): void {
 	const channel = ipc();
 	if (!channel) return;
 	try {
-		if (channel.sendSync("vault-open", path, false) === true) return;
+		if (channel.sendSync("vault-open", path, false) === true) {
+			if (replace) window.close();
+			return;
+		}
 	} catch (error) {
 		console.error("Skybox: could not open that vault", error);
 	}
@@ -98,9 +109,10 @@ function openVaultChooser(app: App): void {
  * Making a vault asks for a name and a place for it, which is Obsidian's own
  * window's job, so that is where the last item goes.
  */
-export function showVaultMenu(app: App, event: MouseEvent): void {
+export function showVaultMenu(app: App, settings: SkyboxSettings, event: MouseEvent): void {
 	const menu = new Menu();
 	const vaults = knownVaults(app);
+	const replace = settings.vaultSwitch === "replace";
 
 	for (const vault of vaults) {
 		menu.addItem((entry) =>
@@ -108,7 +120,7 @@ export function showVaultMenu(app: App, event: MouseEvent): void {
 				.setTitle(vault.name)
 				.setChecked(vault.current)
 				.onClick(() => {
-					if (!vault.current) openVault(vault.path);
+					if (!vault.current) openVault(vault.path, replace);
 				})
 		);
 	}

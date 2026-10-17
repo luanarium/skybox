@@ -3,20 +3,12 @@ import { ingest, noteTitle } from "../src/ingest";
 import { isWriting } from "../src/writes";
 import type { VaultIndex } from "../src/index";
 import type { App } from "obsidian";
-import type { Item, SkyboxSettings } from "../src/types";
+import { DEFAULT_SETTINGS, type Item, type SkyboxSettings } from "../src/types";
 
 /** The sha256 of the four bytes every image in this file is made of. */
 const PNG_HASH = "9f64a747e1b97f131fabb6b447296c9b6f0201e79fb3c5356e6c77e89b6a806a";
 
-const settings: SkyboxSettings = {
-	intakeFolder: "",
-	openOnStartup: true,
-	standalone: false,
-	expandOnShare: false,
-	focusEditor: false,
-	mobileColumns: "auto",
-	theme: "follow",
-};
+const settings: SkyboxSettings = { ...DEFAULT_SETTINGS, intakeFolder: "" };
 
 const existing = { id: "shots/cat.png", title: "cat.png", kind: "image" } as Item;
 
