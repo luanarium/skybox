@@ -129,6 +129,21 @@ window comes back to the front, and every five minutes, and an unchanged file co
 Deduplication is by the `url` in frontmatter, read through the metadata cache, so a note moved or
 renamed still counts as imported and nothing arrives twice.
 
+### The shape of a bookmark note
+
+The properties are the ones Obsidian's own Web Clipper writes, which its default template fixes as
+`title`, `source`, `author`, `published`, `created`, `description` and `tags`. A bookmark gets
+`title`, `source` (the URL), `created` (when the browser says you bookmarked it) and `tags`; the
+other three wait until there is something to put in them. Every note also carries a `bookmark` tag,
+playing the part `clippings` plays for the clipper: one handle for everything that came in this way.
+
+Matching that shape is most of what makes these notes useful to anything else. A Dataview query
+written for clipped pages works on them unchanged, an auto-tagger sees the same properties it
+already knows, a template can fill them, and a person reading the properties panel sees what they
+expect. It also means Skybox will not import a page you have already clipped, since deduplication
+reads `source` across the whole vault, whoever wrote it. Notes from earlier imports used a `url`
+key, which still counts as imported, so nothing arrives twice.
+
 Why the file rather than something tidier: Brave's own sync is end-to-end encrypted between Brave
 installs with nothing for a third party to hook, and `chrome.bookmarks` belongs to extensions, which
 would need somewhere to send what they read. The file is the only route with no server and no
@@ -151,9 +166,10 @@ reason to want more is that a bookmark is the thinnest thing in the vault, the o
 nothing to search but its own title. Ideas in rough order of how much they would change that, none
 of them built yet:
 
-1. **Page metadata.** Title, description and the preview image a page declares for itself, fetched
-   once when the bookmark arrives. That makes the note read like the page rather than like a link,
-   and gives the card a picture instead of cover art. It needs network requests, through Obsidian's
+1. **Page metadata.** The `author`, `published` and `description` the clipper's shape leaves room
+   for, plus the preview image a page declares for itself, fetched once when the bookmark arrives.
+   That makes the note read like the page rather than like a link, and gives the card a picture
+   instead of cover art. It needs network requests, through Obsidian's
    `requestUrl` so there is no CORS in the way, which is a line worth crossing deliberately: a
    bookmark import that quietly fetches every page you ever saved is a different thing from one
    that reads a local file.

@@ -109,19 +109,43 @@ export function folderTag(name: string): string | null {
 	return tag || null;
 }
 
-/** The note a bookmark becomes. */
+/**
+ * The keys a note about a web page carries here are the ones Obsidian's own
+ * Web Clipper writes: `title`, `source`, `created`, `tags`, with `author`,
+ * `published` and `description` joining them when there is something to put
+ * in them. Matching the clipper means a bookmark note and a clipped page look
+ * the same to everything downstream: a Dataview query, an auto-tagger, a
+ * template, or a person reading properties in the sidebar.
+ *
+ * The `bookmark` tag plays the part `clippings` plays for the clipper: one
+ * handle for every note that came in this way.
+ */
+export const BOOKMARK_TAG = "bookmark";
+
 export function bookmarkNote(bookmark: Bookmark): string {
-	const tags = bookmark.folders.map(folderTag).filter((tag): tag is string => tag !== null);
-	const added = bookmark.added
+	const tags = [BOOKMARK_TAG];
+	for (const folder of bookmark.folders) {
+		const tag = folderTag(folder);
+		if (tag && !tags.includes(tag)) tags.push(tag);
+	}
+	const created = bookmark.added
 		? new Date(bookmark.added).toISOString().slice(0, 10)
 		: new Date().toISOString().slice(0, 10);
-	const lines = ["---", `url: ${bookmark.url}`, `added: ${added}`];
-	if (tags.length > 0) {
-		lines.push("tags:");
-		for (const tag of tags) lines.push(`  - ${tag}`);
-	}
+	const lines = [
+		"---",
+		`title: ${yaml(bookmark.title)}`,
+		`source: ${bookmark.url}`,
+		`created: ${created}`,
+		"tags:",
+	];
+	for (const tag of tags) lines.push(`  - ${tag}`);
 	lines.push("---", "", `# ${bookmark.title}`, "", `<${bookmark.url}>`, "");
 	return lines.join("\n");
+}
+
+/** A title can hold anything; YAML cannot. Quote it when it has to be. */
+export function yaml(value: string): string {
+	return /^[\w][\w ,.'()/-]*$/.test(value) ? value : `"${value.replace(/"/g, '\\"')}"`;
 }
 
 interface FileSystem {
@@ -282,13 +306,20 @@ export class BookmarkImport {
 	/**
 	 * Every URL the vault already holds a note for, read from frontmatter
 	 * through the metadata cache, so nothing is read off disk twice and a note
-	 * moved out of the bookmarks folder still counts as imported.
+	 * moved out of the bookmarks folder still counts as imported. A page
+	 * clipped with Obsidian's Web Clipper counts too, since it writes the same
+	 * `source` key: the same page does not arrive twice by two routes.
 	 */
 	private importedUrls(): Set<string> {
 		const urls = new Set<string>();
 		for (const file of this.app.vault.getMarkdownFiles()) {
-			const url = this.app.metadataCache.getFileCache(file)?.frontmatter?.url;
-			if (typeof url === "string" && url) urls.add(url.trim());
+			const front = this.app.metadataCache.getFileCache(file)?.frontmatter;
+			// `source` is what the clipper writes and what this writes now;
+			// `url` is what earlier imports wrote, and still counts.
+			for (const key of ["source", "url"]) {
+				const value = front?.[key];
+				if (typeof value === "string" && value) urls.add(value.trim());
+			}
 		}
 		return urls;
 	}

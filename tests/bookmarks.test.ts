@@ -1,11 +1,13 @@
 import * as assert from "node:assert";
 import {
+	BOOKMARK_TAG,
 	bookmarkNote,
 	chromiumTime,
 	expandHome,
 	folderTag,
 	hostOf,
 	parseBookmarks,
+	yaml,
 } from "../src/bookmarks";
 
 /** The shape Chromium writes, cut down: roots, folders, nested folders. */
@@ -100,17 +102,28 @@ assert.strictEqual(folderTag("  Reading / later "), "reading-/-later");
 assert.strictEqual(folderTag("###"), null);
 assert.strictEqual(folderTag(""), null);
 
-// The note carries the URL for deduplication, the date, and its folders.
+// The properties are the ones Obsidian's own Web Clipper writes, so a
+// bookmark note and a clipped page look alike to everything downstream.
 const note = bookmarkNote(found[1]);
-assert.ok(note.startsWith("---\nurl: https://github.com/kimusan/mastui\n"), note);
+assert.ok(note.startsWith("---\ntitle: mastui\nsource: https://github.com/kimusan/mastui\n"), note);
+assert.ok(/\ncreated: \d{4}-\d{2}-\d{2}\n/.test(note), note);
+assert.ok(note.includes(`\n  - ${BOOKMARK_TAG}\n`), note);
 assert.ok(note.includes("\n  - linux-tools\n"), note);
 assert.ok(note.includes("\n  - terminals\n"), note);
 assert.ok(note.includes("# mastui"), note);
 assert.ok(note.includes("<https://github.com/kimusan/mastui>"), note);
-assert.ok(/added: \d{4}-\d{2}-\d{2}/.test(note), note);
 
-// A bookmark with no folders writes no tags block at all.
-assert.ok(!bookmarkNote(found[0]).includes("tags:"));
+// Every bookmark gets the one handle, folders or no folders.
+const plain = bookmarkNote(found[0]);
+assert.ok(plain.includes(`tags:\n  - ${BOOKMARK_TAG}\n`), plain);
+
+// A title YAML cannot hold plainly gets quoted.
+assert.strictEqual(yaml("mastui"), "mastui");
+assert.strictEqual(yaml("Chicken soup - Wikipedia"), "Chicken soup - Wikipedia");
+assert.strictEqual(yaml("Shadow of the Colossus: the quest"), '"Shadow of the Colossus: the quest"');
+assert.strictEqual(yaml('He said "no"'), '"He said \\"no\\""');
+assert.strictEqual(yaml("#tagged"), '"#tagged"');
+assert.ok(bookmarkNote({ ...found[0], title: "a: b" }).includes('title: "a: b"'));
 
 // `~` is a shell's idea of home, not a path.
 assert.strictEqual(expandHome("~/x/Bookmarks", "/home/neo"), "/home/neo/x/Bookmarks");
