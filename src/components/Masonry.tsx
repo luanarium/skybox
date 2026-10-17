@@ -10,7 +10,7 @@ import {
 	shortestColumnCompactor,
 } from "../compact";
 import { Platform } from "obsidian";
-import { useTelegrid } from "../context";
+import { useSkybox } from "../context";
 import type { Item } from "../types";
 
 interface MasonryProps {
@@ -19,7 +19,7 @@ interface MasonryProps {
 }
 
 export function Masonry({ items, children }: MasonryProps) {
-	const { settings } = useTelegrid();
+	const { settings } = useSkybox();
 	const { width, mounted, containerRef } = useContainerWidth({
 		measureBeforeMount: true,
 		debounceTimeout: 60,
@@ -98,7 +98,7 @@ export function Masonry({ items, children }: MasonryProps) {
 	);
 
 	return (
-		<div className="telegrid-grid" ref={containerRef as React.RefObject<HTMLDivElement>}>
+		<div className="skybox-grid" ref={containerRef as React.RefObject<HTMLDivElement>}>
 			{mounted && (
 				<GridLayout
 					width={width}
@@ -115,8 +115,8 @@ export function Masonry({ items, children }: MasonryProps) {
 					autoSize
 				>
 					{items.map((item, position) => (
-						<div key={item.id} className="telegrid-cell">
-							<div className="telegrid-cell-inner" ref={measure(item.id)}>
+						<div key={item.id} className="skybox-cell">
+							<div className="skybox-cell-inner" ref={measure(item.id)}>
 								{children(item, position)}
 							</div>
 						</div>

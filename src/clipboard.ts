@@ -15,7 +15,7 @@ export async function copyItem(app: App, item: Item): Promise<void> {
 		}
 		await copyImage(app, item);
 	} catch (error) {
-		console.error("Telegrid: nothing could be copied", error);
+		console.error("Skybox: nothing could be copied", error);
 		new Notice("Nothing could be copied");
 	}
 }

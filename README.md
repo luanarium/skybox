@@ -1,4 +1,4 @@
-# Telegrid
+# Skybox
 
 An Obsidian plugin that opens onto a masonry search pane over the vault, on desktop and Android.
 
@@ -10,9 +10,9 @@ the pane or sharing them to Obsidian from your phone.
 
 ## Installing
 
-Telegrid is not in Obsidian's community plugins. Build it — `npm install && npm run build` — or take
+Skybox is not in Obsidian's community plugins. Build it — `npm install && npm run build` — or take
 the three files a build leaves, `main.js`, `manifest.json` and `styles.css`, and put them in
-`<vault>/.obsidian/plugins/telegrid/`. Then turn Restricted mode off and enable Telegrid under
+`<vault>/.obsidian/plugins/skybox/`. Then turn Restricted mode off and enable Skybox under
 Community plugins. The same three files are what goes onto a phone.
 
 ## Layout of the source
@@ -40,7 +40,7 @@ Community plugins. The same three files are what goes onto a phone.
 ```sh
 npm install
 npm run dev                                            # esbuild watch
-ln -s "$PWD" "<vault>/.obsidian/plugins/telegrid"      # symlink into a dev vault
+ln -s "$PWD" "<vault>/.obsidian/plugins/skybox"        # symlink into a dev vault
 touch .hotreload                                       # Hot Reload reloads on rebuild
 ```
 
@@ -70,7 +70,7 @@ card shrinks into is the rendered text.
 While a leaf is on loan it counts as Obsidian's active leaf, so the plugin treats a borrowed editor
 as the grid rather than as somewhere else, and closing the overlay hands the active leaf back.
 
-"Open in Obsidian" puts the note in its own tab and adds a **Back to Telegrid** action to that tab's
+"Open in Obsidian" puts the note in its own tab and adds a **Back to Skybox** action to that tab's
 header. It is desktop only: a phone has no tabs to open into, so the note would take the grid's own
 leaf and leave the sheet sitting over nothing. In standalone mode, where the ribbon and tab bar are hidden, a pill in the bottom-left
 corner appears whenever the grid is up but something else is in front of it. Both ways back reveal
@@ -121,15 +121,15 @@ scrolls.
 ## Trying it on a phone
 
 The plugin is three files — `main.js`, `manifest.json`, `styles.css` — copied into
-`<vault>/.obsidian/plugins/telegrid/` on the device, with Restricted mode off and Telegrid enabled
+`<vault>/.obsidian/plugins/skybox/` on the device, with Restricted mode off and Skybox enabled
 in Community plugins.
 
 ```sh
-npm run deploy                              # builds, then copies into ./dist/telegrid
-TELEGRID_DEST=~/Music/telegrid-dist npm run deploy
+npm run deploy                              # builds, then copies into ./dist/skybox
+SKYBOX_DEST=~/Music/skybox-dist npm run deploy
 ```
 
-That leaves a plain `telegrid` folder to drag across — over FTP, say. Obsidian Sync with installed
+That leaves a plain `skybox` folder to drag across — over FTP, say. Obsidian Sync with installed
 plugins turned on, or a tagged GitHub release through BRAT, saves doing it by hand at all.
 
 Content hashing needs `crypto.subtle` and so a secure context. Obsidian's own windows are one, but
@@ -191,7 +191,7 @@ and without one the band falls back to a CSS `app-region: drag` region. Android 
 ## Two notes on the implementation
 
 - **A known hash asks before it writes.** Drop or pick a file whose contents are already in the
-  vault and Telegrid asks: add it again, or open the one you have. Dismissing the question opens the
+  vault and Skybox asks: add it again, or open the one you have. Dismissing the question opens the
   existing card and writes nothing. Shared items are the same question from the other side — the
   share target has already written the copy, so the choice is to keep it or move it to the trash,
   and dismissing the question keeps it. A hash held by several cards resolves to the newest.

@@ -2,12 +2,12 @@ import { createContext, useContext } from "react";
 import type { App, WorkspaceLeaf } from "obsidian";
 import type { Bus } from "./bus";
 import type { VaultIndex } from "./index";
-import type { TelegridSettings } from "./types";
+import type { SkyboxSettings } from "./types";
 
-export interface TelegridContextValue {
+export interface SkyboxContextValue {
 	app: App;
 	index: VaultIndex;
-	settings: TelegridSettings;
+	settings: SkyboxSettings;
 	leaf: WorkspaceLeaf;
 	bus: Bus;
 	saveSettings: () => Promise<void>;
@@ -15,10 +15,10 @@ export interface TelegridContextValue {
 	setStandalone: (on: boolean) => Promise<void>;
 }
 
-export const TelegridContext = createContext<TelegridContextValue | null>(null);
+export const SkyboxContext = createContext<SkyboxContextValue | null>(null);
 
-export function useTelegrid(): TelegridContextValue {
-	const value = useContext(TelegridContext);
-	if (!value) throw new Error("Telegrid context is missing");
+export function useSkybox(): SkyboxContextValue {
+	const value = useContext(SkyboxContext);
+	if (!value) throw new Error("Skybox context is missing");
 	return value;
 }

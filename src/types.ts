@@ -21,7 +21,7 @@ export interface Item {
 	excerpt: string;
 }
 
-export interface TelegridSettings {
+export interface SkyboxSettings {
 	/** Folder new and added files are written to; empty means the vault root. */
 	intakeFolder: string;
 	openOnStartup: boolean;
@@ -36,7 +36,7 @@ export interface TelegridSettings {
 	theme: "follow" | "dark" | "light";
 }
 
-export const DEFAULT_SETTINGS: TelegridSettings = {
+export const DEFAULT_SETTINGS: SkyboxSettings = {
 	intakeFolder: "",
 	openOnStartup: true,
 	standalone: false,
@@ -46,13 +46,13 @@ export const DEFAULT_SETTINGS: TelegridSettings = {
 	theme: "follow",
 };
 
-export const VIEW_TYPE_TELEGRID = "telegrid-search-view";
+export const VIEW_TYPE_SKYBOX = "skybox-search-view";
 
 /**
  * Obsidian defines its colours on `.theme-dark` and `.theme-light`, so putting
  * one of those classes on the pane dresses it independently of the app.
  */
-export function themeClass(settings: TelegridSettings): string | null {
+export function themeClass(settings: SkyboxSettings): string | null {
 	if (settings.theme === "dark") return "theme-dark";
 	if (settings.theme === "light") return "theme-light";
 	return null;

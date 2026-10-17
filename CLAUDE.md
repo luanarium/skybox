@@ -1,6 +1,6 @@
-# telegrid
+# skybox
 
-Telegrid is an Obsidian plugin that opens onto a masonry search pane over the vault, running on desktop and Android.
+Skybox is an Obsidian plugin that opens onto a masonry search pane over the vault, running on desktop and Android.
 
 ## Conventions
 
@@ -103,7 +103,7 @@ The view is registered with `registerView` and opened from a ribbon icon, a comm
 ```
 npm install
 npm run dev                                            # esbuild watch
-ln -s "$PWD" "<vault>/.obsidian/plugins/telegrid"      # symlink build into a dev vault
+ln -s "$PWD" "<vault>/.obsidian/plugins/skybox"        # symlink build into a dev vault
 touch .hotreload                                       # Hot Reload reloads on rebuild
 ```
 
@@ -117,7 +117,7 @@ touch .hotreload                                       # Hot Reload reloads on r
 
 | Term | Meaning |
 |---|---|
-| Telegrid | The plugin |
+| Skybox | The plugin |
 | Obsidian | Markdown knowledge-base app; the plugin runtime |
 | Plugin | The TypeScript Obsidian plugin |
 | `ItemView` | Obsidian class for a custom pane view |

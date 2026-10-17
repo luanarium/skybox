@@ -1,11 +1,11 @@
 import { PluginSettingTab, Setting, type App } from "obsidian";
-import type TelegridPlugin from "./main";
+import type SkyboxPlugin from "./main";
 import { hasWindowHandle } from "./window";
 
-export class TelegridSettingTab extends PluginSettingTab {
+export class SkyboxSettingTab extends PluginSettingTab {
 	constructor(
 		app: App,
-		private plugin: TelegridPlugin
+		private plugin: SkyboxPlugin
 	) {
 		super(app, plugin);
 	}
@@ -19,7 +19,7 @@ export class TelegridSettingTab extends PluginSettingTab {
 			.setDesc("Where new notes and added files are written. Empty means the vault root.")
 			.addText((text) =>
 				text
-					.setPlaceholder("Telegrid")
+					.setPlaceholder("Skybox")
 					.setValue(this.plugin.settings.intakeFolder)
 					.onChange(async (value) => {
 						this.plugin.settings.intakeFolder = value.trim();

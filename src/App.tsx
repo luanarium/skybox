@@ -3,7 +3,7 @@ import { flushSync } from "react-dom";
 import { Menu, Platform } from "obsidian";
 import { copyItem } from "./clipboard";
 import { ask } from "./confirm";
-import { useTelegrid } from "./context";
+import { useSkybox } from "./context";
 import { createNote, ingest } from "./ingest";
 import { openPluginSettings } from "./preferences";
 import { type Chip, search } from "./search";
@@ -21,7 +21,7 @@ import { SearchBox } from "./components/SearchBox";
 const PAGE = 100;
 
 export function App() {
-	const { app, index, settings, bus, leaf, setStandalone } = useTelegrid();
+	const { app, index, settings, bus, leaf, setStandalone } = useSkybox();
 	const [chips, setChips] = useState<Chip[]>([]);
 	const [draft, setDraft] = useState("");
 	const [version, setVersion] = useState(0);
@@ -247,7 +247,7 @@ export function App() {
 
 	return (
 		<div
-			className={`telegrid-root${dropping ? " is-dropping" : ""}${
+			className={`skybox-root${dropping ? " is-dropping" : ""}${
 				typing ? " is-typing" : ""
 			}`}
 			onDragOver={(event) => {
@@ -263,30 +263,30 @@ export function App() {
 				void take([...event.dataTransfer.files]);
 			}}
 		>
-			<div className="telegrid-head">
-				<div className="telegrid-drag">
+			<div className="skybox-head">
+				<div className="skybox-drag">
 					<button
-						className="telegrid-settings"
-						onClick={() => openPluginSettings(app, "telegrid")}
+						className="skybox-settings"
+						onClick={() => openPluginSettings(app, "skybox")}
 					>
 						settings
 					</button>
 				</div>
-				<div className="telegrid-bar">
+				<div className="skybox-bar">
 					<SearchBox
 						chips={chips}
 						draft={draft}
 						onDraftChange={setDraft}
 						onChipsChange={setChips}
 					/>
-					<button className="telegrid-plus" aria-label="Add" onClick={plusMenu}>
+					<button className="skybox-plus" aria-label="Add" onClick={plusMenu}>
 						+
 					</button>
 				</div>
 			</div>
 
 			{shown.length === 0 ? (
-				<p className="telegrid-empty">nothing here</p>
+				<p className="skybox-empty">nothing here</p>
 			) : (
 				<Masonry items={shown}>
 					{(item, position) => (
@@ -302,11 +302,11 @@ export function App() {
 					)}
 				</Masonry>
 			)}
-			<div className="telegrid-sentinel" ref={sentinel} />
+			<div className="skybox-sentinel" ref={sentinel} />
 
 			<input
 				ref={picker}
-				className="telegrid-picker"
+				className="skybox-picker"
 				type="file"
 				multiple
 				accept="image/*,.md"
@@ -321,7 +321,7 @@ export function App() {
 
 			{Platform.isMobile && (
 				<button
-					className={`telegrid-standalone-toggle${settings.standalone ? " is-on" : ""}`}
+					className={`skybox-standalone-toggle${settings.standalone ? " is-on" : ""}`}
 					aria-label={settings.standalone ? "Leave standalone mode" : "Standalone mode"}
 					onClick={() => void setStandalone(!settings.standalone)}
 				>

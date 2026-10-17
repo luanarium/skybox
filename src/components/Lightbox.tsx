@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Platform, type TFile } from "obsidian";
-import { useTelegrid } from "../context";
+import { useSkybox } from "../context";
 import { ensureSidecar, readBody, writeBody } from "../sidecar";
 import type { Item } from "../types";
 import { Icon } from "./Icon";
@@ -17,7 +17,7 @@ interface LightboxProps {
 
 /** An image opens as a lightbox: tags beside it, thoughts below. */
 export function Lightbox({ item, onClose, onOpenPath }: LightboxProps) {
-	const { app } = useTelegrid();
+	const { app } = useSkybox();
 	// Inside a sheet, closing means letting the sheet slide away.
 	const dismiss = useDismiss(onClose);
 	const [thoughts, setThoughts] = useState("");
@@ -74,16 +74,16 @@ export function Lightbox({ item, onClose, onOpenPath }: LightboxProps) {
 
 	return (
 		<div
-			className="telegrid-overlay"
+			className="skybox-overlay"
 			onMouseDown={(event) => {
 				if (event.target === event.currentTarget) onClose();
 			}}
 		>
-			<div className="telegrid-expanded is-lightbox">
-				<header className="telegrid-expanded-head">
+			<div className="skybox-expanded is-lightbox">
+				<header className="skybox-expanded-head">
 					{Platform.isMobile && (
 						<button
-							className="telegrid-back-arrow"
+							className="skybox-back-arrow"
 							aria-label="Back to the grid"
 							onClick={() => dismiss()}
 						>
@@ -91,24 +91,24 @@ export function Lightbox({ item, onClose, onOpenPath }: LightboxProps) {
 						</button>
 					)}
 					<h2>{item.title}</h2>
-					<div className="telegrid-expanded-actions">
+					<div className="skybox-expanded-actions">
 						{/* The arrow and the back gesture are the phone's way out. */}
 						{!Platform.isMobile && (
-							<button className="telegrid-close" aria-label="Close" onClick={() => onClose()}>
+							<button className="skybox-close" aria-label="Close" onClick={() => onClose()}>
 								×
 							</button>
 						)}
 					</div>
 				</header>
-				<div className="telegrid-expanded-body">
-					<div className="telegrid-lightbox-main">
+				<div className="skybox-expanded-body">
+					<div className="skybox-lightbox-main">
 						<img
-							className="telegrid-lightbox-image"
+							className="skybox-lightbox-image"
 							src={app.vault.getResourcePath(item.file)}
 							alt={item.title}
 						/>
 						<textarea
-							className="telegrid-thoughts"
+							className="skybox-thoughts"
 							placeholder="thoughts and annotations"
 							value={thoughts}
 							disabled={!loaded}

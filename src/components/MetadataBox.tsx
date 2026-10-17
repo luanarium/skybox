@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Notice, Platform, TFile } from "obsidian";
-import { useTelegrid } from "../context";
+import { useSkybox } from "../context";
 import { guarded } from "../writes";
 
 interface MetadataBoxProps {
@@ -15,7 +15,7 @@ interface MetadataBoxProps {
 }
 
 export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: MetadataBoxProps) {
-	const { app, index } = useTelegrid();
+	const { app, index } = useSkybox();
 	const [draft, setDraft] = useState("");
 	/**
 	 * Shown straight away, then reconciled with the index: a tag written to
@@ -81,7 +81,7 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 				})
 			);
 		} catch (error) {
-			console.error("Telegrid: the tag could not be written", error);
+			console.error("Skybox: the tag could not be written", error);
 			new Notice(`“${tag}” could not be saved`);
 			setShown((current) => current.filter((existing) => existing !== tag));
 		}
@@ -100,24 +100,24 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 				})
 			);
 		} catch (error) {
-			console.error("Telegrid: the tag could not be taken off", error);
+			console.error("Skybox: the tag could not be taken off", error);
 			new Notice(`“${tag}” could not be removed`);
 			setShown((current) => [...current, tag]);
 		}
 	};
 
 	return (
-		<aside className="telegrid-meta">
-			<section className="telegrid-meta-section">
+		<aside className="skybox-meta">
+			<section className="skybox-meta-section">
 				<h4>Tags</h4>
-				<div className="telegrid-meta-tags">
-					{shown.length === 0 && <span className="telegrid-meta-none">no tags yet</span>}
+				<div className="skybox-meta-tags">
+					{shown.length === 0 && <span className="skybox-meta-none">no tags yet</span>}
 					{shown.map((tag) => (
-						<span className="telegrid-tag is-editable" key={tag}>
+						<span className="skybox-tag is-editable" key={tag}>
 							#{tag}
 							{written.has(tag) && (
 								<button
-									className="telegrid-chip-remove"
+									className="skybox-chip-remove"
 									aria-label={`Remove #${tag}`}
 									onClick={() => void removeTag(tag)}
 								>
@@ -128,7 +128,7 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 					))}
 				</div>
 				<input
-					className="telegrid-meta-input"
+					className="skybox-meta-input"
 					placeholder="add a tag"
 					value={draft}
 					// Android turns a datalist into a full-height picker, over the
@@ -152,9 +152,9 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 			</section>
 
 			{properties.length > 0 && (
-				<section className="telegrid-meta-section">
+				<section className="skybox-meta-section">
 					<h4>Properties</h4>
-					<dl className="telegrid-meta-properties">
+					<dl className="skybox-meta-properties">
 						{properties.map(([key, value]) => (
 							<div key={key}>
 								<dt>{key}</dt>
@@ -166,9 +166,9 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 			)}
 
 			{links.length > 0 && (
-				<section className="telegrid-meta-section">
+				<section className="skybox-meta-section">
 					<h4>Links</h4>
-					<ul className="telegrid-meta-list">
+					<ul className="skybox-meta-list">
 						{links.map((link) => (
 							<li key={link.path}>
 								<a onClick={() => onOpenPath(link.path)}>{link.label}</a>
@@ -179,9 +179,9 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 			)}
 
 			{backlinks.length > 0 && (
-				<section className="telegrid-meta-section">
+				<section className="skybox-meta-section">
 					<h4>Backlinks</h4>
-					<ul className="telegrid-meta-list">
+					<ul className="skybox-meta-list">
 						{backlinks.map((path) => (
 							<li key={path}>
 								<a onClick={() => onOpenPath(path)}>{basename(path)}</a>
@@ -191,9 +191,9 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 				</section>
 			)}
 
-			<section className="telegrid-meta-section">
+			<section className="skybox-meta-section">
 				<h4>Dates</h4>
-				<dl className="telegrid-meta-properties">
+				<dl className="skybox-meta-properties">
 					<div>
 						<dt>created</dt>
 						<dd>{formatDate(file.stat.ctime)}</dd>
@@ -208,7 +208,7 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 	);
 }
 
-const TAG_SUGGESTIONS = "telegrid-tag-suggestions";
+const TAG_SUGGESTIONS = "skybox-tag-suggestions";
 
 /** Frontmatter holds tags as a list, a single string, or not at all. */
 function frontmatterTags(frontmatter: Record<string, unknown> | undefined): string[] {

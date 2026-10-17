@@ -11,7 +11,7 @@ import { EditorState } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { borrow } from "../borrowed";
-import { useTelegrid } from "../context";
+import { useSkybox } from "../context";
 import { guarded } from "../writes";
 
 /**
@@ -24,7 +24,7 @@ import { guarded } from "../writes";
  * editor over the file's text.
  */
 export function Editor({ file }: { file: TFile }) {
-	const { app, settings } = useTelegrid();
+	const { app, settings } = useSkybox();
 	const host = useRef<HTMLDivElement>(null);
 	const [borrowed, setBorrowed] = useState(true);
 
@@ -73,7 +73,7 @@ export function Editor({ file }: { file: TFile }) {
 		};
 
 		mount().catch((error) => {
-			console.error("Telegrid: falling back to a plain editor", error);
+			console.error("Skybox: falling back to a plain editor", error);
 			close();
 			setBorrowed(false);
 		});
@@ -82,7 +82,7 @@ export function Editor({ file }: { file: TFile }) {
 	}, [app, file.path, borrowed, settings.focusEditor]);
 
 	if (!borrowed) return <SourceEditor file={file} />;
-	return <div className="telegrid-editor is-borrowed" ref={host} />;
+	return <div className="skybox-editor is-borrowed" ref={host} />;
 }
 
 /**
@@ -99,7 +99,7 @@ const SAVE_DELAY = 600;
 
 /** The fallback: CodeMirror 6 over the file's text, writing with `vault.process`. */
 function SourceEditor({ file }: { file: TFile }) {
-	const { app, settings } = useTelegrid();
+	const { app, settings } = useSkybox();
 	const host = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
@@ -153,5 +153,5 @@ function SourceEditor({ file }: { file: TFile }) {
 		};
 	}, [app, file.path, settings.focusEditor]);
 
-	return <div className="telegrid-editor" ref={host} />;
+	return <div className="skybox-editor" ref={host} />;
 }

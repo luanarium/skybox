@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Modal } from "obsidian";
-import { useTelegrid } from "../context";
+import { useSkybox } from "../context";
 import { themeClass } from "../types";
 
 /**
@@ -34,7 +34,7 @@ export function Sheet({
 	cls?: string;
 	children: React.ReactNode;
 }) {
-	const { app, settings } = useTelegrid();
+	const { app, settings } = useSkybox();
 	const [host, setHost] = useState<HTMLElement | null>(null);
 	const sheet = useRef<Modal | null>(null);
 
@@ -45,7 +45,7 @@ export function Sheet({
 		let ours = false;
 		const modal = new Modal(app);
 		sheet.current = modal;
-		modal.modalEl.addClass("telegrid-sheet");
+		modal.modalEl.addClass("skybox-sheet");
 		if (cls) modal.modalEl.addClass(cls);
 		// A modal is Obsidian's, not the pane's, so it is dressed to match.
 		const dressed = themeClass(settings);

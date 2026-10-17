@@ -3,12 +3,12 @@ import { ingest, noteTitle } from "../src/ingest";
 import { isWriting } from "../src/writes";
 import type { VaultIndex } from "../src/index";
 import type { App } from "obsidian";
-import type { Item, TelegridSettings } from "../src/types";
+import type { Item, SkyboxSettings } from "../src/types";
 
 /** The sha256 of the four bytes every image in this file is made of. */
 const PNG_HASH = "9f64a747e1b97f131fabb6b447296c9b6f0201e79fb3c5356e6c77e89b6a806a";
 
-const settings: TelegridSettings = {
+const settings: SkyboxSettings = {
 	intakeFolder: "",
 	openOnStartup: true,
 	standalone: false,

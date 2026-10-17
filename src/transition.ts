@@ -34,7 +34,7 @@ export function withTransition(update: () => void): Promise<void> {
 		return transition.finished.catch(() => undefined);
 	} catch (error) {
 		// A transition that will not start is no reason to stay put.
-		console.error("Telegrid: view transition refused", error);
+		console.error("Skybox: view transition refused", error);
 		update();
 		return Promise.resolve();
 	}

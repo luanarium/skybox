@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { ItemView, Platform } from "obsidian";
-import { useTelegrid } from "../context";
+import { useSkybox } from "../context";
 import type { Item } from "../types";
 import { Editor } from "./Editor";
 import { Icon } from "./Icon";
@@ -15,7 +15,7 @@ interface NoteOverlayProps {
 }
 
 export function NoteOverlay({ item, onClose, onOpenPath }: NoteOverlayProps) {
-	const { app, leaf } = useTelegrid();
+	const { app, leaf } = useSkybox();
 	// Inside a sheet, closing means letting the sheet slide away.
 	const dismiss = useDismiss(onClose);
 
@@ -33,7 +33,7 @@ export function NoteOverlay({ item, onClose, onOpenPath }: NoteOverlayProps) {
 		await target.openFile(item.file);
 		const view = target.view;
 		if (view instanceof ItemView) {
-			view.addAction("layout-grid", "Back to Telegrid", () => {
+			view.addAction("layout-grid", "Back to Skybox", () => {
 				void app.workspace.revealLeaf(leaf);
 				// Revealing alone leaves the grid unfocused and the way-back
 				// pill hanging around until something is clicked.
@@ -46,16 +46,16 @@ export function NoteOverlay({ item, onClose, onOpenPath }: NoteOverlayProps) {
 
 	return (
 		<div
-			className="telegrid-overlay"
+			className="skybox-overlay"
 			onMouseDown={(event) => {
 				if (event.target === event.currentTarget) onClose();
 			}}
 		>
-			<div className="telegrid-expanded">
-				<header className="telegrid-expanded-head">
+			<div className="skybox-expanded">
+				<header className="skybox-expanded-head">
 					{Platform.isMobile && (
 						<button
-							className="telegrid-back-arrow"
+							className="skybox-back-arrow"
 							aria-label="Back to the grid"
 							onClick={() => dismiss()}
 						>
@@ -63,7 +63,7 @@ export function NoteOverlay({ item, onClose, onOpenPath }: NoteOverlayProps) {
 						</button>
 					)}
 					<h2>{item.title}</h2>
-					<div className="telegrid-expanded-actions">
+					<div className="skybox-expanded-actions">
 						{/*
 						 * A phone has no tabs to open into: the note would take
 						 * the grid's own leaf and leave the sheet over nothing.
@@ -79,13 +79,13 @@ export function NoteOverlay({ item, onClose, onOpenPath }: NoteOverlayProps) {
 						)}
 						{/* The arrow and the back gesture are the phone's way out. */}
 						{!Platform.isMobile && (
-							<button className="telegrid-close" aria-label="Close" onClick={() => onClose()}>
+							<button className="skybox-close" aria-label="Close" onClick={() => onClose()}>
 								×
 							</button>
 						)}
 					</div>
 				</header>
-				<div className="telegrid-expanded-body">
+				<div className="skybox-expanded-body">
 					<Editor file={item.file} />
 					<MetadataBox
 						note={item.file}

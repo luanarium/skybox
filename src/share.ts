@@ -4,7 +4,7 @@ import { ask } from "./confirm";
 import type { VaultIndex } from "./index";
 import { hashOf } from "./ingest";
 import { ensureSidecar } from "./sidecar";
-import { isImageExtension, type TelegridSettings } from "./types";
+import { isImageExtension, type SkyboxSettings } from "./types";
 import { guarded, isWriting } from "./writes";
 
 /** How long after the app comes back a vault write counts as a shared item. */
@@ -28,7 +28,7 @@ export class ShareIntake {
 		private app: App,
 		private index: VaultIndex,
 		private bus: Bus,
-		private settings: TelegridSettings,
+		private settings: SkyboxSettings,
 		private bringBack: () => Promise<void>
 	) {}
 

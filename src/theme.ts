@@ -14,7 +14,7 @@
  * `body`, and whatever depends on the ramp, is re-declared for the pane and
  * recomputed from the ramp the pane now has.
  */
-const STYLE_ID = "telegrid-scoped-theme";
+const STYLE_ID = "skybox-scoped-theme";
 
 const cache = new Map<string, string>();
 
@@ -32,7 +32,7 @@ export function applyScopedTheme(mode: "follow" | "dark" | "light"): void {
 	const style = document.createElement("style");
 	style.id = STYLE_ID;
 	style.textContent =
-		`.telegrid-content.theme-${mode},\n.telegrid-sheet.theme-${mode} {\n${declarations}}\n`;
+		`.skybox-content.theme-${mode},\n.skybox-sheet.theme-${mode} {\n${declarations}}\n`;
 	document.head.appendChild(style);
 }
 

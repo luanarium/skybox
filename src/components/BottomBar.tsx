@@ -9,10 +9,10 @@ const PLACES = [
 
 export function BottomBar() {
 	return (
-		<nav className="telegrid-bottom" aria-label="Places">
+		<nav className="skybox-bottom" aria-label="Places">
 			{PLACES.map((place, position) => (
 				<button
-					className={`telegrid-bottom-item${position === 0 ? " is-current" : ""}`}
+					className={`skybox-bottom-item${position === 0 ? " is-current" : ""}`}
 					key={place.label}
 					aria-disabled="true"
 					title="Not wired up yet"

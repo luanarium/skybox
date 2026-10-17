@@ -22,7 +22,7 @@ if (tests.length === 0) {
 	process.exit(1);
 }
 
-const out = mkdtempSync(join(tmpdir(), "telegrid-tests-"));
+const out = mkdtempSync(join(tmpdir(), "skybox-tests-"));
 
 await esbuild.build({
 	entryPoints: tests.map((name) => join(here, name)),

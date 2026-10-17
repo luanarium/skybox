@@ -52,7 +52,7 @@ const style = { id: "", textContent: "", remove: () => undefined };
 forgetScopedTheme();
 applyScopedTheme("light");
 
-assert.match(style.textContent, /^\.telegrid-content\.theme-light,\n\.telegrid-sheet\.theme-light \{/);
+assert.match(style.textContent, /^\.skybox-content\.theme-light,\n\.skybox-sheet\.theme-light \{/);
 assert.match(style.textContent, /--color-base-00: #ffffff;/, "the chosen palette is re-declared");
 assert.match(
 	style.textContent,

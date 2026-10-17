@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useTelegrid } from "../context";
+import { useSkybox } from "../context";
 import { plainExcerpt } from "../search";
 import type { Item } from "../types";
 
@@ -19,7 +19,7 @@ interface CardProps {
 }
 
 export function Card({ item, index, named, fresh, dropped, onOpen, onMenu }: CardProps) {
-	const { app, index: vaultIndex } = useTelegrid();
+	const { app, index: vaultIndex } = useSkybox();
 	const [excerpt, setExcerpt] = useState("");
 
 	useEffect(() => {
@@ -56,12 +56,12 @@ export function Card({ item, index, named, fresh, dropped, onOpen, onMenu }: Car
 
 	const style = {
 		animationDelay: `${Math.min(index, 20) * 24}ms`,
-		viewTransitionName: named ? "telegrid-expanding" : undefined,
+		viewTransitionName: named ? "skybox-expanding" : undefined,
 	} as React.CSSProperties;
 
 	return (
 		<div
-			className={`telegrid-card is-${item.kind}${fresh ? " is-fresh" : ""}${
+			className={`skybox-card is-${item.kind}${fresh ? " is-fresh" : ""}${
 				dropped ? " is-dropped" : ""
 			}`}
 			style={style}
@@ -95,20 +95,20 @@ export function Card({ item, index, named, fresh, dropped, onOpen, onMenu }: Car
 		>
 			{item.kind === "image" && (
 				<img
-					className="telegrid-card-image"
+					className="skybox-card-image"
 					src={app.vault.getResourcePath(item.file)}
 					alt={item.title}
 					loading="lazy"
 					draggable={false}
 				/>
 			)}
-			<div className="telegrid-card-body">
-				<div className="telegrid-card-title">{item.title}</div>
-				{excerpt && <div className="telegrid-card-excerpt">{excerpt}</div>}
+			<div className="skybox-card-body">
+				<div className="skybox-card-title">{item.title}</div>
+				{excerpt && <div className="skybox-card-excerpt">{excerpt}</div>}
 				{item.tags.length > 0 && (
-					<div className="telegrid-card-tags">
+					<div className="skybox-card-tags">
 						{item.tags.slice(0, 4).map((tag) => (
-							<span className="telegrid-tag" key={tag}>
+							<span className="skybox-tag" key={tag}>
 								#{tag}
 							</span>
 						))}

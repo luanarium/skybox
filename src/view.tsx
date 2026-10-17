@@ -1,28 +1,28 @@
 import { ItemView, type WorkspaceLeaf } from "obsidian";
 import { StrictMode } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { App as Telegrid } from "./App";
-import { TelegridContext } from "./context";
-import type TelegridPlugin from "./main";
+import { App as Skybox } from "./App";
+import { SkyboxContext } from "./context";
+import type SkyboxPlugin from "./main";
 import { applyScopedTheme } from "./theme";
-import { themeClass, VIEW_TYPE_TELEGRID } from "./types";
+import { themeClass, VIEW_TYPE_SKYBOX } from "./types";
 
-export class TelegridView extends ItemView {
+export class SkyboxView extends ItemView {
 	private root: Root | null = null;
 
 	constructor(
 		leaf: WorkspaceLeaf,
-		private plugin: TelegridPlugin
+		private plugin: SkyboxPlugin
 	) {
 		super(leaf);
 	}
 
 	getViewType(): string {
-		return VIEW_TYPE_TELEGRID;
+		return VIEW_TYPE_SKYBOX;
 	}
 
 	getDisplayText(): string {
-		return "Telegrid";
+		return "Skybox";
 	}
 
 	getIcon(): string {
@@ -31,7 +31,7 @@ export class TelegridView extends ItemView {
 
 	async onOpen(): Promise<void> {
 		this.contentEl.empty();
-		this.contentEl.addClass("telegrid-content");
+		this.contentEl.addClass("skybox-content");
 		this.root = createRoot(this.contentEl);
 		this.render();
 	}
@@ -44,7 +44,7 @@ export class TelegridView extends ItemView {
 		applyScopedTheme(this.plugin.settings.theme);
 		this.root?.render(
 			<StrictMode>
-				<TelegridContext.Provider
+				<SkyboxContext.Provider
 					value={{
 						app: this.app,
 						index: this.plugin.index,
@@ -59,8 +59,8 @@ export class TelegridView extends ItemView {
 						},
 					}}
 				>
-					<Telegrid />
-				</TelegridContext.Provider>
+					<Skybox />
+				</SkyboxContext.Provider>
 			</StrictMode>
 		);
 	}

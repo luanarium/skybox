@@ -15,14 +15,14 @@ interface SettingsWindow {
 export function openPluginSettings(app: App, pluginId: string): void {
 	const host = app as unknown as SettingsWindow;
 	if (!host.setting) {
-		new Notice("Telegrid's settings are in Obsidian's settings, under Community plugins.");
+		new Notice("Skybox's settings are in Obsidian's settings, under Community plugins.");
 		return;
 	}
 	try {
 		host.setting.open();
 		host.setting.openTabById(pluginId);
 	} catch (error) {
-		console.error("Telegrid: could not open the settings window", error);
-		new Notice("Telegrid's settings are in Obsidian's settings, under Community plugins.");
+		console.error("Skybox: could not open the settings window", error);
+		new Notice("Skybox's settings are in Obsidian's settings, under Community plugins.");
 	}
 }

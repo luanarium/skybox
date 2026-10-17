@@ -31,7 +31,7 @@ function nativeWindow(): NativeWindow | null {
 			(typeof host.require === "function" ? (host.require("electron") as Electron) : null);
 		return electron?.remote?.getCurrentWindow?.() ?? null;
 	} catch (error) {
-		console.error("Telegrid: no window handle", error);
+		console.error("Skybox: no window handle", error);
 		return null;
 	}
 }

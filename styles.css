@@ -1,5 +1,5 @@
 /* ---------------------------------------------------------------- *
- * Telegrid — a masonry search pane over the vault.
+ * Skybox — a masonry search pane over the vault.
  * Everything is drawn with Obsidian's own CSS variables, so the
  * plugin follows whatever theme the vault is wearing.
  * ---------------------------------------------------------------- */
@@ -34,10 +34,10 @@
  * ramp and nothing else; these declarations are what make the pane recompute
  * the names it uses from the ramp it now has.
  */
-.telegrid-content.theme-dark,
-.telegrid-content.theme-light,
-.telegrid-sheet.theme-dark,
-.telegrid-sheet.theme-light {
+.skybox-content.theme-dark,
+.skybox-content.theme-light,
+.skybox-sheet.theme-dark,
+.skybox-sheet.theme-light {
 	--background-primary: var(--color-base-00);
 	--background-primary-alt: var(--color-base-10);
 	--background-secondary: var(--color-base-20);
@@ -59,25 +59,25 @@
 
 /* ---- the pane ---------------------------------------------------- */
 
-.telegrid-content {
+.skybox-content {
 	padding: 0;
 	overflow-y: auto;
 	overflow-x: hidden;
 	height: 100%;
 }
 
-.telegrid-root,
-.telegrid-standalone-toggle {
+.skybox-root,
+.skybox-standalone-toggle {
 	/* A neutral orange, the one colour of its own the pane keeps. */
-	--telegrid-create: #d97f3d;
-	--telegrid-create-hover: #c76f30;
+	--skybox-create: #d97f3d;
+	--skybox-create-hover: #c76f30;
 	position: relative;
 	padding: 24px 20px 96px;
 	min-height: 100%;
 	box-sizing: border-box;
 }
 
-.telegrid-root.is-dropping::after {
+.skybox-root.is-dropping::after {
 	content: "";
 	position: absolute;
 	inset: 8px;
@@ -93,7 +93,7 @@
  * scrolls under them. The drag band rides along, so a standalone window can
  * still be moved once the grid has been scrolled.
  */
-.telegrid-head {
+.skybox-head {
 	position: sticky;
 	top: 0;
 	z-index: 12;
@@ -104,22 +104,22 @@
  * The drag band holds the top edge of the window, so the band the pointer has
  * to reach for the window buttons and the settings is the band they are in.
  */
-body.telegrid-standalone:not(.is-mobile) .telegrid-head {
+body.skybox-standalone:not(.is-mobile) .skybox-head {
 	margin-top: -24px;
 }
 
-.telegrid-bar {
+.skybox-bar {
 	display: flex;
 	align-items: stretch;
 	gap: 10px;
 }
 
 /* Both controls are the height of the box, and in line with it. */
-.telegrid-bar > * {
+.skybox-bar > * {
 	align-self: stretch;
 }
 
-.telegrid-bar .telegrid-search {
+.skybox-bar .skybox-search {
 	flex: 1 1 auto;
 	min-width: 0;
 	margin-bottom: 0;
@@ -133,11 +133,11 @@ body.telegrid-standalone:not(.is-mobile) .telegrid-head {
  * This band across the top of the pane takes that job. Where the titlebar is
  * draggable too, the band simply adds to it; on Android it stays out.
  */
-.telegrid-drag {
+.skybox-drag {
 	display: none;
 }
 
-body.telegrid-standalone:not(.is-mobile) .telegrid-drag {
+body.skybox-standalone:not(.is-mobile) .skybox-drag {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -153,14 +153,14 @@ body.telegrid-standalone:not(.is-mobile) .telegrid-drag {
  * moved from the page the band follows the pointer itself and keeps them —
  * that is what makes double-clicking to maximize possible.
  */
-body.telegrid-window .telegrid-drag {
+body.skybox-window .skybox-drag {
 	-webkit-app-region: no-drag;
 	app-region: no-drag;
 }
 
 /* ---- search box -------------------------------------------------- */
 
-.telegrid-search {
+.skybox-search {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
@@ -176,22 +176,22 @@ body.telegrid-window .telegrid-drag {
  * Obsidian draws a ring around a focused input, and `input[type='text']:focus`
  * outweighs a class on its own, so the selector has to say both.
  */
-.telegrid-search,
-input[type="text"].telegrid-search-input,
-input[type="text"].telegrid-search-input:focus,
-input[type="text"].telegrid-search-input:focus-visible,
-input[type="text"].telegrid-search-input:active {
+.skybox-search,
+input[type="text"].skybox-search-input,
+input[type="text"].skybox-search-input:focus,
+input[type="text"].skybox-search-input:focus-visible,
+input[type="text"].skybox-search-input:active {
 	border: none;
 	outline: none;
 	box-shadow: none;
 	-webkit-tap-highlight-color: transparent;
 }
 
-.telegrid-search {
+.skybox-search {
 	border: 1px solid var(--background-modifier-border);
 }
 
-.telegrid-search-input {
+.skybox-search-input {
 	flex: 1 1 10ch;
 	min-width: 10ch;
 	border: none;
@@ -205,12 +205,12 @@ input[type="text"].telegrid-search-input:active {
 	font-family: inherit;
 }
 
-.telegrid-search-input::placeholder {
+.skybox-search-input::placeholder {
 	font-style: italic;
 	color: var(--text-faint);
 }
 
-.telegrid-chip {
+.skybox-chip {
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
@@ -220,10 +220,10 @@ input[type="text"].telegrid-search-input:active {
 	color: var(--text-on-accent);
 	font-size: 1.05em;
 	line-height: 1.3;
-	animation: telegrid-pop 160ms ease both;
+	animation: skybox-pop 160ms ease both;
 }
 
-.telegrid-chip-remove {
+.skybox-chip-remove {
 	all: unset;
 	cursor: pointer;
 	display: grid;
@@ -235,18 +235,18 @@ input[type="text"].telegrid-search-input:active {
 	opacity: 0.75;
 }
 
-.telegrid-chip-remove:hover {
+.skybox-chip-remove:hover {
 	opacity: 1;
 	background: var(--background-modifier-hover);
 }
 
 /* ---- cards ------------------------------------------------------- */
 
-.telegrid-cell {
+.skybox-cell {
 	position: relative;
 }
 
-.telegrid-cell-inner {
+.skybox-cell-inner {
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -254,7 +254,7 @@ input[type="text"].telegrid-search-input:active {
 	height: auto;
 }
 
-.telegrid-card {
+.skybox-card {
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
@@ -265,38 +265,38 @@ input[type="text"].telegrid-search-input:active {
 	transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
 }
 
-.telegrid-card:hover,
-.telegrid-card:focus-visible {
+.skybox-card:hover,
+.skybox-card:focus-visible {
 	border-color: var(--interactive-accent);
 	box-shadow: 0 2px 14px rgba(0, 0, 0, 0.14);
 	outline: none;
 }
 
-.telegrid-card.is-fresh {
-	animation: telegrid-fade-in 260ms ease both;
+.skybox-card.is-fresh {
+	animation: skybox-fade-in 260ms ease both;
 }
 
-.telegrid-card-image {
+.skybox-card-image {
 	display: block;
 	width: 100%;
 	height: auto;
 	object-fit: cover;
 }
 
-.telegrid-card-body {
+.skybox-card-body {
 	display: flex;
 	flex-direction: column;
 	gap: 6px;
 	padding: 12px 14px 14px;
 }
 
-.telegrid-card-title {
+.skybox-card-title {
 	font-weight: 600;
 	line-height: 1.3;
 	color: var(--text-normal);
 }
 
-.telegrid-card-excerpt {
+.skybox-card-excerpt {
 	font-size: var(--font-ui-smaller);
 	line-height: 1.5;
 	color: var(--text-muted);
@@ -306,14 +306,14 @@ input[type="text"].telegrid-search-input:active {
 	overflow: hidden;
 }
 
-.telegrid-card-tags,
-.telegrid-meta-tags {
+.skybox-card-tags,
+.skybox-meta-tags {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 6px;
 }
 
-.telegrid-tag {
+.skybox-tag {
 	display: inline-flex;
 	align-items: center;
 	gap: 2px;
@@ -324,20 +324,20 @@ input[type="text"].telegrid-search-input:active {
 	font-size: var(--font-ui-smaller);
 }
 
-.telegrid-empty {
+.skybox-empty {
 	color: var(--text-faint);
 	font-style: italic;
 	text-align: center;
 	padding: 48px 0;
 }
 
-.telegrid-sentinel {
+.skybox-sentinel {
 	height: 1px;
 }
 
 /* ---- plus button ------------------------------------------------- */
 
-.telegrid-plus {
+.skybox-plus {
 	flex: 0 0 auto;
 	align-self: stretch;
 	/* Obsidian gives every button a fixed height, which stretch cannot beat. */
@@ -346,7 +346,7 @@ input[type="text"].telegrid-search-input:active {
 	padding: 0;
 	border: none;
 	border-radius: 8px;
-	background: var(--telegrid-create);
+	background: var(--skybox-create);
 	color: #ffffff;
 	font-size: 22px;
 	line-height: 1;
@@ -354,17 +354,17 @@ input[type="text"].telegrid-search-input:active {
 	box-shadow: none;
 }
 
-.telegrid-plus:hover {
-	background: var(--telegrid-create-hover);
+.skybox-plus:hover {
+	background: var(--skybox-create-hover);
 }
 
-.telegrid-picker {
+.skybox-picker {
 	display: none;
 }
 
 /* ---- the way back ------------------------------------------------ */
 
-.telegrid-back {
+.skybox-back {
 	position: fixed;
 	left: 16px;
 	bottom: 16px;
@@ -372,11 +372,11 @@ input[type="text"].telegrid-search-input:active {
 	display: none;
 }
 
-.telegrid-back.is-visible {
+.skybox-back.is-visible {
 	display: block;
 }
 
-.telegrid-back button {
+.skybox-back button {
 	display: flex;
 	align-items: center;
 	gap: 6px;
@@ -389,17 +389,17 @@ input[type="text"].telegrid-search-input:active {
 	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 
-.telegrid-back button:hover {
+.skybox-back button:hover {
 	background: var(--background-modifier-hover);
 }
 
-.telegrid-back-icon {
+.skybox-back-icon {
 	display: flex;
 }
 
 /* ---- expanded card ----------------------------------------------- */
 
-.telegrid-overlay {
+.skybox-overlay {
 	position: fixed;
 	inset: 0;
 	z-index: 30;
@@ -409,8 +409,8 @@ input[type="text"].telegrid-search-input:active {
 	background: rgba(0, 0, 0, 0.45);
 }
 
-.telegrid-expanded {
-	view-transition-name: telegrid-expanding;
+.skybox-expanded {
+	view-transition-name: skybox-expanding;
 	display: flex;
 	flex-direction: column;
 	width: min(1100px, 100%);
@@ -422,7 +422,7 @@ input[type="text"].telegrid-search-input:active {
 	box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
 }
 
-.telegrid-expanded-head {
+.skybox-expanded-head {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -431,7 +431,7 @@ input[type="text"].telegrid-search-input:active {
 	border-bottom: 1px solid var(--background-modifier-border);
 }
 
-.telegrid-expanded-head h2 {
+.skybox-expanded-head h2 {
 	margin: 0;
 	font-size: 1.2em;
 	overflow: hidden;
@@ -439,61 +439,61 @@ input[type="text"].telegrid-search-input:active {
 	white-space: nowrap;
 }
 
-.telegrid-expanded-actions {
+.skybox-expanded-actions {
 	display: flex;
 	align-items: center;
 	gap: 8px;
 	flex: 0 0 auto;
 }
 
-.telegrid-close {
+.skybox-close {
 	font-size: 1.1em;
 	line-height: 1;
 }
 
-.telegrid-expanded-body {
+.skybox-expanded-body {
 	display: flex;
 	min-height: 0;
 	flex: 1 1 auto;
 }
 
-.telegrid-editor {
+.skybox-editor {
 	flex: 1 1 auto;
 	min-width: 0;
 	overflow: auto;
 	padding: 8px 4px;
 }
 
-.telegrid-editor .cm-editor {
+.skybox-editor .cm-editor {
 	height: 100%;
 	background: transparent;
 }
 
-.telegrid-editor .cm-content {
+.skybox-editor .cm-content {
 	font-family: var(--font-text);
 	font-size: var(--font-text-size);
 }
 
 /* Obsidian's own editor, borrowed into the overlay. */
-.telegrid-editor.is-borrowed {
+.skybox-editor.is-borrowed {
 	display: flex;
 	padding: 0;
 	overflow: hidden;
 }
 
-.telegrid-editor .workspace-leaf-content {
+.skybox-editor .workspace-leaf-content {
 	flex: 1 1 auto;
 	min-width: 0;
 	height: 100%;
 }
 
-.telegrid-editor .view-content {
+.skybox-editor .view-content {
 	height: 100%;
 }
 
 /* The overlay's own header carries the title and the actions. */
-.telegrid-editor .view-header,
-.telegrid-editor .inline-title {
+.skybox-editor .view-header,
+.skybox-editor .inline-title {
 	display: none;
 }
 
@@ -502,7 +502,7 @@ input[type="text"].telegrid-search-input:active {
 	display: none;
 }
 
-.telegrid-lightbox-main {
+.skybox-lightbox-main {
 	display: flex;
 	flex-direction: column;
 	flex: 1 1 auto;
@@ -511,7 +511,7 @@ input[type="text"].telegrid-search-input:active {
 	padding: 16px;
 }
 
-.telegrid-lightbox-image {
+.skybox-lightbox-image {
 	flex: 1 1 auto;
 	min-height: 0;
 	max-width: 100%;
@@ -520,7 +520,7 @@ input[type="text"].telegrid-search-input:active {
 	background: var(--background-secondary);
 }
 
-.telegrid-thoughts {
+.skybox-thoughts {
 	flex: 0 0 auto;
 	height: 120px;
 	resize: vertical;
@@ -533,7 +533,7 @@ input[type="text"].telegrid-search-input:active {
  * In the middle of the top band, arriving and leaving with the window
  * buttons: standalone mode hides every other way to Obsidian's settings.
  */
-.telegrid-settings {
+.skybox-settings {
 	display: none;
 	padding: 2px 10px;
 	border: none;
@@ -551,30 +551,30 @@ input[type="text"].telegrid-search-input:active {
 	app-region: no-drag;
 }
 
-body.telegrid-standalone:not(.is-mobile) .telegrid-settings {
+body.skybox-standalone:not(.is-mobile) .skybox-settings {
 	display: block;
 }
 
-body.telegrid-standalone.telegrid-top-edge .telegrid-settings,
-body.telegrid-standalone .telegrid-settings:focus-visible {
+body.skybox-standalone.skybox-top-edge .skybox-settings,
+body.skybox-standalone .skybox-settings:focus-visible {
 	opacity: 1;
 	pointer-events: auto;
 }
 
-.telegrid-settings:hover {
+.skybox-settings:hover {
 	background: var(--background-modifier-hover);
 	color: var(--text-normal);
 }
 
 /* Icons carry their own size: an unsized SVG lays itself out at 300x150. */
-.telegrid-icon {
+.skybox-icon {
 	display: inline-flex;
 	align-items: center;
 	line-height: 0;
 }
 
-.telegrid-icon svg,
-.telegrid-icon .svg-icon {
+.skybox-icon svg,
+.skybox-icon .svg-icon {
 	width: 18px;
 	height: 18px;
 }
@@ -585,11 +585,11 @@ body.telegrid-standalone .telegrid-settings:focus-visible {
  * Standalone mode hides the navbar and Obsidian's own settings are then a
  * long way off, so on a phone it can be turned on and off from here.
  */
-.telegrid-standalone-toggle {
+.skybox-standalone-toggle {
 	display: none;
 }
 
-.is-mobile .telegrid-standalone-toggle {
+.is-mobile .skybox-standalone-toggle {
 	position: fixed;
 	right: 14px;
 	bottom: 78px;
@@ -613,20 +613,20 @@ body.telegrid-standalone .telegrid-settings:focus-visible {
 	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
-.is-mobile .telegrid-standalone-toggle.is-on {
+.is-mobile .skybox-standalone-toggle.is-on {
 	color: var(--text-on-accent);
-	background: var(--telegrid-create);
+	background: var(--skybox-create);
 	border-color: transparent;
 }
 
 /* ---- the places along the bottom --------------------------------- */
 
-.telegrid-root.is-typing .telegrid-bottom,
-.telegrid-root.is-typing .telegrid-standalone-toggle {
+.skybox-root.is-typing .skybox-bottom,
+.skybox-root.is-typing .skybox-standalone-toggle {
 	display: none;
 }
 
-.telegrid-bottom {
+.skybox-bottom {
 	position: fixed;
 	left: 0;
 	right: 0;
@@ -639,7 +639,7 @@ body.telegrid-standalone .telegrid-settings:focus-visible {
 	background: var(--background-primary);
 }
 
-.telegrid-bottom-item {
+.skybox-bottom-item {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -651,13 +651,13 @@ body.telegrid-standalone .telegrid-settings:focus-visible {
 	font-size: var(--font-ui-smaller);
 }
 
-.telegrid-bottom-item.is-current {
+.skybox-bottom-item.is-current {
 	color: var(--text-normal);
 }
 
 /* ---- metadata box ------------------------------------------------ */
 
-.telegrid-meta {
+.skybox-meta {
 	flex: 0 0 280px;
 	overflow-y: auto;
 	padding: 16px;
@@ -666,11 +666,11 @@ body.telegrid-standalone .telegrid-settings:focus-visible {
 	font-size: var(--font-ui-small);
 }
 
-.telegrid-meta-section + .telegrid-meta-section {
+.skybox-meta-section + .skybox-meta-section {
 	margin-top: 20px;
 }
 
-.telegrid-meta h4 {
+.skybox-meta h4 {
 	margin: 0 0 8px;
 	color: var(--text-muted);
 	font-size: var(--font-ui-smaller);
@@ -678,45 +678,45 @@ body.telegrid-standalone .telegrid-settings:focus-visible {
 	letter-spacing: 0.08em;
 }
 
-.telegrid-meta-none {
+.skybox-meta-none {
 	color: var(--text-faint);
 	font-style: italic;
 }
 
-.telegrid-meta-input {
+.skybox-meta-input {
 	width: 100%;
 	margin-top: 8px;
 }
 
-.telegrid-meta-properties div {
+.skybox-meta-properties div {
 	display: flex;
 	justify-content: space-between;
 	gap: 12px;
 	padding: 2px 0;
 }
 
-.telegrid-meta-properties dt {
+.skybox-meta-properties dt {
 	color: var(--text-muted);
 }
 
-.telegrid-meta-properties dd {
+.skybox-meta-properties dd {
 	margin: 0;
 	text-align: right;
 	word-break: break-word;
 }
 
-.telegrid-meta-list {
+.skybox-meta-list {
 	margin: 0;
 	padding-left: 18px;
 }
 
-.telegrid-meta-list a {
+.skybox-meta-list a {
 	cursor: pointer;
 }
 
 /* ---- animation --------------------------------------------------- */
 
-@keyframes telegrid-fade-in {
+@keyframes skybox-fade-in {
 	from {
 		opacity: 0;
 		transform: translateY(6px);
@@ -728,11 +728,11 @@ body.telegrid-standalone .telegrid-settings:focus-visible {
 }
 
 /* A file that has just arrived drops into the grid. */
-.telegrid-card.is-dropped {
-	animation: telegrid-drop-in 520ms cubic-bezier(0.2, 0.9, 0.25, 1.1) both;
+.skybox-card.is-dropped {
+	animation: skybox-drop-in 520ms cubic-bezier(0.2, 0.9, 0.25, 1.1) both;
 }
 
-@keyframes telegrid-drop-in {
+@keyframes skybox-drop-in {
 	0% {
 		opacity: 0;
 		transform: translateY(-18px) scale(0.96);
@@ -747,7 +747,7 @@ body.telegrid-standalone .telegrid-settings:focus-visible {
 	}
 }
 
-@keyframes telegrid-pop {
+@keyframes skybox-pop {
 	from {
 		opacity: 0;
 		transform: scale(0.9);
@@ -765,9 +765,9 @@ body.telegrid-standalone .telegrid-settings:focus-visible {
 
 @media (prefers-reduced-motion: reduce) {
 	.react-grid-item,
-	.telegrid-card,
-	.telegrid-card.is-fresh,
-	.telegrid-chip {
+	.skybox-card,
+	.skybox-card.is-fresh,
+	.skybox-chip {
 		transition: none;
 		animation: none;
 	}
@@ -775,16 +775,16 @@ body.telegrid-standalone .telegrid-settings:focus-visible {
 
 /* ---- standalone -------------------------------------------------- */
 
-body.telegrid-standalone .workspace-ribbon,
-body.telegrid-standalone .workspace-tabs .workspace-tab-header-container,
-body.telegrid-standalone .workspace-split.mod-left-split,
-body.telegrid-standalone .workspace-split.mod-right-split,
-body.telegrid-standalone .status-bar {
+body.skybox-standalone .workspace-ribbon,
+body.skybox-standalone .workspace-tabs .workspace-tab-header-container,
+body.skybox-standalone .workspace-split.mod-left-split,
+body.skybox-standalone .workspace-split.mod-right-split,
+body.skybox-standalone .status-bar {
 	display: none !important;
 }
 
-body.telegrid-standalone.is-mobile .mobile-navbar,
-body.telegrid-standalone.is-mobile .workspace-drawer {
+body.skybox-standalone.is-mobile .mobile-navbar,
+body.skybox-standalone.is-mobile .workspace-drawer {
 	display: none !important;
 }
 
@@ -793,9 +793,9 @@ body.telegrid-standalone.is-mobile .workspace-drawer {
  * the sidebar toggles have nothing to toggle: standalone mode hides both
  * sidebars already.
  */
-body.telegrid-standalone .titlebar-button.mod-back,
-body.telegrid-standalone .titlebar-button.mod-forward,
-body.telegrid-standalone .sidebar-toggle-button {
+body.skybox-standalone .titlebar-button.mod-back,
+body.skybox-standalone .titlebar-button.mod-forward,
+body.skybox-standalone .sidebar-toggle-button {
 	display: none !important;
 }
 
@@ -804,26 +804,26 @@ body.telegrid-standalone .sidebar-toggle-button {
  * nowhere to walk; the pane's top band takes that space instead. A note opened
  * in Obsidian keeps its header, which is where the way back lives.
  */
-body.telegrid-standalone .workspace-leaf-content[data-type="telegrid-search-view"] > .view-header {
+body.skybox-standalone .workspace-leaf-content[data-type="skybox-search-view"] > .view-header {
 	display: none;
 }
 
 /* The window buttons wait out of sight until the pointer reaches the top. */
-body.telegrid-standalone .titlebar-button-container {
+body.skybox-standalone .titlebar-button-container {
 	opacity: 0;
 	pointer-events: none;
 	transition: opacity 160ms ease;
 }
 
-body.telegrid-standalone.telegrid-top-edge .titlebar-button-container,
-body.telegrid-standalone .titlebar-button-container:focus-within {
+body.skybox-standalone.skybox-top-edge .titlebar-button-container,
+body.skybox-standalone .titlebar-button-container:focus-within {
 	opacity: 1;
 	pointer-events: auto;
 }
 
 /* ---- mobile ------------------------------------------------------ */
 
-.is-mobile .telegrid-root {
+.is-mobile .skybox-root {
 	padding: 0 12px 96px;
 }
 
@@ -833,11 +833,11 @@ body.telegrid-standalone .titlebar-button-container:focus-within {
  * so that margin is just empty space over the search box: the pane keeps only
  * the inset that clears the status bar.
  */
-.is-mobile .workspace-leaf-content[data-type="telegrid-search-view"] {
+.is-mobile .workspace-leaf-content[data-type="skybox-search-view"] {
 	--view-top-spacing: var(--safe-area-inset-top);
 }
 
-.is-mobile .workspace-leaf-content[data-type="telegrid-search-view"] > .view-header {
+.is-mobile .workspace-leaf-content[data-type="skybox-search-view"] > .view-header {
 	display: none;
 }
 
@@ -846,7 +846,7 @@ body.telegrid-standalone .titlebar-button-container:focus-within {
  * reader never sees it travel. Its own background covers the cards passing
  * behind it.
  */
-.is-mobile .telegrid-head {
+.is-mobile .skybox-head {
 	margin: 0 -12px 12px;
 	padding: 6px 12px;
 	background: var(--background-primary);
@@ -860,32 +860,32 @@ body.telegrid-standalone .titlebar-button-container:focus-within {
  */
 .is-mobile .react-grid-layout,
 .is-mobile .react-grid-item,
-.is-mobile .telegrid-card,
-.is-mobile .telegrid-card.is-fresh,
-.is-mobile .telegrid-chip {
+.is-mobile .skybox-card,
+.is-mobile .skybox-card.is-fresh,
+.is-mobile .skybox-chip {
 	transition: none;
 	animation: none;
 }
 
-.is-mobile .telegrid-expanded {
+.is-mobile .skybox-expanded {
 	view-transition-name: none;
 }
 
 /* Except the one the composer earns. */
-.is-mobile .telegrid-card.is-dropped {
-	animation: telegrid-drop-in 520ms cubic-bezier(0.2, 0.9, 0.25, 1.1) both;
+.is-mobile .skybox-card.is-dropped {
+	animation: skybox-drop-in 520ms cubic-bezier(0.2, 0.9, 0.25, 1.1) both;
 }
 
-.is-mobile .telegrid-search {
+.is-mobile .skybox-search {
 	padding: 5px 12px;
 	gap: 6px;
 }
 
-.is-mobile .telegrid-search-input {
+.is-mobile .skybox-search-input {
 	font-size: 1em;
 }
 
-.is-mobile .telegrid-plus {
+.is-mobile .skybox-plus {
 	width: 42px;
 	font-size: 20px;
 }
@@ -895,7 +895,7 @@ body.telegrid-standalone .titlebar-button-container:focus-within {
  * sheet that the back gesture closes. The card fills it, so the overlay's own
  * backdrop steps out of the way.
  */
-.telegrid-sheet {
+.skybox-sheet {
 	width: 100%;
 	max-width: none;
 	height: 100%;
@@ -904,7 +904,7 @@ body.telegrid-standalone .titlebar-button-container:focus-within {
 	padding: 0;
 }
 
-.telegrid-sheet .modal-content {
+.skybox-sheet .modal-content {
 	height: 100%;
 	margin: 0;
 	padding: 0;
@@ -917,21 +917,21 @@ body.telegrid-standalone .titlebar-button-container:focus-within {
  * back gesture are the ways out. The sheet takes them out of the DOM too, in
  * case a build names them something else.
  */
-.telegrid-sheet .modal-close-button,
-.telegrid-sheet .modal-header-button,
-.telegrid-sheet .modal-header,
-.telegrid-sheet .modal-title {
+.skybox-sheet .modal-close-button,
+.skybox-sheet .modal-header-button,
+.skybox-sheet .modal-header,
+.skybox-sheet .modal-title {
 	display: none !important;
 }
 
-.telegrid-sheet .telegrid-overlay {
+.skybox-sheet .skybox-overlay {
 	position: static;
 	display: block;
 	padding: 0;
 	background: none;
 }
 
-.telegrid-sheet .telegrid-expanded {
+.skybox-sheet .skybox-expanded {
 	width: 100%;
 	height: 100%;
 	border: none;
@@ -939,7 +939,7 @@ body.telegrid-standalone .titlebar-button-container:focus-within {
 	box-shadow: none;
 }
 
-.is-mobile .telegrid-back-arrow {
+.is-mobile .skybox-back-arrow {
 	display: flex;
 	align-items: center;
 	padding: 6px 8px;
@@ -949,7 +949,7 @@ body.telegrid-standalone .titlebar-button-container:focus-within {
 }
 
 /* One way back is enough, and on Android it is the arrow. */
-.is-mobile .telegrid-close {
+.is-mobile .skybox-close {
 	display: none !important;
 }
 
@@ -959,47 +959,47 @@ body.telegrid-standalone .titlebar-button-container:focus-within {
  * they can be read without scrolling to the bottom of the screen; an image
  * keeps them under the picture and its thoughts.
  */
-.is-mobile .telegrid-expanded-body {
+.is-mobile .skybox-expanded-body {
 	display: flex;
 	flex-direction: column;
 	overflow-y: auto;
 	-webkit-overflow-scrolling: touch;
 }
 
-.is-mobile .telegrid-expanded-body > * {
+.is-mobile .skybox-expanded-body > * {
 	flex: 0 0 auto;
 }
 
-.is-mobile .telegrid-expanded:not(.is-lightbox) .telegrid-meta {
+.is-mobile .skybox-expanded:not(.is-lightbox) .skybox-meta {
 	order: -1;
 	border-top: none;
 	border-bottom: 1px solid var(--background-modifier-border);
 }
 
-.is-mobile .telegrid-editor {
+.is-mobile .skybox-editor {
 	height: 70vh;
 	padding: 0;
 }
 
-.is-mobile .telegrid-lightbox-main {
+.is-mobile .skybox-lightbox-main {
 	display: block;
 	padding: 12px;
 }
 
-.is-mobile .telegrid-lightbox-image {
+.is-mobile .skybox-lightbox-image {
 	width: 100%;
 	max-height: 45vh;
 	object-fit: contain;
 }
 
-.is-mobile .telegrid-thoughts {
+.is-mobile .skybox-thoughts {
 	width: 100%;
 	height: 22vh;
 	min-height: 88px;
 	margin-top: 12px;
 }
 
-.is-mobile .telegrid-meta {
+.is-mobile .skybox-meta {
 	width: auto;
 	border-left: none;
 	border-top: 1px solid var(--background-modifier-border);

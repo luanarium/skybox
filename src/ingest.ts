@@ -1,6 +1,6 @@
 import { type App, Notice, TFile, TFolder, normalizePath } from "obsidian";
 import type { VaultIndex } from "./index";
-import { isImageExtension, sidecarPathFor, type Item, type TelegridSettings } from "./types";
+import { isImageExtension, sidecarPathFor, type Item, type SkyboxSettings } from "./types";
 import { guarded } from "./writes";
 
 export interface IngestResult {
@@ -28,7 +28,7 @@ export type DuplicateAnswer = (existing: Item) => Promise<boolean>;
 export async function ingest(
 	app: App,
 	index: VaultIndex,
-	settings: TelegridSettings,
+	settings: SkyboxSettings,
 	file: File,
 	askAnyway?: DuplicateAnswer
 ): Promise<IngestResult | null> {
@@ -64,7 +64,7 @@ export async function ingest(
 /** A new note in the intake folder, named after its first line if it has one. */
 export async function createNote(
 	app: App,
-	settings: TelegridSettings,
+	settings: SkyboxSettings,
 	text = ""
 ): Promise<TFile> {
 	return guarded(async () => {
@@ -112,10 +112,10 @@ export async function sha256(data: ArrayBuffer): Promise<string | null> {
 			.map((byte) => byte.toString(16).padStart(2, "0"))
 			.join("");
 	} catch (error) {
-		console.error("Telegrid: this browser will not hash content", error);
+		console.error("Skybox: this browser will not hash content", error);
 		if (!warned) {
 			warned = true;
-			new Notice("Telegrid cannot hash content here, so duplicates will not be spotted.");
+			new Notice("Skybox cannot hash content here, so duplicates will not be spotted.");
 		}
 		return null;
 	}

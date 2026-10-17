@@ -12,5 +12,5 @@ export function Icon({ name }: { name: string }) {
 		setIcon(element, name);
 	}, [name]);
 
-	return <span className="telegrid-icon" ref={host} />;
+	return <span className="skybox-icon" ref={host} />;
 }

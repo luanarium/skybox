@@ -2,15 +2,15 @@ import { Platform, Plugin, setIcon, TFile, type WorkspaceLeaf } from "obsidian";
 import { isBorrowing } from "./borrowed";
 import { Bus } from "./bus";
 import { VaultIndex } from "./index";
-import { TelegridSettingTab } from "./settings";
+import { SkyboxSettingTab } from "./settings";
 import { applyScopedTheme, forgetScopedTheme } from "./theme";
 import { ShareIntake } from "./share";
-import { DEFAULT_SETTINGS, VIEW_TYPE_TELEGRID, type TelegridSettings } from "./types";
-import { TelegridView } from "./view";
+import { DEFAULT_SETTINGS, VIEW_TYPE_SKYBOX, type SkyboxSettings } from "./types";
+import { SkyboxView } from "./view";
 import { hasWindowHandle, startWindowDrag, toggleMaximize } from "./window";
 
-export default class TelegridPlugin extends Plugin {
-	settings: TelegridSettings = { ...DEFAULT_SETTINGS };
+export default class SkyboxPlugin extends Plugin {
+	settings: SkyboxSettings = { ...DEFAULT_SETTINGS };
 	index!: VaultIndex;
 	bus!: Bus;
 	private share!: ShareIntake;
@@ -30,16 +30,16 @@ export default class TelegridPlugin extends Plugin {
 			}
 		);
 
-		this.registerView(VIEW_TYPE_TELEGRID, (leaf) => new TelegridView(leaf, this));
+		this.registerView(VIEW_TYPE_SKYBOX, (leaf) => new SkyboxView(leaf, this));
 
-		this.addRibbonIcon("layout-grid", "Telegrid", () => void this.open());
+		this.addRibbonIcon("layout-grid", "Skybox", () => void this.open());
 		this.addCommand({
-			id: "open-telegrid",
-			name: "Open Telegrid",
+			id: "open-skybox",
+			name: "Open Skybox",
 			callback: () => void this.open(),
 		});
 
-		this.addSettingTab(new TelegridSettingTab(this.app, this));
+		this.addSettingTab(new SkyboxSettingTab(this.app, this));
 
 		this.app.workspace.onLayoutReady(() => {
 			this.index.build();
@@ -84,9 +84,9 @@ export default class TelegridPlugin extends Plugin {
 
 	onunload(): void {
 		applyScopedTheme("follow");
-		document.body.removeClass("telegrid-standalone");
-		document.body.removeClass("telegrid-top-edge");
-		document.body.removeClass("telegrid-window");
+		document.body.removeClass("skybox-standalone");
+		document.body.removeClass("skybox-top-edge");
+		document.body.removeClass("skybox-window");
 	}
 
 	/** Open on startup, standalone mode, and whatever the share sheet just sent. */
@@ -105,7 +105,7 @@ export default class TelegridPlugin extends Plugin {
 	 * in the main leaf, say — that leaf is reset to the search view.
 	 */
 	async open(): Promise<WorkspaceLeaf> {
-		const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_TELEGRID);
+		const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_SKYBOX);
 		if (existing.length > 0) {
 			this.app.workspace.revealLeaf(existing[0]);
 			// Revealing alone leaves the pane unfocused, and whatever the
@@ -115,7 +115,7 @@ export default class TelegridPlugin extends Plugin {
 			return existing[0];
 		}
 		const leaf = this.app.workspace.getLeaf(false);
-		await leaf.setViewState({ type: VIEW_TYPE_TELEGRID, active: true });
+		await leaf.setViewState({ type: VIEW_TYPE_SKYBOX, active: true });
 		this.app.workspace.revealLeaf(leaf);
 		this.updateBack();
 		return leaf;
@@ -154,10 +154,10 @@ export default class TelegridPlugin extends Plugin {
 	}
 
 	applyStandalone(): void {
-		document.body.toggleClass("telegrid-standalone", this.settings.standalone);
+		document.body.toggleClass("skybox-standalone", this.settings.standalone);
 		// With a window handle the drag band moves the window itself, so it
 		// must keep its clicks rather than becoming a CSS drag region.
-		document.body.toggleClass("telegrid-window", hasWindowHandle());
+		document.body.toggleClass("skybox-window", hasWindowHandle());
 		this.updateBack();
 	}
 
@@ -167,10 +167,10 @@ export default class TelegridPlugin extends Plugin {
 	 * shown whenever the grid is up but something else is in front of it.
 	 */
 	private mountBack(): void {
-		const el = document.body.createDiv({ cls: "telegrid-back" });
-		const button = el.createEl("button", { attr: { "aria-label": "Back to Telegrid" } });
-		setIcon(button.createSpan({ cls: "telegrid-back-icon" }), "layout-grid");
-		button.createSpan({ text: "Telegrid" });
+		const el = document.body.createDiv({ cls: "skybox-back" });
+		const button = el.createEl("button", { attr: { "aria-label": "Back to Skybox" } });
+		setIcon(button.createSpan({ cls: "skybox-back-icon" }), "layout-grid");
+		button.createSpan({ text: "Skybox" });
 		button.addEventListener("click", () => void this.open());
 		this.backEl = el;
 		this.register(() => {
@@ -187,9 +187,9 @@ export default class TelegridPlugin extends Plugin {
 	private updateBack(): void {
 		const el = this.backEl;
 		if (!el) return;
-		const up = this.app.workspace.getLeavesOfType(VIEW_TYPE_TELEGRID).length > 0;
+		const up = this.app.workspace.getLeavesOfType(VIEW_TYPE_SKYBOX).length > 0;
 		// A borrowed editor is the grid, expanded — not somewhere else.
-		const back = this.app.workspace.getActiveViewOfType(TelegridView) !== null || isBorrowing();
+		const back = this.app.workspace.getActiveViewOfType(SkyboxView) !== null || isBorrowing();
 		el.toggleClass("is-visible", this.settings.standalone && up && !back);
 	}
 
@@ -216,7 +216,7 @@ export default class TelegridPlugin extends Plugin {
 			const within = event.clientY <= topEdge();
 			if (within === near) return;
 			near = within;
-			document.body.toggleClass("telegrid-top-edge", near);
+			document.body.toggleClass("skybox-top-edge", near);
 		};
 
 		const onDown = (event: MouseEvent) => {
@@ -234,7 +234,7 @@ export default class TelegridPlugin extends Plugin {
 			document.removeEventListener("mousemove", onMove);
 			document.removeEventListener("mousedown", onDown);
 			document.removeEventListener("dblclick", onDouble);
-			document.body.removeClass("telegrid-top-edge");
+			document.body.removeClass("skybox-top-edge");
 		});
 	}
 
@@ -248,9 +248,9 @@ export default class TelegridPlugin extends Plugin {
 	}
 
 	private redraw(): void {
-		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_TELEGRID)) {
+		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_SKYBOX)) {
 			const view = leaf.view;
-			if (view instanceof TelegridView) view.render();
+			if (view instanceof SkyboxView) view.render();
 		}
 	}
 }
@@ -266,8 +266,8 @@ const HANDS_OFF = [
 	".view-action",
 	".view-header-nav-buttons",
 	".menu",
-	".telegrid-chip",
-	".telegrid-search",
+	".skybox-chip",
+	".skybox-search",
 ].join(", ");
 
 /** The band at the top of the window that brings the window buttons back. */

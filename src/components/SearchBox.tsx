@@ -32,12 +32,12 @@ export function SearchBox({ chips, draft, onDraftChange, onChipsChange }: Search
 	};
 
 	return (
-		<div className="telegrid-search" onClick={() => inputRef.current?.focus()}>
+		<div className="skybox-search" onClick={() => inputRef.current?.focus()}>
 			{chips.map((chip, position) => (
-				<span className="telegrid-chip" key={`${chipLabel(chip)}-${position}`}>
+				<span className="skybox-chip" key={`${chipLabel(chip)}-${position}`}>
 					{chipLabel(chip)}
 					<button
-						className="telegrid-chip-remove"
+						className="skybox-chip-remove"
 						aria-label={`Remove ${chipLabel(chip)}`}
 						onClick={(event) => {
 							event.stopPropagation();
@@ -50,7 +50,7 @@ export function SearchBox({ chips, draft, onDraftChange, onChipsChange }: Search
 			))}
 			<input
 				ref={inputRef}
-				className="telegrid-search-input"
+				className="skybox-search-input"
 				type="text"
 				value={draft}
 				placeholder={chips.length ? "" : "search my vault"}

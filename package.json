@@ -1,5 +1,5 @@
 {
-  "name": "telegrid",
+  "name": "skybox",
   "version": "0.1.0",
   "description": "A masonry search pane over your Obsidian vault.",
   "main": "main.js",
@@ -16,7 +16,7 @@
   "author": "luanarium",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/luanarium/telegrid.git"
+    "url": "git+https://github.com/luanarium/skybox.git"
   },
   "license": "MIT",
   "devDependencies": {
