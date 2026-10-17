@@ -8,6 +8,13 @@ into an editor with a metadata box beside it; clicking an image opens a lightbox
 place for thoughts. The plus button makes a note or takes in files, and so does dropping files on
 the pane or sharing them to Obsidian from your phone.
 
+## Installing
+
+Telegrid is not in Obsidian's community plugins. Build it — `npm install && npm run build` — or take
+the three files a build leaves, `main.js`, `manifest.json` and `styles.css`, and put them in
+`<vault>/.obsidian/plugins/telegrid/`. Then turn Restricted mode off and enable Telegrid under
+Community plugins. The same three files are what goes onto a phone.
+
 ## Layout of the source
 
 | File | What lives there |

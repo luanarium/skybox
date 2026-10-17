@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "minAppVersion": "1.6.6",
   "description": "A masonry search pane over your vault: chips, cards, and a lightbox.",
-  "author": "",
-  "authorUrl": "",
+  "author": "luanarium",
+  "authorUrl": "https://github.com/luanarium",
   "isDesktopOnly": false
 }
