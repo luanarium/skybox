@@ -1,4 +1,4 @@
-import { type App, TFile } from "obsidian";
+import { type App, MarkdownView, TFile } from "obsidian";
 import { noteTitle, uniquePath } from "./ingest";
 import type { SkyboxSettings } from "./types";
 import { guarded } from "./writes";
@@ -56,8 +56,7 @@ export class Autonamer {
 		const current = this.app.vault.getAbstractFileByPath(file.path);
 		if (!(current instanceof TFile) || !unnamed(current.basename)) return;
 
-		const text = await this.app.vault.cachedRead(current);
-		const title = noteTitle(text);
+		const title = noteTitle(this.open(current) ?? (await this.app.vault.cachedRead(current)));
 		// `noteTitle` falls back to `Untitled`, which is where we started.
 		if (unnamed(title) || title.length < 2) return;
 
@@ -72,6 +71,22 @@ export class Autonamer {
 			// note is fine, it just keeps the name it has.
 			console.error("Skybox: could not name the note from its first line", error);
 		}
+	}
+
+	/**
+	 * What the editor has, where the note is open in one. Obsidian writes a
+	 * note to disk on its own schedule rather than on every keystroke, so a
+	 * note being typed into is usually a character or two ahead of its file —
+	 * and naming it from the file gave `image drop tes`.
+	 */
+	private open(file: TFile): string | null {
+		for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
+			const view = leaf.view;
+			if (view instanceof MarkdownView && view.file?.path === file.path) {
+				return view.editor.getValue();
+			}
+		}
+		return null;
 	}
 
 	dispose(): void {
