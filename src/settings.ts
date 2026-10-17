@@ -65,6 +65,24 @@ export class SkyboxSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
+			.setName("Ignored folders")
+			.setDesc(
+				"Folders the grid leaves alone, one per line — an attachment folder whose images " +
+					"belong inside notes, a templates folder, or another vault nested in this one. " +
+					"Everything under them stays out: notes, images and their sidecars."
+			)
+			.addTextArea((area) => {
+				area.setPlaceholder("attachments\ntemplates")
+					.setValue(this.plugin.settings.ignoredFolders)
+					.onChange(async (value) => {
+						this.plugin.settings.ignoredFolders = value;
+						await this.plugin.saveSettings();
+						this.plugin.index.build();
+					});
+				area.inputEl.rows = 4;
+			});
+
+		new Setting(containerEl)
 			.setName("Name notes from their first line")
 			.setDesc(
 				"A new note starts as Untitled. Once the typing settles, its first line becomes " +

@@ -27,6 +27,7 @@ Community plugins. The same three files are what goes onto a phone.
 | `src/compact.ts` | The shortest-column compactor and the card geometry |
 | `src/cover.ts` | Which cover a note gets drawn, from its path |
 | `src/autoname.ts` | Naming a new note after its first line |
+| `src/ignore.ts` | Folders the index leaves alone |
 | `src/ingest.ts` | The one intake path: hash, dedupe, write |
 | `src/share.ts` | Mobile share intake and the bring-back |
 | `src/sidecar.ts` | `<name>.<ext>.md` beside an image: its tags and thoughts |
@@ -54,6 +55,19 @@ developer console previews the mobile layout.
 a shell, so these cover the modules that need no workspace — the compactor and card geometry, the
 sidecar and frontmatter rules, chips and search, and `ingest`'s duplicate branches against a fake
 vault. Everything about views, transitions and window chrome still has to be looked at in the app.
+
+## Ignored folders
+
+The grid shows every note and every image in the vault, which is the point — a picture is something
+you kept, not an attachment belonging to a note. But a vault holds things that are not cards: an
+attachment folder of images that live inside notes, a templates folder, or another vault nested
+inside this one, whose every note would otherwise appear twice.
+
+**Ignored folders** in the settings takes one folder per line, and the index skips everything under
+them — notes, images and sidecars alike, since that is what ignoring a folder reads as. Matching is
+case-insensitive and by whole path segment, so `attachments` leaves `attachments-2026` alone.
+`src/ignore.ts` holds both halves and `tests/ignore.test.ts` covers them; the index re-reads the
+list whenever it is rebuilt, which the settings do on every change.
 
 ## Naming a new note
 

@@ -1,6 +1,8 @@
+import { isIgnored, parseIgnored } from "./ignore";
 import { type App, type TAbstractFile, TFile, getAllTags } from "obsidian";
 import {
 	type Item,
+	type SkyboxSettings,
 	isImageExtension,
 	sidecarPathFor,
 	sidecarTargetPath,
@@ -15,10 +17,17 @@ export class VaultIndex {
 	private text = new Map<string, { mtime: number; content: string }>();
 	private listeners = new Set<() => void>();
 
-	constructor(private app: App) {}
+	/** Folders to leave alone, parsed from the settings on every build. */
+	private ignored: string[] = [];
+
+	constructor(
+		private app: App,
+		private settings: SkyboxSettings
+	) {}
 
 	build(): void {
 		this.items.clear();
+		this.ignored = parseIgnored(this.settings.ignoredFolders);
 		const files = this.app.vault.getFiles();
 		for (const file of files) this.add(file);
 		this.notify();
@@ -130,6 +139,8 @@ export class VaultIndex {
 
 	/** Index the card a file belongs to, replacing any earlier entry. */
 	private add(file: TFile): void {
+		// A whole folder at a time: its notes, its images and their sidecars.
+		if (isIgnored(file.path, this.ignored)) return;
 		const target = sidecarTargetPath(file.path);
 		if (target) {
 			const image = this.app.vault.getAbstractFileByPath(target);

@@ -20,7 +20,7 @@ export default class SkyboxPlugin extends Plugin {
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
-		this.index = new VaultIndex(this.app);
+		this.index = new VaultIndex(this.app, this.settings);
 		this.autoname = new Autonamer(this.app, this.settings);
 		this.register(() => this.autoname.dispose());
 		this.bus = new Bus();

@@ -38,6 +38,8 @@ export interface SkyboxSettings {
 	coverArt: boolean;
 	/** Name a new note after its first line, once the typing settles. */
 	nameFromFirstLine: boolean;
+	/** Folders the grid leaves alone, one per line. */
+	ignoredFolders: string;
 }
 
 export const DEFAULT_SETTINGS: SkyboxSettings = {
@@ -50,6 +52,7 @@ export const DEFAULT_SETTINGS: SkyboxSettings = {
 	theme: "follow",
 	coverArt: true,
 	nameFromFirstLine: true,
+	ignoredFolders: "",
 };
 
 export const VIEW_TYPE_SKYBOX = "skybox-search-view";
