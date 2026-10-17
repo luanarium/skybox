@@ -31,9 +31,19 @@ export class SkyboxSettingTab extends PluginSettingTab {
 			.setName("Browser bookmarks")
 			.setDesc(
 				"Bookmark pages in your browser as you always have, and Skybox writes a note for " +
-					"each new one while Obsidian is open. It reads one file, the Chromium " +
-					"bookmarks file named below, and nothing else; it only ever adds, so a " +
-					"bookmark deleted in the browser leaves its note where it is."
+					"each new one. It reads one file, the Chromium bookmarks file named below, and " +
+					"nothing else; it only ever adds, so a bookmark deleted in the browser leaves " +
+					"its note where it is. The notes carry the properties Obsidian's own Web " +
+					"Clipper writes, so a page saved either way is the same kind of note."
+			);
+
+		new Setting(containerEl)
+			.setName("Keep them coming")
+			.setDesc(
+				"Look for new bookmarks on their own: when Obsidian starts, when its window comes " +
+					"back to the front, and every five minutes it is left open. A file that has " +
+					"not changed costs nothing to look at. Off, the button below is the only way " +
+					"anything is read."
 			)
 			.addToggle((toggle) =>
 				toggle.setValue(this.plugin.settings.bookmarksEnabled).onChange(async (value) => {
@@ -53,9 +63,10 @@ export class SkyboxSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Bookmarks file")
 			.setDesc(
-				found.length > 0
-					? `Found on this computer: ${found.join(", ")}`
-					: "No Chromium bookmarks file turned up in the usual places. Paste the path to one."
+				(found.length > 0
+					? `Found on this computer: ${found.join(", ")}. `
+					: "No Chromium bookmarks file turned up in the usual places. Paste the path to one. ") +
+					"Sync now reads it once, whether or not the switch above is on."
 			)
 			.addText((text) =>
 				text
