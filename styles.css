@@ -852,13 +852,23 @@ body.telegrid-standalone .titlebar-button-container:focus-within {
 	background: var(--background-primary);
 }
 
-/* Obsidian's own sheet animation is plenty on a phone. */
+/*
+ * Obsidian's own sheet animation is plenty on a phone: the grid's cards, its
+ * chips, the slide the layout makes when the columns change and the height the
+ * grid eases into all stand still. Nothing names itself for a view transition
+ * either, since none runs here.
+ */
+.is-mobile .react-grid-layout,
 .is-mobile .react-grid-item,
 .is-mobile .telegrid-card,
 .is-mobile .telegrid-card.is-fresh,
 .is-mobile .telegrid-chip {
 	transition: none;
 	animation: none;
+}
+
+.is-mobile .telegrid-expanded {
+	view-transition-name: none;
 }
 
 /* Except the one the composer earns. */

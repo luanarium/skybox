@@ -93,7 +93,8 @@ export function App() {
 	}, [results.length]);
 
 	const open = useCallback((item: Item) => {
-		flushSync(() => setNamedId(item.id));
+		// A phone runs no view transition, so nothing there needs naming for one.
+		if (!Platform.isMobile) flushSync(() => setNamedId(item.id));
 		void withTransition(() => setExpandedId(item.id));
 	}, []);
 

@@ -50,9 +50,23 @@ export function Sheet({
 		setHost(modal.contentEl);
 		return () => {
 			ours = true;
+			/*
+			 * A phone slides a modal out over a quarter of a second, and the card
+			 * inside this one has already gone with the React tree that closed it:
+			 * what slides away is an empty sheet. Obsidian's own flag turns that
+			 * last animation off, so the grid is simply there again. Tapping
+			 * outside or going back closes the modal itself, with the card still
+			 * in it, and keeps the slide.
+			 */
+			animated(modal).shouldAnimate = false;
 			modal.close();
 		};
 	}, [app, cls, onClose, settings]);
 
 	return host ? createPortal(children, host) : null;
+}
+
+/** Obsidian's modals carry this flag; its own dialogs set it the same way. */
+function animated(modal: Modal): Modal & { shouldAnimate: boolean } {
+	return modal as Modal & { shouldAnimate: boolean };
 }
