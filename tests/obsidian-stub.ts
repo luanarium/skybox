@@ -23,6 +23,9 @@ export class Notice {
 
 export class TFile {}
 
+/** Enough of a class for `instanceof` where a test never opens an editor. */
+export class MarkdownView {}
+
 export class TFolder {}
 
 export function normalizePath(path: string): string {
