@@ -147,13 +147,19 @@ function fs(): FileSystem | null {
 }
 
 function home(): string {
-	const host = window as unknown as { require?: (id: string) => unknown };
+	const host = window as unknown as {
+		require?: (id: string) => unknown;
+		process?: { env?: Record<string, string | undefined> };
+	};
 	try {
 		const os = host.require?.("os") as { homedir(): string } | undefined;
-		return os?.homedir() ?? "";
+		const dir = os?.homedir();
+		if (dir) return dir;
 	} catch {
-		return "";
+		// Fall through to the environment.
 	}
+	const env = host.process?.env ?? {};
+	return env.HOME ?? env.USERPROFILE ?? "";
 }
 
 /** `~/…` is a shell's idea, not a path: it gets expanded here. */
@@ -205,6 +211,8 @@ export function findBookmarkFiles(): string[] {
 export class BookmarkImport {
 	/** The modification time last imported, so an unchanged file is skipped. */
 	private seenAt = 0;
+	/** Why the last look failed, for the notice to say something useful. */
+	private trouble: string | null = null;
 
 	constructor(
 		private app: App,
@@ -224,7 +232,15 @@ export class BookmarkImport {
 		if (!this.settings.bookmarksEnabled) return null;
 		const node = fs();
 		const path = expandHome(this.settings.bookmarksPath.trim(), home());
-		if (!node || !path) return null;
+		this.trouble = null;
+		if (!node) {
+			this.trouble = "this build has no access to the filesystem";
+			return null;
+		}
+		if (!path) {
+			this.trouble = "no bookmarks file is set";
+			return null;
+		}
 
 		let json: string;
 		try {
@@ -234,6 +250,9 @@ export class BookmarkImport {
 			this.seenAt = stat.mtimeMs;
 			json = node.readFileSync(path, "utf8");
 		} catch (error) {
+			// The path it actually tried, which is the thing worth knowing when
+			// `~` went unexpanded or a profile is named something else.
+			this.trouble = `${path}: ${error instanceof Error ? error.message : String(error)}`;
 			console.error("Skybox: could not read the bookmarks file", error);
 			return null;
 		}
@@ -276,7 +295,7 @@ export class BookmarkImport {
 	async syncAloud(): Promise<void> {
 		const written = await this.sync(true);
 		if (written === null) {
-			new Notice("Skybox could not read that bookmarks file.");
+			new Notice(`Skybox could not read the bookmarks file.\n${this.trouble ?? ""}`, 10000);
 			return;
 		}
 		new Notice(
