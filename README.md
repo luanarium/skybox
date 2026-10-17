@@ -56,6 +56,20 @@ a shell, so these cover the modules that need no workspace — the compactor and
 sidecar and frontmatter rules, chips and search, and `ingest`'s duplicate branches against a fake
 vault. Everything about views, transitions and window chrome still has to be looked at in the app.
 
+## Images a note embeds
+
+Drop an image into a note and Obsidian writes it into the vault, so the grid has every right to show
+it a card — but an image embedded in a note is part of that note's page rather than something kept
+for its own sake. `metadataCache` already knows which is which: every note's `embeds` are resolved
+on build, and an image some note embeds is marked `embedded` and given a tag nothing wrote,
+`#embedded`.
+
+What that buys is one rule rather than two settings: embedded images stay out of the everything
+view, and nothing else changes. Any search still reaches them, `#embedded` asks for exactly those,
+and the moment the last note stops embedding an image the mark falls away — there is nothing stored
+to go stale, in the vault or anywhere else. **Images embedded in notes** in the settings turns the
+rule off.
+
 ## Ignored folders
 
 The grid shows every note and every image in the vault, which is the point — a picture is something

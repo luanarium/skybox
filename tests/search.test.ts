@@ -1,5 +1,5 @@
 import * as assert from "node:assert";
-import { plainExcerpt, search, toChip } from "../src/search";
+import { plainExcerpt, search, toChip, unembedded } from "../src/search";
 import type { VaultIndex } from "../src/index";
 import type { Chip } from "../src/search";
 import type { Item } from "../src/types";
@@ -58,10 +58,11 @@ function note(path: string, title: string, tags: string[], headings: string[], m
 		tags,
 		headings,
 		excerpt: "",
+		embedded: false,
 	};
 }
 
-function image(path: string, tags: string[], mtime: number): Item {
+function image(path: string, tags: string[], mtime: number, embedded = false): Item {
 	return {
 		id: path,
 		kind: "image",
@@ -72,5 +73,43 @@ function image(path: string, tags: string[], mtime: number): Item {
 		tags,
 		headings: [],
 		excerpt: "",
+		embedded,
 	};
 }
+
+// An image a note embeds stays out of the everything view, and comes back for
+// any search at all — including the tag nothing wrote.
+const embeds: Item[] = [
+	note("n1.md", "Kyoto", ["travel"], ["Trams"], 3),
+	image("diagram.png", ["embedded"], 2, true),
+	image("i1.png", ["travel"], 1),
+];
+const withEmbed = {
+	all: () => embeds,
+	content: async () => "",
+} as unknown as VaultIndex;
+
+assert.deepStrictEqual(
+	(await search(withEmbed, [], true)).map((item) => item.id),
+	["n1.md", "i1.png"],
+	"the everything view leaves embedded images out"
+);
+assert.deepStrictEqual(
+	(await search(withEmbed, [], false)).map((item) => item.id),
+	["n1.md", "diagram.png", "i1.png"],
+	"unless the setting says otherwise"
+);
+assert.deepStrictEqual(
+	(await search(withEmbed, [toChip("#embedded")!], true)).map((item) => item.id),
+	["diagram.png"],
+	"#embedded asks for exactly those"
+);
+assert.deepStrictEqual(
+	(await search(withEmbed, [toChip("diagram")!], true)).map((item) => item.id),
+	["diagram.png"],
+	"and any search reaches one"
+);
+assert.deepStrictEqual(
+	unembedded([image("a.png", [], 2, true), image("b.png", [], 1)]).map((item) => item.id),
+	["b.png"]
+);

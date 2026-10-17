@@ -22,13 +22,27 @@ export function chipLabel(chip: Chip): string {
 }
 
 /**
+ * An image a note embeds is part of that note's page rather than something
+ * kept for its own sake, so it stays out of the everything view. It is not
+ * gone: any search reaches it, and `#embedded` asks for exactly these.
+ */
+export function unembedded(items: Item[]): Item[] {
+	return items.filter((item) => !item.embedded);
+}
+
+/**
  * Chips are ANDed. Each word is matched against title, path, tags, headings and
  * then the note's text; `#word` is matched against tags alone. With no chips
- * every card surfaces, most recently modified first.
+ * every card surfaces, most recently modified first — bar the embedded ones,
+ * when the setting says so.
  */
-export async function search(index: VaultIndex, chips: Chip[]): Promise<Item[]> {
+export async function search(
+	index: VaultIndex,
+	chips: Chip[],
+	hideEmbedded = false
+): Promise<Item[]> {
 	const all = index.all();
-	if (chips.length === 0) return all;
+	if (chips.length === 0) return hideEmbedded ? unembedded(all) : all;
 
 	const matchers = chips.map((chip) =>
 		chip.tagOnly ? null : prepareSimpleSearch(chip.text)

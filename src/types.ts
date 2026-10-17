@@ -19,6 +19,8 @@ export interface Item {
 	headings: string[];
 	/** Plain excerpt for notes; empty for images. */
 	excerpt: string;
+	/** Some note embeds this image, so it is part of that note's page. */
+	embedded: boolean;
 }
 
 export interface SkyboxSettings {
@@ -40,6 +42,8 @@ export interface SkyboxSettings {
 	nameFromFirstLine: boolean;
 	/** Folders the grid leaves alone, one per line. */
 	ignoredFolders: string;
+	/** Keep images that notes embed out of the grid until something is searched. */
+	hideEmbedded: boolean;
 }
 
 export const DEFAULT_SETTINGS: SkyboxSettings = {
@@ -53,7 +57,11 @@ export const DEFAULT_SETTINGS: SkyboxSettings = {
 	coverArt: true,
 	nameFromFirstLine: true,
 	ignoredFolders: "",
+	hideEmbedded: true,
 };
+
+/** The tag an image gets for being embedded in a note; nothing writes it. */
+export const EMBEDDED_TAG = "embedded";
 
 export const VIEW_TYPE_SKYBOX = "skybox-search-view";
 

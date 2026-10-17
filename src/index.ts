@@ -1,6 +1,7 @@
 import { isIgnored, parseIgnored } from "./ignore";
 import { type App, type TAbstractFile, TFile, getAllTags } from "obsidian";
 import {
+	EMBEDDED_TAG,
 	type Item,
 	type SkyboxSettings,
 	isImageExtension,
@@ -19,6 +20,9 @@ export class VaultIndex {
 
 	/** Folders to leave alone, parsed from the settings on every build. */
 	private ignored: string[] = [];
+	/** What each note embeds, and every image some note embeds. */
+	private embedsBy = new Map<string, string[]>();
+	private embedded = new Set<string>();
 
 	constructor(
 		private app: App,
@@ -27,10 +31,36 @@ export class VaultIndex {
 
 	build(): void {
 		this.items.clear();
+		this.embedsBy.clear();
 		this.ignored = parseIgnored(this.settings.ignoredFolders);
 		const files = this.app.vault.getFiles();
+		// Embeds first: an image's card says whether a note holds it.
+		for (const file of files) {
+			if (file.extension === "md") this.embedsBy.set(file.path, this.embedsOf(file));
+		}
+		this.refreshEmbedded();
 		for (const file of files) this.add(file);
 		this.notify();
+	}
+
+	/** The images a note embeds, by path. */
+	private embedsOf(note: TFile): string[] {
+		const cache = this.app.metadataCache.getFileCache(note);
+		const paths: string[] = [];
+		for (const embed of cache?.embeds ?? []) {
+			const target = this.app.metadataCache.getFirstLinkpathDest(embed.link, note.path);
+			if (target instanceof TFile && isImageExtension(target.extension)) {
+				paths.push(target.path);
+			}
+		}
+		return paths;
+	}
+
+	private refreshEmbedded(): void {
+		this.embedded = new Set<string>();
+		for (const paths of this.embedsBy.values()) {
+			for (const path of paths) this.embedded.add(path);
+		}
 	}
 
 	subscribe(listener: () => void): () => void {
@@ -153,6 +183,18 @@ export class VaultIndex {
 	private index(file: TFile): void {
 		if (file.extension === "md") {
 			this.items.set(file.path, this.noteItem(file));
+			// What this note embeds may have just changed, and an image's card
+			// carries whether anything embeds it.
+			const before = this.embedsBy.get(file.path) ?? [];
+			const after = this.embedsOf(file);
+			if (before.join("\u0000") !== after.join("\u0000")) {
+				this.embedsBy.set(file.path, after);
+				this.refreshEmbedded();
+				for (const path of new Set([...before, ...after])) {
+					const image = this.app.vault.getAbstractFileByPath(path);
+					if (image instanceof TFile && this.items.has(path)) this.index(image);
+				}
+			}
 			return;
 		}
 		if (isImageExtension(file.extension)) {
@@ -161,6 +203,7 @@ export class VaultIndex {
 	}
 
 	private noteItem(file: TFile): Item {
+		// A note is never embedded in the sense that matters here: it is read.
 		const cache = this.app.metadataCache.getFileCache(file);
 		return {
 			id: file.path,
@@ -172,6 +215,7 @@ export class VaultIndex {
 			tags: tagNames(cache ? getAllTags(cache) : null),
 			headings: (cache?.headings ?? []).map((h) => h.heading),
 			excerpt: "",
+			embedded: false,
 		};
 	}
 
@@ -179,6 +223,11 @@ export class VaultIndex {
 		const sidecarFile = this.app.vault.getAbstractFileByPath(sidecarPathFor(file.path));
 		const sidecar = sidecarFile instanceof TFile ? sidecarFile : null;
 		const cache = sidecar ? this.app.metadataCache.getFileCache(sidecar) : null;
+		const embedded = this.embedded.has(file.path);
+		const tags = tagNames(cache ? getAllTags(cache) : null);
+		// A tag nobody wrote: it is how the image is found again once hidden,
+		// and it falls away the moment the last note stops embedding it.
+		if (embedded && !tags.includes(EMBEDDED_TAG)) tags.push(EMBEDDED_TAG);
 		return {
 			id: file.path,
 			kind: "image",
@@ -186,9 +235,10 @@ export class VaultIndex {
 			sidecar,
 			title: this.titleOf(file, cache?.frontmatter?.title),
 			mtime: Math.max(file.stat.mtime, sidecar?.stat.mtime ?? 0),
-			tags: tagNames(cache ? getAllTags(cache) : null),
+			tags,
 			headings: [],
 			excerpt: "",
+			embedded,
 		};
 	}
 

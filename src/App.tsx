@@ -42,7 +42,7 @@ export function App() {
 
 	useEffect(() => {
 		let current = true;
-		void search(index, chips).then((found) => {
+		void search(index, chips, settings.hideEmbedded).then((found) => {
 			if (!current) return;
 			setResults(found);
 			const ids = new Set(found.map((item) => item.id));
@@ -52,7 +52,7 @@ export function App() {
 		return () => {
 			current = false;
 		};
-	}, [index, chips, version]);
+	}, [index, chips, version, settings.hideEmbedded]);
 
 	useEffect(() => setLimit(PAGE), [chips]);
 

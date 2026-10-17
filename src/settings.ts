@@ -65,6 +65,24 @@ export class SkyboxSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
+			.setName("Images embedded in notes")
+			.setDesc(
+				"An image a note embeds is part of that note rather than something kept for its " +
+					"own sake, so it stays out of the grid while the search box is empty. It is " +
+					"not hidden: any search finds it, and #embedded asks for exactly these. " +
+					"Nothing is written to the vault — Obsidian already knows what embeds what."
+			)
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOptions({ hidden: "Out of the everything view", shown: "Shown like any other" })
+					.setValue(this.plugin.settings.hideEmbedded ? "hidden" : "shown")
+					.onChange(async (value) => {
+						this.plugin.settings.hideEmbedded = value === "hidden";
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
 			.setName("Ignored folders")
 			.setDesc(
 				"Folders the grid leaves alone, one per line — an attachment folder whose images " +
