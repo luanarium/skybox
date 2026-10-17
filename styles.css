@@ -828,13 +828,27 @@ body.telegrid-standalone .titlebar-button-container:focus-within {
 }
 
 /*
+ * A phone floats the view header over the pane and keeps a header's worth of
+ * margin above the content for it to sit in. The grid's own header is hidden,
+ * so that margin is just empty space over the search box: the pane keeps only
+ * the inset that clears the status bar.
+ */
+.is-mobile .workspace-leaf-content[data-type="telegrid-search-view"] {
+	--view-top-spacing: var(--safe-area-inset-top);
+}
+
+.is-mobile .workspace-leaf-content[data-type="telegrid-search-view"] > .view-header {
+	display: none;
+}
+
+/*
  * Nothing sits above the head, so it is already where it sticks and the
  * reader never sees it travel. Its own background covers the cards passing
  * behind it.
  */
 .is-mobile .telegrid-head {
 	margin: 0 -12px 12px;
-	padding: 10px 12px;
+	padding: 6px 12px;
 	background: var(--background-primary);
 }
 
@@ -887,9 +901,16 @@ body.telegrid-standalone .titlebar-button-container:focus-within {
 	overflow: hidden;
 }
 
+/*
+ * Whatever a modal dresses itself with — a close button, and on a phone a
+ * header bar to hold it — the sheet has no use for: the back arrow and the
+ * back gesture are the ways out. The sheet takes them out of the DOM too, in
+ * case a build names them something else.
+ */
 .telegrid-sheet .modal-close-button,
-.is-mobile .telegrid-sheet .modal-close-button,
-.is-mobile .telegrid-sheet .modal-title {
+.telegrid-sheet .modal-header-button,
+.telegrid-sheet .modal-header,
+.telegrid-sheet .modal-title {
 	display: none !important;
 }
 

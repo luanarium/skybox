@@ -38,6 +38,15 @@ export function Sheet({
 			if (!ours) onClose();
 		};
 		modal.open();
+		/*
+		 * A modal arrives dressed for a dialog: a close button in the corner,
+		 * and on a phone a header bar to hold it. The sheet is the card itself
+		 * and its way out is the back arrow, so whatever the modal put beside
+		 * its content goes — by what it is rather than by what it is called.
+		 */
+		for (const spare of Array.from(modal.modalEl.children)) {
+			if (spare !== modal.contentEl) spare.remove();
+		}
 		setHost(modal.contentEl);
 		return () => {
 			ours = true;

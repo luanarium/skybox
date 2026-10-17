@@ -74,9 +74,12 @@ export function NoteOverlay({ item, onClose, onOpenPath }: NoteOverlayProps) {
 								Open in Obsidian
 							</button>
 						)}
-						<button className="telegrid-close" aria-label="Close" onClick={() => onClose()}>
-							×
-						</button>
+						{/* The arrow and the back gesture are the phone's way out. */}
+						{!Platform.isMobile && (
+							<button className="telegrid-close" aria-label="Close" onClick={() => onClose()}>
+								×
+							</button>
+						)}
 					</div>
 				</header>
 				<div className="telegrid-expanded-body">
