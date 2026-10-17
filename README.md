@@ -1,19 +1,77 @@
 # Skybox
 
-An Obsidian plugin that opens onto a masonry search pane over the vault, on desktop and Android.
+<!-- Replace this placeholder with the demo GIF, keeping the path or updating it here. -->
+![Skybox: a masonry search pane over your vault](docs/images/skybox.png)
 
-Type into the big box; words become chips, chips narrow the search, removing one widens it again.
-An empty box shows every note and image, most recently modified first. Clicking a note expands it
-into an editor with a metadata box beside it; clicking an image opens a lightbox with its tags and a
-place for thoughts. The plus button makes a note or takes in files, and so does dropping files on
-the pane or sharing them to Obsidian from your phone.
+An Obsidian plugin that opens the vault as a wall of cards you can search, on desktop and Android.
+
+It takes its shape from [mymind](https://mymind.com): everything you keep in one visual place, found
+by typing rather than filed by hand. Obsidian already holds the notes and the images; Skybox is the
+other way of looking at them, and it writes nothing of its own to make that work.
+
+- **One pane over the whole vault.** Notes and images sit shoulder to shoulder in a masonry grid,
+  most recently modified first. Typing turns words into chips; chips narrow the search and removing
+  one widens it again, and `#word` matches tags alone.
+- **Make, change and throw away without leaving the grid.** The plus button writes a new note, which
+  opens straight into Obsidian's own editor (live preview, links, embeds) with tags, properties
+  and backlinks beside it. Right-click a card on desktop, or long-press on a phone, to copy or
+  delete it; deleting takes the image's notes with it and goes through the trash, not around it.
+- **A note names itself.** New notes start as Untitled and take their name from their first line
+  once the typing settles, heading marks and all stripped. Rename one yourself and it is yours;
+  Skybox never touches it again.
+- **Drop things in, including from a browser.** Drag files onto the pane, or an image straight out
+  of a browser window, and they are taken into the vault, hashed, and shown as cards. A file whose
+  contents are already in the vault asks before it writes a second copy. On a phone, anything shared
+  to Obsidian arrives the same way.
+- **Images are things you kept, not attachments.** Every image gets a card with a sidecar note for
+  its tags and thoughts, so Obsidian's own tag pane sees them. An image a *note* embeds belongs to
+  that note, so it stays out of the everything view until you search for it.
+- **Notes get cover art.** A grid of text is a wall of words, so each note draws a gradient of its
+  own, decided by its path. Nothing is stored for it, and a setting turns it off.
+- **Out of the way.** Standalone mode hands the whole window to the pane, with no ribbon and no tab
+  bar, and the window controls hide until the pointer reaches the top edge, where the band also
+  drags the window and maximizes on a double click.
 
 ## Installing
 
-Skybox is not in Obsidian's community plugins. Build it — `npm install && npm run build` — or take
-the three files a build leaves, `main.js`, `manifest.json` and `styles.css`, and put them in
-`<vault>/.obsidian/plugins/skybox/`. Then turn Restricted mode off and enable Skybox under
-Community plugins. The same three files are what goes onto a phone.
+Skybox is not in Obsidian's community plugins yet, so it installs by hand. Either way you need the
+three files a build leaves: **`main.js`**, **`manifest.json`** and **`styles.css`**, from the
+[latest release](https://github.com/luanarium/skybox/releases) or from `npm install && npm run
+build` in a clone.
+
+### Straight into the vault folder
+
+Put the three files in a folder called `skybox` inside your vault's `.obsidian/plugins/`. The
+`.obsidian` folder is hidden, so turn on hidden files in your file manager first.
+
+| | Where that is |
+|---|---|
+| Linux | `/home/<you>/<vault>/.obsidian/plugins/skybox/` |
+| Windows | `C:\Users\<you>\<vault>\.obsidian\plugins\skybox\` |
+| Android | `/sdcard/<vault>/.obsidian/plugins/skybox/`, or `Internal storage/<vault>/…` as most file managers show it |
+
+Create `plugins` or `skybox` if they are not there. Then in Obsidian: **Settings → Community
+plugins**, turn **Restricted mode** off, and switch **Skybox** on under *Installed plugins*. If
+Obsidian was already running, reload it first (Ctrl+R) or it will not see the new folder.
+
+### Through Obsidian
+
+Open **Settings → Community plugins → Installed plugins**. Everything already in
+`.obsidian/plugins/` is listed there, so this is where you enable Skybox after copying the files,
+turn it off again, or reach its own settings through the gear beside it. There is no browse-and-
+install route yet; that comes with the community list.
+
+### With BRAT, which also keeps it updated
+
+[BRAT](https://github.com/TfTHacker/obsidian42-brat) installs plugins straight from GitHub, which is
+the easiest route on a phone and the only one that updates itself.
+
+1. Install **BRAT** from Community plugins → Browse, and enable it.
+2. **Settings → BRAT → Add beta plugin**.
+3. Paste `luanarium/skybox` and confirm.
+
+BRAT fetches the three files from the latest release and enables the plugin. It checks for new
+releases on startup, so a new version arrives on its own.
 
 ## Layout of the source
 
@@ -52,33 +110,33 @@ developer console previews the mobile layout.
 
 `npm test` runs `tests/`: esbuild bundles each `*.test.ts` with the `obsidian` import pointed at
 `tests/obsidian-stub.ts`, node runs it, and a file that throws fails. Obsidian cannot be driven from
-a shell, so these cover the modules that need no workspace — the compactor and card geometry, the
+a shell, so these cover the modules that need no workspace: the compactor and card geometry, the
 sidecar and frontmatter rules, chips and search, and `ingest`'s duplicate branches against a fake
 vault. Everything about views, transitions and window chrome still has to be looked at in the app.
 
 ## Images a note embeds
 
 Drop an image into a note and Obsidian writes it into the vault, so the grid has every right to show
-it a card — but an image embedded in a note is part of that note's page rather than something kept
+it a card, but an image embedded in a note is part of that note's page rather than something kept
 for its own sake. `metadataCache` already knows which is which: every note's `embeds` are resolved
 on build, and an image some note embeds is marked `embedded` and given a tag nothing wrote,
 `#embedded`.
 
 What that buys is one rule rather than two settings: embedded images stay out of the everything
 view, and nothing else changes. Any search still reaches them, `#embedded` asks for exactly those,
-and the moment the last note stops embedding an image the mark falls away — there is nothing stored
+and the moment the last note stops embedding an image the mark falls away; there is nothing stored
 to go stale, in the vault or anywhere else. **Images embedded in notes** in the settings turns the
 rule off.
 
 ## Ignored folders
 
-The grid shows every note and every image in the vault, which is the point — a picture is something
+The grid shows every note and every image in the vault, which is the point: a picture is something
 you kept, not an attachment belonging to a note. But a vault holds things that are not cards: an
 attachment folder of images that live inside notes, a templates folder, or another vault nested
 inside this one, whose every note would otherwise appear twice.
 
 **Ignored folders** in the settings takes one folder per line, and the index skips everything under
-them — notes, images and sidecars alike, since that is what ignoring a folder reads as. Matching is
+them: notes, images and sidecars alike, since that is what ignoring a folder reads as. Matching is
 case-insensitive and by whole path segment, so `attachments` leaves `attachments-2026` alone.
 `src/ignore.ts` holds both halves and `tests/ignore.test.ts` covers them; the index re-reads the
 list whenever it is rebuilt, which the settings do on every change.
@@ -86,7 +144,7 @@ list whenever it is rebuilt, which the settings do on every change.
 ## Naming a new note
 
 A note from the plus button starts as `Untitled`, which says nothing on a card. `src/autoname.ts`
-watches it: a second and a half after the typing stops, the note's first line becomes its name —
+watches it: a second and a half after the typing stops, the note's first line becomes its name, with
 heading marks and list bullets stripped, characters a filename cannot hold turned into spaces,
 frontmatter and horizontal rules skipped, sixty characters at most. The rename goes through
 `fileManager.renameFile`, so anything already linking to the note follows it.
@@ -99,15 +157,15 @@ settings turns it off.
 ## Cover art
 
 A note has no picture of its own, so the grid draws one. `src/cover.ts` hashes the note's path and
-reads a palette and a shape out of it — eight palettes, four shapes, all in `styles.css` as CSS
-gradients — and then nudges both: the hue turned a few degrees, the light lifted or dropped, the
+reads a palette and a shape out of it (eight palettes, four shapes, all in `styles.css` as CSS
+gradients), and then nudges both: the hue turned a few degrees, the light lifted or dropped, the
 shape moved along the horizon, spaced, tilted and scaled. Those nudges ride down as custom
 properties and every gradient reads them with a fallback, so the bounds live in one place and a
 cover still draws without them. Thirty-two looks become a fingerprint: the demo vault's 24 notes
 share 17 palette-and-shape combinations but no two covers alike.
 
 The hash is FNV-1a with murmur3's finalizer over the top. Without that last step its low bits are
-not independent — a multiply's low bits come only from its inputs' low bits — and every note's
+not independent (a multiply's low bits come only from its inputs' low bits), and every note's
 shape came out as its palette plus two. `tests/cover.test.ts` is what caught it.
 
 The same note is drawn the same way on every machine and every rebuild, nothing is written into the
@@ -118,8 +176,9 @@ rather than mixes of the palette, which keeps them working on an older Android W
 ## The expanded note
 
 Clicking a note card borrows Obsidian's own markdown editor: a real markdown leaf is created out of
-sight in the right sidebar, and its view is moved into the overlay. That brings live preview with it
-— headings, links, embeds and images render as they are typed — and the view saves the file itself.
+sight in the right sidebar, and its view is moved into the overlay. That brings live preview with
+it, so headings, links, embeds and images render as they are typed, and the view saves the file
+itself.
 The borrowed leaf is detached when the overlay closes, and the empty husk it leaves behind is hidden
 by a stylesheet rule. If a leaf cannot be borrowed, the overlay falls back to a plain CodeMirror
 editor over the file's text, writing through `vault.process`.
@@ -134,9 +193,10 @@ as the grid rather than as somewhere else, and closing the overlay hands the act
 
 "Open in Obsidian" puts the note in its own tab and adds a **Back to Skybox** action to that tab's
 header. It is desktop only: a phone has no tabs to open into, so the note would take the grid's own
-leaf and leave the sheet sitting over nothing. In standalone mode, where the ribbon and tab bar are hidden, a pill in the bottom-left
-corner appears whenever the grid is up but something else is in front of it. Both ways back reveal
-the grid *and* make it the active pane — revealing alone leaves the pill hanging around until
+leaf and leave the sheet sitting over nothing. In standalone mode, where the ribbon and tab bar are
+hidden, a pill in the bottom-left corner appears whenever the grid is up but something else is in
+front of it. Both ways back reveal
+the grid *and* make it the active pane; revealing alone leaves the pill hanging around until
 something is clicked.
 
 ## The head, the composer and the places
@@ -152,7 +212,7 @@ for a file that has just arrived drops into the grid.
 
 A drop that lands on an open card belongs to Obsidian's editor, not to intake: it writes the file to
 the attachment folder and embeds it where the cursor is. Taking it in as well would import the same
-image twice — once embedded, once as a card of its own — and the content hash cannot catch it,
+image twice, once embedded and once as a card of its own, and the content hash cannot catch it,
 because Obsidian's copy has no sidecar to carry one.
 
 A long press on a card, or a right click, offers **Copy** and **Delete**. Copy takes a note's text,
@@ -164,7 +224,7 @@ A phone also carries a round toggle above those places for standalone mode, whic
 the navbar and puts Obsidian's own settings a long way off. It is there for trying the mode out, and
 nothing but mobile shows it.
 
-Along the bottom of a phone sit three places — everything, spaces, serendipity — as placeholders.
+Along the bottom of a phone sit three places (everything, spaces, serendipity) as placeholders.
 They are deliberately not wired up to anything yet.
 
 ## On a phone
@@ -174,40 +234,42 @@ than 240px, so a phone gets a two-column grid in portrait instead of one card pe
 on a phone** in the settings pins it to one or two instead.
 
 The search box does not take the cursor on a phone, because the keyboard would come up over a grid
-the reader opened to scroll. Obsidian's own sheet animation is the only movement on mobile — the
-card transitions and the staggered fade sit out — except the drop-in the composer earns.
+the reader opened to scroll. Obsidian's own sheet animation is the only movement on mobile: the
+card transitions and the staggered fade sit out, except the drop-in the composer earns.
 
 The expanded card is hosted in one of Obsidian's own modals, rendered into it through a portal. A
 modal is a history handler, so the Android back gesture closes the card instead of leaving the app,
-a tap outside closes it, and it arrives as a full-screen sheet with Obsidian's own animation — which
+a tap outside closes it, and it arrives as a full-screen sheet with Obsidian's own animation, which
 is why the shared-element view transition sits out on mobile. The header carries a back arrow where
-an Android reader looks for one, and the × steps aside. Down the sheet it is plain block flow — the
-editor or the image, then the side pane below it — so nothing is asked to shrink and the whole sheet
+an Android reader looks for one, and the × steps aside. Down the sheet it is plain block flow (the
+editor or the image, then the side pane below it), so nothing is asked to shrink and the whole sheet
 scrolls.
 
-## Trying it on a phone
+## Getting a build onto a phone
 
-The plugin is three files — `main.js`, `manifest.json`, `styles.css` — copied into
-`<vault>/.obsidian/plugins/skybox/` on the device, with Restricted mode off and Skybox enabled
-in Community plugins.
+Installing is covered at the top; this is the development side of it, where there is no release to
+install from yet.
 
 ```sh
 npm run deploy                              # builds, then copies into ./dist/skybox
 SKYBOX_DEST=~/Music/skybox-dist npm run deploy
 ```
 
-That leaves a plain `skybox` folder to drag across — over FTP, say. Obsidian Sync with installed
-plugins turned on, or a tagged GitHub release through BRAT, saves doing it by hand at all.
+That leaves a plain `skybox` folder to drag across over FTP or a cable, into
+`<vault>/.obsidian/plugins/` on the device. A folder rather than an archive, because unpacking one
+on a phone is the tedious part.
+Obsidian Sync with installed plugins turned on, or a tagged release through BRAT, saves doing it by
+hand at all.
 
 Content hashing needs `crypto.subtle` and so a secure context. Obsidian's own windows are one, but
 where it is missing the intake says so once and takes the file in without a hash rather than
-swallowing it — dedupe is what degrades, not the import.
+swallowing it: dedupe is what degrades, not the import.
 
 ## Tags
 
 The tag box writes to frontmatter, so Obsidian's own tag pane sees everything added here. A tag
 appears the moment it is typed and is reconciled against the index afterwards, because the write
-only comes back through the metadata cache — and a note open in an editor can take a couple of
+only comes back through the metadata cache, and a note open in an editor can take a couple of
 seconds to get there. A write that fails rolls the tag back and says so. The × is only on tags that
 live in frontmatter: a `#tag` written in the body belongs to the body. Suggestions come from the
 index, so they are the tags already in the vault.
@@ -218,7 +280,7 @@ as empty for files the cache has not reached yet.
 ## Standalone chrome
 
 Standalone mode hides the ribbon, tab bar, sidebars and status bar with a stylesheet, and on Android
-the navbar too. The titlebar's back and forward arrows are hidden as well — the grid keeps no
+the navbar too. The titlebar's back and forward arrows are hidden as well, since the grid keeps no
 navigation history for them to walk. The window buttons fade out and come back when the pointer
 reaches the top edge of the window, a band as tall as `--titlebar-height`.
 
@@ -226,7 +288,7 @@ In a frameless window Obsidian's draggable region is the tab header bar, so hidi
 window with nothing to drag by. The top band of the window takes that job: a mouse-down there moves
 the window, a double-click maximizes it, and the window buttons fade in and out of it. The listeners
 are on the document and keyed on the pointer's distance from the top edge, so whatever happens to be
-in that band answers — the pane's own drag band, a view header, the titlebar overlay — and anything
+in that band answers (the pane's own drag band, a view header, the titlebar overlay), and anything
 in it that is there to be clicked is left alone. The grid's view header is hidden in standalone
 along with the titlebar arrows and the sidebar toggles: no history to walk, no sidebar to toggle. A
 note opened in Obsidian keeps its header, which is where the way back lives.
@@ -238,7 +300,7 @@ failing quietly.
 
 **Appearance** in the settings dresses the pane light or dark on its own. `.theme-dark` and
 `.theme-light` go on the pane and on the sheets, which are Obsidian's own modals and live outside
-it, and that gives those subtrees the other palette — but it changes nothing visible on its own. The
+it, and that gives those subtrees the other palette, but it changes nothing visible on its own. The
 palette is the `--color-base-*` ramp; the names everything is drawn with (`--background-primary` and
 the rest) are declared on `body` in terms of the ramp, so they are resolved there and reach the pane
 already decided.
@@ -250,7 +312,7 @@ deep, is re-declared in a scoped `<style>` and recomputed from the ramp the pane
 rebuilt when Obsidian fires `css-change`, and a handful of core names are also written plainly in
 `styles.css` so the pane's own furniture flips even if that walk comes back empty.
 
-Moving and maximizing go through Electron's window, the way Obsidian's own titlebar buttons do —
+Moving and maximizing go through Electron's window, the way Obsidian's own titlebar buttons do, in
 `src/window.ts`, the single place the plugin steps outside Obsidian's API and the browser. It is
 desktop-only and feature-detected, the settings tab says whether this window handed a handle over,
 and without one the band falls back to a CSS `app-region: drag` region. Android never touches it.
@@ -259,7 +321,7 @@ and without one the band falls back to a CSS `app-region: drag` region. Android 
 
 - **A known hash asks before it writes.** Drop or pick a file whose contents are already in the
   vault and Skybox asks: add it again, or open the one you have. Dismissing the question opens the
-  existing card and writes nothing. Shared items are the same question from the other side — the
+  existing card and writes nothing. Shared items are the same question from the other side: the
   share target has already written the copy, so the choice is to keep it or move it to the trash,
   and dismissing the question keeps it. A hash held by several cards resolves to the newest.
 - **`@codemirror/commands` is declared, not installed.** Obsidian ships the CodeMirror 6 modules and
