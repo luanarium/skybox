@@ -144,6 +144,34 @@ microseconds-since-1601 timestamps Chromium writes.
 It is one way and additive. A bookmark deleted in the browser leaves its note alone, because the
 vault is where curating happens.
 
+### Where this is going
+
+What is there now is the drop-in: a note with a title, a URL and the folders it came from. The
+reason to want more is that a bookmark is the thinnest thing in the vault, the only card with
+nothing to search but its own title. Ideas in rough order of how much they would change that, none
+of them built yet:
+
+1. **Page metadata.** Title, description and the preview image a page declares for itself, fetched
+   once when the bookmark arrives. That makes the note read like the page rather than like a link,
+   and gives the card a picture instead of cover art. It needs network requests, through Obsidian's
+   `requestUrl` so there is no CORS in the way, which is a line worth crossing deliberately: a
+   bookmark import that quietly fetches every page you ever saved is a different thing from one
+   that reads a local file.
+2. **Readable text.** The article itself, extracted the way a reader mode does it and written into
+   the note body, so a bookmark is searchable by what it said and survives the page going away.
+   Bigger: extraction is fiddly, the text has to be kept out of the way of your own notes on it, and
+   it wants a re-fetch when a page changes.
+3. **Favicons.** Cheaper than a preview image and almost as good at telling cards apart at a glance.
+4. **Firefox.** Its bookmarks live in `places.sqlite`, which needs a SQLite reader rather than a
+   JSON parse, so the Chromium family came first. An export file is the easy half of this.
+5. **More than one source at a time.** Several profiles, or several browsers, instead of the single
+   path the settings take now.
+6. **Noticing deletions.** Not acting on them, but saying so: a note for a bookmark that is no
+   longer in the browser could say as much, and leave what to do about it to you.
+
+On a phone none of this applies, since there is no file to read. Bookmarks arrive there the way
+everything else does, by syncing the vault.
+
 ## Images a note embeds
 
 Drop an image into a note and Obsidian writes it into the vault, so the grid has every right to show
