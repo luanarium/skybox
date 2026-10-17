@@ -26,6 +26,7 @@ Community plugins. The same three files are what goes onto a phone.
 | `src/search.ts` | Chips, `prepareSimpleSearch` matching, excerpts |
 | `src/compact.ts` | The shortest-column compactor and the card geometry |
 | `src/cover.ts` | Which cover a note gets drawn, from its path |
+| `src/autoname.ts` | Naming a new note after its first line |
 | `src/ingest.ts` | The one intake path: hash, dedupe, write |
 | `src/share.ts` | Mobile share intake and the bring-back |
 | `src/sidecar.ts` | `<name>.<ext>.md` beside an image: its tags and thoughts |
@@ -53,6 +54,19 @@ developer console previews the mobile layout.
 a shell, so these cover the modules that need no workspace — the compactor and card geometry, the
 sidecar and frontmatter rules, chips and search, and `ingest`'s duplicate branches against a fake
 vault. Everything about views, transitions and window chrome still has to be looked at in the app.
+
+## Naming a new note
+
+A note from the plus button starts as `Untitled`, which says nothing on a card. `src/autoname.ts`
+watches it: a second and a half after the typing stops, the note's first line becomes its name —
+heading marks and list bullets stripped, characters a filename cannot hold turned into spaces,
+frontmatter and horizontal rules skipped, sixty characters at most. The rename goes through
+`fileManager.renameFile`, so anything already linking to the note follows it.
+
+Two rules keep it out of the way. Only a note still called `Untitled` (or `Untitled 4`) is renamed,
+so a note you named yourself keeps its name however its first line reads; and once it has a name,
+rewriting the first line is editing, not naming. **Name notes from their first line** in the
+settings turns it off.
 
 ## Cover art
 

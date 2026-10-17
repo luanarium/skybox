@@ -1,5 +1,6 @@
 import { Platform, Plugin, setIcon, TFile, type WorkspaceLeaf } from "obsidian";
 import { isBorrowing } from "./borrowed";
+import { Autonamer } from "./autoname";
 import { Bus } from "./bus";
 import { VaultIndex } from "./index";
 import { SkyboxSettingTab } from "./settings";
@@ -14,11 +15,14 @@ export default class SkyboxPlugin extends Plugin {
 	index!: VaultIndex;
 	bus!: Bus;
 	private share!: ShareIntake;
+	private autoname!: Autonamer;
 	private backEl: HTMLElement | null = null;
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
 		this.index = new VaultIndex(this.app);
+		this.autoname = new Autonamer(this.app, this.settings);
+		this.register(() => this.autoname.dispose());
 		this.bus = new Bus();
 		this.share = new ShareIntake(
 			this.app,
@@ -53,7 +57,10 @@ export default class SkyboxPlugin extends Plugin {
 			this.registerEvent(
 				this.app.vault.on("modify", (file) => {
 					this.index.onModify(file);
-					if (file instanceof TFile) this.share.onVaultWrite(file);
+					if (file instanceof TFile) {
+						this.share.onVaultWrite(file);
+						this.autoname.touch(file);
+					}
 				})
 			);
 			this.registerEvent(this.app.vault.on("delete", (file) => this.index.onDelete(file)));

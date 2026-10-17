@@ -65,6 +65,20 @@ export class SkyboxSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
+			.setName("Name notes from their first line")
+			.setDesc(
+				"A new note starts as Untitled. Once the typing settles, its first line becomes " +
+					"its name — headings and list marks stripped — and anything linking to it " +
+					"follows. Only notes still called Untitled are renamed, and only once."
+			)
+			.addToggle((toggle) =>
+				toggle.setValue(this.plugin.settings.nameFromFirstLine).onChange(async (value) => {
+					this.plugin.settings.nameFromFirstLine = value;
+					await this.plugin.saveSettings();
+				})
+			);
+
+		new Setting(containerEl)
 			.setName("Cover art")
 			.setDesc(
 				"Notes have no picture of their own, so the grid draws one — a gradient decided " +

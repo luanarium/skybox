@@ -36,6 +36,8 @@ export interface SkyboxSettings {
 	theme: "follow" | "dark" | "light";
 	/** Draw a cover for cards that have no picture of their own. */
 	coverArt: boolean;
+	/** Name a new note after its first line, once the typing settles. */
+	nameFromFirstLine: boolean;
 }
 
 export const DEFAULT_SETTINGS: SkyboxSettings = {
@@ -47,6 +49,7 @@ export const DEFAULT_SETTINGS: SkyboxSettings = {
 	mobileColumns: "auto",
 	theme: "follow",
 	coverArt: true,
+	nameFromFirstLine: true,
 };
 
 export const VIEW_TYPE_SKYBOX = "skybox-search-view";

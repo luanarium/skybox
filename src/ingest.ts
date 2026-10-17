@@ -75,14 +75,29 @@ export async function createNote(
 }
 
 /**
- * The first line, less its heading marks, with anything a filename cannot
- * hold turned into a space.
+ * The first line of the note itself, less its heading marks, with anything a
+ * filename cannot hold turned into a space. Frontmatter is not the note.
  */
+/** A line that is only a rule: `---`, `***`, `___`. */
+const RULE = /^(-{3,}|\*{3,}|_{3,})$/;
+
+/**
+ * The first line with something on it, past any frontmatter block. An
+ * unclosed `---` is a horizontal rule rather than frontmatter, so the line
+ * under it is the one that counts either way.
+ */
+function firstLine(text: string): string | undefined {
+	const lines = text.split("\n").map((line) => line.trim());
+	let start = 0;
+	if (lines[0] === "---") {
+		const close = lines.indexOf("---", 1);
+		if (close !== -1) start = close + 1;
+	}
+	return lines.slice(start).find((line) => line && !RULE.test(line));
+}
+
 export function noteTitle(text: string): string {
-	const first = text
-		.split("\n")
-		.map((line) => line.trim())
-		.find(Boolean);
+	const first = firstLine(text);
 	const cleaned = (first ?? "")
 		.replace(/^#+\s*/, "")
 		.replace(/^[-*>]\s*/, "")
@@ -140,7 +155,7 @@ async function ensureFolder(app: App, folder: string): Promise<string> {
 }
 
 /** `name.png`, then `name 1.png`, until nothing is in the way. */
-async function uniquePath(app: App, folder: string, name: string): Promise<string> {
+export async function uniquePath(app: App, folder: string, name: string): Promise<string> {
 	const dot = name.lastIndexOf(".");
 	const stem = dot === -1 ? name : name.slice(0, dot);
 	const extension = dot === -1 ? "" : name.slice(dot);

@@ -1,5 +1,6 @@
 import * as assert from "node:assert";
 import { ingest, noteTitle } from "../src/ingest";
+import { unnamed } from "../src/autoname";
 import { isWriting } from "../src/writes";
 import type { VaultIndex } from "../src/index";
 import type { App } from "obsidian";
@@ -162,3 +163,22 @@ assert.strictEqual(
 );
 assert.strictEqual(noteTitle("   "), "Untitled", "nothing typed still names the note");
 assert.strictEqual(noteTitle("x".repeat(90)).length, 60, "a long first line is cut short");
+
+// Frontmatter is not the note: a title comes from the first line under it.
+assert.strictEqual(
+	noteTitle("---\ntags:\n  - garden\n---\n\n## Tomato varieties\n\nSungold."),
+	"Tomato varieties"
+);
+assert.strictEqual(noteTitle("---\ntitle: x\n---\n"), "Untitled");
+// An unclosed `---` is a horizontal rule, so the line under it is the title.
+assert.strictEqual(noteTitle("---\nKyoto, three days\n"), "Kyoto, three days");
+assert.strictEqual(noteTitle("***\n\nWeeknight pasta"), "Weeknight pasta");
+assert.strictEqual(noteTitle("# Kyoto: three days"), "Kyoto three days");
+assert.strictEqual(noteTitle("- milk\n- bread"), "milk");
+
+// Only a note still carrying the name the plugin gave it gets renamed.
+assert.ok(unnamed("Untitled"));
+assert.ok(unnamed("Untitled 4"));
+assert.ok(!unnamed("Untitled thoughts"));
+assert.ok(!unnamed("untitled"));
+assert.ok(!unnamed("Sourdough timings"));
