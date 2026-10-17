@@ -122,6 +122,11 @@ writes a note into the intake folder and expands it straight into its editor, an
 which opens the file picker. Files also arrive by drag and drop or from the share sheet, and a card
 for a file that has just arrived drops into the grid.
 
+A drop that lands on an open card belongs to Obsidian's editor, not to intake: it writes the file to
+the attachment folder and embeds it where the cursor is. Taking it in as well would import the same
+image twice — once embedded, once as a card of its own — and the content hash cannot catch it,
+because Obsidian's copy has no sidecar to carry one.
+
 A long press on a card, or a right click, offers **Copy** and **Delete**. Copy takes a note's text,
 or the image itself where the clipboard will have it and its path where it will not. Delete asks
 first and goes through `trashFile`, so it honours the vault's own deleted-files setting, and it

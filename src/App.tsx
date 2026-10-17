@@ -258,6 +258,16 @@ export function App() {
 
 	const dismiss = useCallback(() => close(), [close]);
 
+	/*
+	 * An open card covers the pane, and Obsidian's editor takes dropped files
+	 * itself: it writes them to the attachment folder and embeds them where
+	 * the cursor is. Intake stays out of a drop that lands there, or the file
+	 * arrives twice — once embedded, once as a card — and the hashes cannot
+	 * tell, because Obsidian's copy carries no sidecar to hold one.
+	 */
+	const theirs = (event: React.DragEvent) =>
+		event.target instanceof Element && event.target.closest(".skybox-overlay") !== null;
+
 	const card = (item: Item) =>
 		item.kind === "image" ? (
 			<Lightbox item={item} onClose={close} onOpenPath={openPath} />
@@ -274,6 +284,7 @@ export function App() {
 				typing ? " is-typing" : ""
 			}`}
 			onDragOver={(event) => {
+				if (theirs(event)) return;
 				event.preventDefault();
 				setDropping(true);
 			}}
@@ -281,6 +292,7 @@ export function App() {
 				if (event.target === event.currentTarget) setDropping(false);
 			}}
 			onDrop={(event) => {
+				if (theirs(event)) return;
 				event.preventDefault();
 				setDropping(false);
 				void take([...event.dataTransfer.files]);
