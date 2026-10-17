@@ -33,8 +33,7 @@ Community plugins. The same three files are what goes onto a phone.
 | `tests/` | What can be checked without a workspace, run with `npm test` |
 | `src/confirm.ts` | The yes-or-no modal duplicates are asked about |
 | `src/borrowed.ts` | The flag that says the overlay has one of Obsidian's leaves on loan |
-| `src/window.ts` | Dragging and maximizing the standalone window, through Electron |
-| `src/vaults.ts` | The vaults menu: Obsidian's vault list, and the way to a new one |
+| `src/window.ts` | Toggling maximize, the one call that leaves Obsidian's API behind |
 
 ## Dev loop
 
@@ -165,20 +164,10 @@ in it that is there to be clicked is left alone. The grid's view header is hidde
 along with the titlebar arrows and the sidebar toggles: no history to walk, no sidebar to toggle. A
 note opened in Obsidian keeps its header, which is where the way back lives.
 
-In the middle of that band sit the two ways out of the pane — **vaults** and **settings** — arriving
-and leaving with the window buttons, because standalone mode hides every other route to either. The
-settings window is not part of the public API, so if `app.setting` is ever not there the button says
-where to look instead of failing quietly.
-
-**vaults** drops a menu of the vaults Obsidian remembers, most recently opened first, with a check
-against the one you are in. A vault belongs to the window it opened in — `app.vault` and everything
-hanging off it, the index, the metadata cache, the borrowed editor — so nothing can swap one vault
-for another underneath a running pane, and choosing one is a new window either way. **Choosing
-another vault** in the settings decides what happens to this window once the other is up: closing it
-hands the screen over, which reads as the app changing vault, and keeping it open is for working in
-two vaults at once. The close waits on the main process confirming the other vault opened, so a
-vault that has been moved leaves this window where it is. Making a vault needs a name and a place to
-put it, which is Obsidian's own vault window's job, so that is what the menu's last item opens.
+In the middle of that band sits the way to the settings, arriving and leaving with the window
+buttons, because standalone mode hides every other route to them. The settings window is not part of
+the public API, so if `app.setting` is ever not there the button says where to look instead of
+failing quietly.
 
 **Appearance** in the settings dresses the pane light or dark on its own. `.theme-dark` and
 `.theme-light` go on the pane and on the sheets, which are Obsidian's own modals and live outside
@@ -195,15 +184,9 @@ rebuilt when Obsidian fires `css-change`, and a handful of core names are also w
 `styles.css` so the pane's own furniture flips even if that walk comes back empty.
 
 Moving and maximizing go through Electron's window, the way Obsidian's own titlebar buttons do —
-`src/window.ts`. It is desktop-only and feature-detected, the settings tab says whether this window
-handed a handle over, and without one the band falls back to a CSS `app-region: drag` region.
-Android never touches it.
-
-The vaults menu is the other place that leaves Obsidian's API behind, for the same reason: which
-vaults exist is the application's business, not a vault's, so Obsidian keeps it in the main process
-behind `vault-list` and `vault-open` and its own switcher is a menu of exactly that. `src/vaults.ts`
-is desktop-only and feature-detected too, and where no list comes back the menu holds a single item
-that opens Obsidian's vault window — which can do everything the menu can, and more.
+`src/window.ts`, the single place the plugin steps outside Obsidian's API and the browser. It is
+desktop-only and feature-detected, the settings tab says whether this window handed a handle over,
+and without one the band falls back to a CSS `app-region: drag` region. Android never touches it.
 
 ## Two notes on the implementation
 

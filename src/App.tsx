@@ -6,7 +6,6 @@ import { ask } from "./confirm";
 import { useSkybox } from "./context";
 import { createNote, ingest } from "./ingest";
 import { openPluginSettings } from "./preferences";
-import { showVaultMenu } from "./vaults";
 import { type Chip, search } from "./search";
 import { withTransition } from "./transition";
 import type { Item } from "./types";
@@ -267,13 +266,7 @@ export function App() {
 			<div className="skybox-head">
 				<div className="skybox-drag">
 					<button
-						className="skybox-band-button"
-						onClick={(event) => showVaultMenu(app, settings, event.nativeEvent)}
-					>
-						vaults
-					</button>
-					<button
-						className="skybox-band-button"
+						className="skybox-settings"
 						onClick={() => openPluginSettings(app, "skybox")}
 					>
 						settings

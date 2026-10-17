@@ -1,6 +1,5 @@
 import { PluginSettingTab, Setting, type App } from "obsidian";
 import type SkyboxPlugin from "./main";
-import { knownVaults } from "./vaults";
 import { hasWindowHandle } from "./window";
 
 export class SkyboxSettingTab extends PluginSettingTab {
@@ -86,40 +85,6 @@ export class SkyboxSettingTab extends PluginSettingTab {
 						"drags the window and maximizes it on a double-click."
 					: "This window cannot be moved from the page. The band across the top of the " +
 						"pane falls back to the system's drag region, and double-click does nothing."
-			);
-
-		const vaults = knownVaults(this.app);
-		new Setting(containerEl)
-			.setName("Vaults")
-			.setDesc(
-				vaults.length > 0
-					? `The band's vaults button lists the ${vaults.length} ${
-							vaults.length === 1 ? "vault" : "vaults"
-						} Obsidian remembers. A vault belongs to the window it opened in, so ` +
-						"choosing another one is a new window either way; a new vault is made in " +
-						"Obsidian's own vault window, which that menu's last item opens."
-					: "The band's vaults button opens Obsidian's vault window, where vaults are " +
-						"chosen and created. This window gave no vault list for the menu to show."
-			);
-
-		new Setting(containerEl)
-			.setName("Choosing another vault")
-			.setDesc(
-				"Whether this window gets out of the way once the other vault is up. Closing it " +
-					"reads as the app changing vault rather than collecting windows; keeping it is " +
-					"what you want when the two vaults are being used side by side."
-			)
-			.addDropdown((dropdown) =>
-				dropdown
-					.addOptions({
-						replace: "Close this window",
-						beside: "Leave this window open",
-					})
-					.setValue(this.plugin.settings.vaultSwitch)
-					.onChange(async (value) => {
-						this.plugin.settings.vaultSwitch = value as "replace" | "beside";
-						await this.plugin.saveSettings();
-					})
 			);
 
 		new Setting(containerEl)

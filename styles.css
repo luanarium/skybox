@@ -141,7 +141,6 @@ body.skybox-standalone:not(.is-mobile) .skybox-drag {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	gap: 2px;
 	height: var(--titlebar-height, 32px);
 	margin-bottom: 10px;
 	position: relative;
@@ -534,7 +533,7 @@ input[type="text"].skybox-search-input:active {
  * In the middle of the top band, arriving and leaving with the window
  * buttons: standalone mode hides every other way to Obsidian's settings.
  */
-.skybox-band-button {
+.skybox-settings {
 	display: none;
 	padding: 2px 10px;
 	border: none;
@@ -552,17 +551,17 @@ input[type="text"].skybox-search-input:active {
 	app-region: no-drag;
 }
 
-body.skybox-standalone:not(.is-mobile) .skybox-band-button {
+body.skybox-standalone:not(.is-mobile) .skybox-settings {
 	display: block;
 }
 
-body.skybox-standalone.skybox-top-edge .skybox-band-button,
-body.skybox-standalone .skybox-band-button:focus-visible {
+body.skybox-standalone.skybox-top-edge .skybox-settings,
+body.skybox-standalone .skybox-settings:focus-visible {
 	opacity: 1;
 	pointer-events: auto;
 }
 
-.skybox-band-button:hover {
+.skybox-settings:hover {
 	background: var(--background-modifier-hover);
 	color: var(--text-normal);
 }
