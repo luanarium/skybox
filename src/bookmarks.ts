@@ -229,7 +229,9 @@ export class BookmarkImport {
 	 * got. Returns how many were written, or null when it could not look.
 	 */
 	async sync(force = false): Promise<number | null> {
-		if (!this.settings.bookmarksEnabled) return null;
+		// Asking for it is asking for it: the switch governs the looking that
+		// happens on its own, not the button that says to look now.
+		if (!force && !this.settings.bookmarksEnabled) return null;
 		const node = fs();
 		const path = expandHome(this.settings.bookmarksPath.trim(), home());
 		this.trouble = null;
@@ -295,7 +297,10 @@ export class BookmarkImport {
 	async syncAloud(): Promise<void> {
 		const written = await this.sync(true);
 		if (written === null) {
-			new Notice(`Skybox could not read the bookmarks file.\n${this.trouble ?? ""}`, 10000);
+			new Notice(
+				`Skybox could not read the bookmarks file. ${this.trouble ?? "No reason given."}`,
+				10000
+			);
 			return;
 		}
 		new Notice(
