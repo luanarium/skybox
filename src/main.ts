@@ -35,7 +35,7 @@ export default class SkyboxPlugin extends Plugin {
 		this.addRibbonIcon("layout-grid", "Skybox", () => void this.open());
 		this.addCommand({
 			id: "open-skybox",
-			name: "Open Skybox",
+			name: "Open",
 			callback: () => void this.open(),
 		});
 

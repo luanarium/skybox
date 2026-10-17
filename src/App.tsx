@@ -104,12 +104,11 @@ export function App() {
 		// transition should start from the rendered text, not from `# title`.
 		const focused = document.activeElement;
 		if (focused instanceof HTMLElement) focused.blur();
-		requestAnimationFrame(() => {
-			void withTransition(() => setExpandedId(null)).then(() => {
-				setNamedId(null);
-				// The borrowed editor may have taken the active leaf with it.
-				if (keepFocus) app.workspace.setActiveLeaf(leaf, { focus: true });
-			});
+		requestAnimationFrame(async () => {
+			await withTransition(() => setExpandedId(null));
+			setNamedId(null);
+			// The borrowed editor may have taken the active leaf with it.
+			if (keepFocus) app.workspace.setActiveLeaf(leaf, { focus: true });
 		});
 	}, [app, leaf]);
 

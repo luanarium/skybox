@@ -67,8 +67,10 @@ export function Lightbox({ item, onClose, onOpenPath }: LightboxProps) {
 		touched.current = item.id;
 		setThoughts(value);
 		if (timer.current !== null) window.clearTimeout(timer.current);
-		timer.current = window.setTimeout(() => {
-			void sidecar().then((note) => writeBody(app, note, value.endsWith("\n") ? value : `${value}\n`));
+		timer.current = window.setTimeout(async () => {
+			// An image has no note of its own until there is something to put in it.
+			const note = await sidecar();
+			await writeBody(app, note, value.endsWith("\n") ? value : `${value}\n`);
 		}, SAVE_DELAY);
 	};
 
