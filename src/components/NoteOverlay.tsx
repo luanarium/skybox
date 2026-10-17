@@ -4,6 +4,7 @@ import { useTelegrid } from "../context";
 import type { Item } from "../types";
 import { Editor } from "./Editor";
 import { Icon } from "./Icon";
+import { useDismiss } from "./Sheet";
 import { MetadataBox } from "./MetadataBox";
 
 interface NoteOverlayProps {
@@ -15,6 +16,8 @@ interface NoteOverlayProps {
 
 export function NoteOverlay({ item, onClose, onOpenPath }: NoteOverlayProps) {
 	const { app, leaf } = useTelegrid();
+	// Inside a sheet, closing means letting the sheet slide away.
+	const dismiss = useDismiss(onClose);
 
 	useEffect(() => {
 		const onKey = (event: KeyboardEvent) => {
@@ -54,7 +57,7 @@ export function NoteOverlay({ item, onClose, onOpenPath }: NoteOverlayProps) {
 						<button
 							className="telegrid-back-arrow"
 							aria-label="Back to the grid"
-							onClick={() => onClose()}
+							onClick={() => dismiss()}
 						>
 							<Icon name="arrow-left" />
 						</button>

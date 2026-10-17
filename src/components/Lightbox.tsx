@@ -4,6 +4,7 @@ import { useTelegrid } from "../context";
 import { ensureSidecar, readBody, writeBody } from "../sidecar";
 import type { Item } from "../types";
 import { Icon } from "./Icon";
+import { useDismiss } from "./Sheet";
 import { MetadataBox } from "./MetadataBox";
 
 const SAVE_DELAY = 600;
@@ -17,6 +18,8 @@ interface LightboxProps {
 /** An image opens as a lightbox: tags beside it, thoughts below. */
 export function Lightbox({ item, onClose, onOpenPath }: LightboxProps) {
 	const { app } = useTelegrid();
+	// Inside a sheet, closing means letting the sheet slide away.
+	const dismiss = useDismiss(onClose);
 	const [thoughts, setThoughts] = useState("");
 	const [loaded, setLoaded] = useState(false);
 	const timer = useRef<number | null>(null);
@@ -82,7 +85,7 @@ export function Lightbox({ item, onClose, onOpenPath }: LightboxProps) {
 						<button
 							className="telegrid-back-arrow"
 							aria-label="Back to the grid"
-							onClick={() => onClose()}
+							onClick={() => dismiss()}
 						>
 							<Icon name="arrow-left" />
 						</button>

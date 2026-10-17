@@ -38,10 +38,19 @@ export function Editor({ file }: { file: TFile }) {
 		const close = () => {
 			if (closed) return;
 			closed = true;
-			// Detaching unloads the file, which saves any unsaved changes.
-			leaf?.detach();
+			const spent = leaf;
 			leaf = null;
-			giveBack();
+			/*
+			 * Detaching unloads the file, which saves any unsaved changes, and
+			 * sends the workspace off to rearrange itself around the leaf that
+			 * has gone. On a phone that is the leaf the grid lives in, so the
+			 * work lands in the very frame that has to paint the grid: it
+			 * waits for the frame after instead.
+			 */
+			window.setTimeout(() => {
+				spent?.detach();
+				giveBack();
+			}, 0);
 		};
 
 		const mount = async () => {

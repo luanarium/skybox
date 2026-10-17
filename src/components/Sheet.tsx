@@ -1,8 +1,21 @@
-import { useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Modal } from "obsidian";
 import { useTelegrid } from "../context";
 import { themeClass } from "../types";
+
+/**
+ * How a card inside a sheet asks to be closed: through the modal, so the
+ * sheet slides away with the card still in it, the way Obsidian's own panels
+ * leave. Outside a sheet there is nothing here and the card closes itself.
+ */
+const SheetDismiss = createContext<(() => void) | null>(null);
+
+/** The sheet's way out where there is one, and the card's own where there is not. */
+export function useDismiss(fallback: () => void): () => void {
+	const sheet = useContext(SheetDismiss);
+	return sheet ?? fallback;
+}
 
 /**
  * On a phone the expanded card lives in one of Obsidian's own modals: it
@@ -23,10 +36,15 @@ export function Sheet({
 }) {
 	const { app, settings } = useTelegrid();
 	const [host, setHost] = useState<HTMLElement | null>(null);
+	const sheet = useRef<Modal | null>(null);
+
+	// Closing the modal animates it away and reports back through `onClose`.
+	const dismiss = useCallback(() => sheet.current?.close(), []);
 
 	useEffect(() => {
 		let ours = false;
 		const modal = new Modal(app);
+		sheet.current = modal;
 		modal.modalEl.addClass("telegrid-sheet");
 		if (cls) modal.modalEl.addClass(cls);
 		// A modal is Obsidian's, not the pane's, so it is dressed to match.
@@ -51,19 +69,21 @@ export function Sheet({
 		return () => {
 			ours = true;
 			/*
-			 * A phone slides a modal out over a quarter of a second, and the card
-			 * inside this one has already gone with the React tree that closed it:
-			 * what slides away is an empty sheet. Obsidian's own flag turns that
-			 * last animation off, so the grid is simply there again. Tapping
-			 * outside or going back closes the modal itself, with the card still
-			 * in it, and keeps the slide.
+			 * The card has already gone with the React tree that closed it, so
+			 * an animation here would slide an empty sheet away: that is the
+			 * blank beat before the grid. Obsidian's own flag turns it off.
+			 * Closing through `dismiss` never comes this way round, and keeps
+			 * the slide.
 			 */
 			animated(modal).shouldAnimate = false;
 			modal.close();
+			sheet.current = null;
 		};
 	}, [app, cls, onClose, settings]);
 
-	return host ? createPortal(children, host) : null;
+	return host
+		? createPortal(<SheetDismiss.Provider value={dismiss}>{children}</SheetDismiss.Provider>, host)
+		: null;
 }
 
 /** Obsidian's modals carry this flag; its own dialogs set it the same way. */
