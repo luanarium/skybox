@@ -7,14 +7,17 @@ interface SearchBoxProps {
 	draft: string;
 	onDraftChange: (draft: string) => void;
 	onChipsChange: (chips: Chip[]) => void;
+	/** The pane keeps hold of the field, to put the cursor back in it. */
+	inputRef?: React.RefObject<HTMLInputElement>;
 }
 
 /**
  * A large box: space commits the typed word to a chip, backspace on an empty
  * box pops the last one, and each chip's × removes it, widening the search.
  */
-export function SearchBox({ chips, draft, onDraftChange, onChipsChange }: SearchBoxProps) {
-	const inputRef = useRef<HTMLInputElement>(null);
+export function SearchBox({ chips, draft, onDraftChange, onChipsChange, inputRef }: SearchBoxProps) {
+	const own = useRef<HTMLInputElement>(null);
+	const field = inputRef ?? own;
 
 	/** Commits every whole word, keeping anything after the last space typed. */
 	const commit = (value: string, remainder = "") => {
@@ -32,7 +35,7 @@ export function SearchBox({ chips, draft, onDraftChange, onChipsChange }: Search
 	};
 
 	return (
-		<div className="skybox-search" onClick={() => inputRef.current?.focus()}>
+		<div className="skybox-search" onClick={() => field.current?.focus()}>
 			{chips.map((chip, position) => (
 				<span className="skybox-chip" key={`${chipLabel(chip)}-${position}`}>
 					{chipLabel(chip)}
@@ -49,7 +52,7 @@ export function SearchBox({ chips, draft, onDraftChange, onChipsChange }: Search
 				</span>
 			))}
 			<input
-				ref={inputRef}
+				ref={field}
 				className="skybox-search-input"
 				type="text"
 				value={draft}

@@ -36,6 +36,7 @@ export function App() {
 	const seen = useRef(new Set<string>());
 	const sentinel = useRef<HTMLDivElement>(null);
 	const picker = useRef<HTMLInputElement>(null);
+	const field = useRef<HTMLInputElement>(null);
 
 	useEffect(() => index.subscribe(() => setVersion((n) => n + 1)), [index]);
 
@@ -107,8 +108,16 @@ export function App() {
 		requestAnimationFrame(async () => {
 			await withTransition(() => setExpandedId(null));
 			setNamedId(null);
+			if (!keepFocus) return;
 			// The borrowed editor may have taken the active leaf with it.
-			if (keepFocus) app.workspace.setActiveLeaf(leaf, { focus: true });
+			app.workspace.setActiveLeaf(leaf, { focus: true });
+			/*
+			 * That hands focus to the pane, not to anything inside it. The
+			 * field has the cursor when the pane first opens, so it should
+			 * have it again on the way back from a card — but not on a phone,
+			 * where focus means the keyboard comes up uninvited.
+			 */
+			if (!Platform.isMobile) field.current?.focus();
 		});
 	}, [app, leaf]);
 
@@ -273,6 +282,7 @@ export function App() {
 				</div>
 				<div className="skybox-bar">
 					<SearchBox
+						inputRef={field}
 						chips={chips}
 						draft={draft}
 						onDraftChange={setDraft}
