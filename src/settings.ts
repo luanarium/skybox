@@ -65,6 +65,20 @@ export class SkyboxSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
+			.setName("Cover art")
+			.setDesc(
+				"Notes have no picture of their own, so the grid draws one — a gradient decided " +
+					"by the note's path, the same every time. Nothing is written to the vault, and " +
+					"a theme or snippet can restyle or hide it."
+			)
+			.addToggle((toggle) =>
+				toggle.setValue(this.plugin.settings.coverArt).onChange(async (value) => {
+					this.plugin.settings.coverArt = value;
+					await this.plugin.saveSettings();
+				})
+			);
+
+		new Setting(containerEl)
 			.setName("Columns on a phone")
 			.setDesc("How many columns the grid packs into on a phone, whichever way it is held.")
 			.addDropdown((dropdown) =>

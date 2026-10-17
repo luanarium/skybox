@@ -25,6 +25,7 @@ Community plugins. The same three files are what goes onto a phone.
 | `src/index.ts` | The in-memory index of notes and images, kept current by vault events |
 | `src/search.ts` | Chips, `prepareSimpleSearch` matching, excerpts |
 | `src/compact.ts` | The shortest-column compactor and the card geometry |
+| `src/cover.ts` | Which cover a note gets drawn, from its path |
 | `src/ingest.ts` | The one intake path: hash, dedupe, write |
 | `src/share.ts` | Mobile share intake and the bring-back |
 | `src/sidecar.ts` | `<name>.<ext>.md` beside an image: its tags and thoughts |
@@ -52,6 +53,16 @@ developer console previews the mobile layout.
 a shell, so these cover the modules that need no workspace — the compactor and card geometry, the
 sidecar and frontmatter rules, chips and search, and `ingest`'s duplicate branches against a fake
 vault. Everything about views, transitions and window chrome still has to be looked at in the app.
+
+## Cover art
+
+A note has no picture of its own, so the grid draws one: `src/cover.ts` hashes the note's path with
+FNV-1a and takes a palette and a shape from different slices of the hash, and `styles.css` holds
+both — eight palettes, four shapes, built from CSS gradients. So the same note looks the same on
+every machine and every rebuild, nothing is written into the vault, and a theme or a snippet can
+restyle or hide the lot. **Cover art** in the settings turns it off for anyone who wants the words
+alone. The overlays are plain black and white at low opacity rather than mixes of the palette, which
+keeps them working on an older Android WebView.
 
 ## The expanded note
 

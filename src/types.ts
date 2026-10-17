@@ -34,6 +34,8 @@ export interface SkyboxSettings {
 	mobileColumns: "auto" | "1" | "2";
 	/** Light or dark for the pane alone, or whatever Obsidian is wearing. */
 	theme: "follow" | "dark" | "light";
+	/** Draw a cover for cards that have no picture of their own. */
+	coverArt: boolean;
 }
 
 export const DEFAULT_SETTINGS: SkyboxSettings = {
@@ -44,6 +46,7 @@ export const DEFAULT_SETTINGS: SkyboxSettings = {
 	focusEditor: false,
 	mobileColumns: "auto",
 	theme: "follow",
+	coverArt: true,
 };
 
 export const VIEW_TYPE_SKYBOX = "skybox-search-view";

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useSkybox } from "../context";
+import { coverClass } from "../cover";
 import { plainExcerpt } from "../search";
 import type { Item } from "../types";
 
@@ -19,7 +20,7 @@ interface CardProps {
 }
 
 export function Card({ item, index, named, fresh, dropped, onOpen, onMenu }: CardProps) {
-	const { app, index: vaultIndex } = useSkybox();
+	const { app, index: vaultIndex, settings } = useSkybox();
 	const [excerpt, setExcerpt] = useState("");
 
 	useEffect(() => {
@@ -93,6 +94,10 @@ export function Card({ item, index, named, fresh, dropped, onOpen, onMenu }: Car
 				}
 			}}
 		>
+			{item.kind === "note" && settings.coverArt && (
+				// Decoration, not content: the title below says what this is.
+				<div className={coverClass(item.id)} aria-hidden="true" />
+			)}
 			{item.kind === "image" && (
 				<img
 					className="skybox-card-image"

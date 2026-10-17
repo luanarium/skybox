@@ -1004,3 +1004,117 @@ body.skybox-standalone .titlebar-button-container:focus-within {
 	border-left: none;
 	border-top: 1px solid var(--background-modifier-border);
 }
+
+/* ---- cover art --------------------------------------------------- */
+
+/*
+ * A note has no picture, so one is drawn for it: a palette and a shape
+ * chosen from the note's path in `src/cover.ts`, and both of them here, so
+ * a theme or a snippet can restyle the lot. The overlays are plain black
+ * and white at low opacity rather than mixes of the palette, so they hold
+ * up on an older Android WebView.
+ */
+.skybox-cover {
+	height: 120px;
+	flex: 0 0 auto;
+	background-color: var(--cover-2);
+	background-image: linear-gradient(
+		to bottom,
+		var(--cover-1),
+		var(--cover-2) 52%,
+		var(--cover-3)
+	);
+}
+
+.skybox-cover.is-palette-0 {
+	--cover-1: #1c2440;
+	--cover-2: #c46c54;
+	--cover-3: #f2cea0;
+}
+
+.skybox-cover.is-palette-1 {
+	--cover-1: #101c36;
+	--cover-2: #2c4e80;
+	--cover-3: #9ec0d6;
+}
+
+.skybox-cover.is-palette-2 {
+	--cover-1: #f6f2ea;
+	--cover-2: #d6c6ac;
+	--cover-3: #786858;
+}
+
+.skybox-cover.is-palette-3 {
+	--cover-1: #fceeba;
+	--cover-2: #f4a236;
+	--cover-3: #be5620;
+}
+
+.skybox-cover.is-palette-4 {
+	--cover-1: #163034;
+	--cover-2: #427870;
+	--cover-3: #b6cebe;
+}
+
+.skybox-cover.is-palette-5 {
+	--cover-1: #120e1e;
+	--cover-2: #7c3078;
+	--cover-3: #ec5c88;
+}
+
+.skybox-cover.is-palette-6 {
+	--cover-1: #1a2a1e;
+	--cover-2: #4a7044;
+	--cover-3: #b6c896;
+}
+
+.skybox-cover.is-palette-7 {
+	--cover-1: #e2c6b0;
+	--cover-2: #b67e60;
+	--cover-3: #704434;
+}
+
+/* Two hills against the sky, the way the demo images are built. */
+.skybox-cover.is-ridge {
+	background-image: radial-gradient(
+			120% 62% at 18% 128%,
+			rgba(0, 0, 0, 0.42) 60%,
+			transparent 61%
+		),
+		radial-gradient(130% 70% at 88% 132%, rgba(0, 0, 0, 0.26) 60%, transparent 61%),
+		linear-gradient(to bottom, var(--cover-1), var(--cover-2) 52%, var(--cover-3));
+}
+
+.skybox-cover.is-bands {
+	background-image: repeating-linear-gradient(
+			to bottom,
+			rgba(255, 255, 255, 0.12) 0 5px,
+			transparent 5px 24px
+		),
+		linear-gradient(to bottom, var(--cover-1), var(--cover-2) 52%, var(--cover-3));
+}
+
+.skybox-cover.is-arcs {
+	background-image: repeating-radial-gradient(
+			circle at 26% 118%,
+			rgba(255, 255, 255, 0.16) 0 2px,
+			transparent 2px 28px
+		),
+		linear-gradient(to bottom, var(--cover-1), var(--cover-2) 52%, var(--cover-3));
+}
+
+.skybox-cover.is-circles {
+	background-image: radial-gradient(
+			circle at 72% 34%,
+			rgba(255, 255, 255, 0.2) 0 16%,
+			transparent 17%
+		),
+		radial-gradient(circle at 30% 64%, rgba(255, 255, 255, 0.16) 0 22%, transparent 23%),
+		radial-gradient(circle at 54% 88%, rgba(255, 255, 255, 0.12) 0 14%, transparent 15%),
+		linear-gradient(to bottom, var(--cover-1), var(--cover-2) 52%, var(--cover-3));
+}
+
+/* Shorter where a column is narrow, so a cover never outweighs its words. */
+.is-mobile .skybox-cover {
+	height: 96px;
+}

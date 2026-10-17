@@ -92,7 +92,7 @@ export function Masonry({ items, children }: MasonryProps) {
 				x: 0,
 				y: position,
 				w: 1,
-				h: rowsFor(heights[item.id] ?? estimateHeight(item)),
+				h: rowsFor(heights[item.id] ?? estimateHeight(item, settings.coverArt)),
 			})),
 		[items, heights]
 	);
