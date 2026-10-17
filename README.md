@@ -56,13 +56,22 @@ vault. Everything about views, transitions and window chrome still has to be loo
 
 ## Cover art
 
-A note has no picture of its own, so the grid draws one: `src/cover.ts` hashes the note's path with
-FNV-1a and takes a palette and a shape from different slices of the hash, and `styles.css` holds
-both — eight palettes, four shapes, built from CSS gradients. So the same note looks the same on
-every machine and every rebuild, nothing is written into the vault, and a theme or a snippet can
-restyle or hide the lot. **Cover art** in the settings turns it off for anyone who wants the words
-alone. The overlays are plain black and white at low opacity rather than mixes of the palette, which
-keeps them working on an older Android WebView.
+A note has no picture of its own, so the grid draws one. `src/cover.ts` hashes the note's path and
+reads a palette and a shape out of it — eight palettes, four shapes, all in `styles.css` as CSS
+gradients — and then nudges both: the hue turned a few degrees, the light lifted or dropped, the
+shape moved along the horizon, spaced, tilted and scaled. Those nudges ride down as custom
+properties and every gradient reads them with a fallback, so the bounds live in one place and a
+cover still draws without them. Thirty-two looks become a fingerprint: the demo vault's 24 notes
+share 17 palette-and-shape combinations but no two covers alike.
+
+The hash is FNV-1a with murmur3's finalizer over the top. Without that last step its low bits are
+not independent — a multiply's low bits come only from its inputs' low bits — and every note's
+shape came out as its palette plus two. `tests/cover.test.ts` is what caught it.
+
+The same note is drawn the same way on every machine and every rebuild, nothing is written into the
+vault, and a theme or a snippet can restyle or hide the lot. **Cover art** in the settings turns it
+off for anyone who wants the words alone. The overlays are plain black and white at low opacity
+rather than mixes of the palette, which keeps them working on an older Android WebView.
 
 ## The expanded note
 

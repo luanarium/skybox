@@ -1024,6 +1024,8 @@ body.skybox-standalone .titlebar-button-container:focus-within {
 		var(--cover-2) 52%,
 		var(--cover-3)
 	);
+	/* The nudges `src/cover.ts` hands down, bounded there, not here. */
+	filter: hue-rotate(var(--cover-turn, 0deg)) brightness(var(--cover-lift, 1));
 }
 
 .skybox-cover.is-palette-0 {
@@ -1075,42 +1077,57 @@ body.skybox-standalone .titlebar-button-container:focus-within {
 }
 
 /* Two hills against the sky, the way the demo images are built. */
+/* Two hills, moved along the horizon and sized by the path's own numbers. */
 .skybox-cover.is-ridge {
 	background-image: radial-gradient(
-			120% 62% at 18% 128%,
+			calc(120% * var(--cover-scale, 1)) calc(62% * var(--cover-scale, 1)) at
+				var(--cover-x, 18%) var(--cover-y, 128%),
 			rgba(0, 0, 0, 0.42) 60%,
 			transparent 61%
 		),
-		radial-gradient(130% 70% at 88% 132%, rgba(0, 0, 0, 0.26) 60%, transparent 61%),
+		radial-gradient(
+			calc(130% * var(--cover-scale, 1)) calc(70% * var(--cover-scale, 1)) at
+				calc(var(--cover-x, 18%) + 62%) calc(var(--cover-y, 128%) + 6%),
+			rgba(0, 0, 0, 0.26) 60%,
+			transparent 61%
+		),
 		linear-gradient(to bottom, var(--cover-1), var(--cover-2) 52%, var(--cover-3));
 }
 
 .skybox-cover.is-bands {
 	background-image: repeating-linear-gradient(
-			to bottom,
+			calc(180deg + var(--cover-tilt, 0deg)),
 			rgba(255, 255, 255, 0.12) 0 5px,
-			transparent 5px 24px
+			transparent 5px var(--cover-step, 24px)
 		),
 		linear-gradient(to bottom, var(--cover-1), var(--cover-2) 52%, var(--cover-3));
 }
 
 .skybox-cover.is-arcs {
 	background-image: repeating-radial-gradient(
-			circle at 26% 118%,
+			circle at var(--cover-x, 26%) var(--cover-y, 118%),
 			rgba(255, 255, 255, 0.16) 0 2px,
-			transparent 2px 28px
+			transparent 2px calc(var(--cover-step, 28px) * var(--cover-scale, 1))
 		),
 		linear-gradient(to bottom, var(--cover-1), var(--cover-2) 52%, var(--cover-3));
 }
 
 .skybox-cover.is-circles {
 	background-image: radial-gradient(
-			circle at 72% 34%,
-			rgba(255, 255, 255, 0.2) 0 16%,
-			transparent 17%
+			circle at var(--cover-x, 72%) 34%,
+			rgba(255, 255, 255, 0.2) 0 calc(16% * var(--cover-scale, 1)),
+			transparent calc(17% * var(--cover-scale, 1))
 		),
-		radial-gradient(circle at 30% 64%, rgba(255, 255, 255, 0.16) 0 22%, transparent 23%),
-		radial-gradient(circle at 54% 88%, rgba(255, 255, 255, 0.12) 0 14%, transparent 15%),
+		radial-gradient(
+			circle at calc(100% - var(--cover-x, 72%)) 64%,
+			rgba(255, 255, 255, 0.16) 0 calc(22% * var(--cover-scale, 1)),
+			transparent calc(23% * var(--cover-scale, 1))
+		),
+		radial-gradient(
+			circle at 54% 88%,
+			rgba(255, 255, 255, 0.12) 0 calc(14% * var(--cover-scale, 1)),
+			transparent calc(15% * var(--cover-scale, 1))
+		),
 		linear-gradient(to bottom, var(--cover-1), var(--cover-2) 52%, var(--cover-3));
 }
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useSkybox } from "../context";
-import { coverClass } from "../cover";
+import { coverClass, coverVars } from "../cover";
 import { plainExcerpt } from "../search";
 import type { Item } from "../types";
 
@@ -96,7 +96,11 @@ export function Card({ item, index, named, fresh, dropped, onOpen, onMenu }: Car
 		>
 			{item.kind === "note" && settings.coverArt && (
 				// Decoration, not content: the title below says what this is.
-				<div className={coverClass(item.id)} aria-hidden="true" />
+				<div
+					className={coverClass(item.id)}
+					style={coverVars(item.id) as React.CSSProperties}
+					aria-hidden="true"
+				/>
 			)}
 			{item.kind === "image" && (
 				<img
