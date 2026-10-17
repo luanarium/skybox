@@ -145,7 +145,7 @@ function extensionOf(name: string): string {
 	return dot === -1 ? "" : name.slice(dot + 1).toLowerCase();
 }
 
-async function ensureFolder(app: App, folder: string): Promise<string> {
+export async function ensureFolder(app: App, folder: string): Promise<string> {
 	const path = normalizePath(folder || "/");
 	if (path === "/" || path === "") return "";
 	const existing = app.vault.getAbstractFileByPath(path);

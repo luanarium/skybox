@@ -23,6 +23,11 @@ other way of looking at them, and it writes nothing of its own to make that work
   of a browser window, and they are taken into the vault, hashed, and shown as cards. A file whose
   contents are already in the vault asks before it writes a second copy. On a phone, anything shared
   to Obsidian arrives the same way.
+- **Bookmarks arrive on their own.** Bookmark a page in your browser the way you always have, and
+  Skybox writes a note for it while Obsidian is open. It reads the one file Chromium browsers keep
+  their bookmarks in, with no extension and no server, and only ever adds: curating happens in the
+  vault, where searching is better than any browser's bookmark manager. Desktop only, off until you
+  turn it on.
 - **Images are things you kept, not attachments.** Every image gets a card with a sidecar note for
   its tags and thoughts, so Obsidian's own tag pane sees them. An image a *note* embeds belongs to
   that note, so it stays out of the everything view until you search for it.
@@ -86,6 +91,7 @@ releases on startup, so a new version arrives on its own.
 | `src/cover.ts` | Which cover a note gets drawn, from its path |
 | `src/autoname.ts` | Naming a new note after its first line |
 | `src/ignore.ts` | Folders the index leaves alone |
+| `src/bookmarks.ts` | Reading the browser's bookmarks file into notes |
 | `src/ingest.ts` | The one intake path: hash, dedupe, write |
 | `src/share.ts` | Mobile share intake and the bring-back |
 | `src/sidecar.ts` | `<name>.<ext>.md` beside an image: its tags and thoughts |
@@ -113,6 +119,30 @@ developer console previews the mobile layout.
 a shell, so these cover the modules that need no workspace: the compactor and card geometry, the
 sidecar and frontmatter rules, chips and search, and `ingest`'s duplicate branches against a fake
 vault. Everything about views, transitions and window chrome still has to be looked at in the app.
+
+## Browser bookmarks
+
+Chromium browsers keep their bookmarks in one JSON file and rewrite it whenever one changes, so
+`src/bookmarks.ts` reads that file and writes a note for every bookmark the vault has not got yet:
+the URL and the date in frontmatter, the browser's folder names as tags. It looks on load, when the
+window comes back to the front, and every five minutes, and an unchanged file costs one `stat`.
+Deduplication is by the `url` in frontmatter, read through the metadata cache, so a note moved or
+renamed still counts as imported and nothing arrives twice.
+
+Why the file rather than something tidier: Brave's own sync is end-to-end encrypted between Brave
+installs with nothing for a third party to hook, and `chrome.bookmarks` belongs to extensions, which
+would need somewhere to send what they read. The file is the only route with no server and no
+extension in it.
+
+That means Node's `fs` and a path outside the vault, which is the second place this plugin steps
+outside Obsidian's API and the browser, and a larger step than the first. So it is off until it is
+switched on, the path is shown in the settings and editable rather than discovered silently, nothing
+is read but that one file, and the whole thing is desktop only: on a phone the import does not
+exist. The parsing is pure and tested headlessly in `tests/bookmarks.test.ts`, including the
+microseconds-since-1601 timestamps Chromium writes.
+
+It is one way and additive. A bookmark deleted in the browser leaves its note alone, because the
+vault is where curating happens.
 
 ## Images a note embeds
 

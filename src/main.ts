@@ -1,6 +1,7 @@
 import { Platform, Plugin, setIcon, TFile, type WorkspaceLeaf } from "obsidian";
 import { isBorrowing } from "./borrowed";
 import { Autonamer } from "./autoname";
+import { BookmarkImport } from "./bookmarks";
 import { Bus } from "./bus";
 import { VaultIndex } from "./index";
 import { SkyboxSettingTab } from "./settings";
@@ -10,18 +11,23 @@ import { DEFAULT_SETTINGS, VIEW_TYPE_SKYBOX, type SkyboxSettings } from "./types
 import { SkyboxView } from "./view";
 import { hasWindowHandle, startWindowDrag, toggleMaximize } from "./window";
 
+/** How often a window left open looks at the bookmarks file. */
+const BOOKMARK_INTERVAL = 5 * 60 * 1000;
+
 export default class SkyboxPlugin extends Plugin {
 	settings: SkyboxSettings = { ...DEFAULT_SETTINGS };
 	index!: VaultIndex;
 	bus!: Bus;
 	private share!: ShareIntake;
 	private autoname!: Autonamer;
+	bookmarks!: BookmarkImport;
 	private backEl: HTMLElement | null = null;
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
 		this.index = new VaultIndex(this.app, this.settings);
 		this.autoname = new Autonamer(this.app, this.settings);
+		this.bookmarks = new BookmarkImport(this.app, this.settings);
 		this.register(() => this.autoname.dispose());
 		this.bus = new Bus();
 		this.share = new ShareIntake(
@@ -73,6 +79,18 @@ export default class SkyboxPlugin extends Plugin {
 			// Tags and headings read as empty until the cache has resolved, so
 			// the index is taken again once it has.
 			this.registerEvent(this.app.metadataCache.on("resolved", () => this.index.build()));
+
+			/*
+			 * Bookmarking stays what it was: the browser writes its file, and
+			 * the vault picks new ones up while Obsidian is open. On load,
+			 * when the window comes back to the front, and on a slow timer
+			 * for a window left open all day. An unchanged file costs a stat.
+			 */
+			void this.bookmarks.sync();
+			this.registerEvent(this.app.workspace.on("active-leaf-change", () => void this.bookmarks.sync()));
+			this.registerInterval(
+				window.setInterval(() => void this.bookmarks.sync(), BOOKMARK_INTERVAL)
+			);
 			// A theme or snippet change rewrites what the pane reads its own
 			// colours out of.
 			this.registerEvent(

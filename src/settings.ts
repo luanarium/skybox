@@ -1,4 +1,5 @@
 import { PluginSettingTab, Setting, type App } from "obsidian";
+import { BookmarkImport, findBookmarkFiles } from "./bookmarks";
 import type SkyboxPlugin from "./main";
 import { hasWindowHandle } from "./window";
 
@@ -8,6 +9,79 @@ export class SkyboxSettingTab extends PluginSettingTab {
 		private plugin: SkyboxPlugin
 	) {
 		super(app, plugin);
+	}
+
+	/**
+	 * Reading the browser's bookmarks file is the one thing here that reaches
+	 * outside the vault, so it says so, shows the path it would read, and
+	 * stays off until it is switched on.
+	 */
+	private bookmarkSettings(containerEl: HTMLElement): void {
+		if (!BookmarkImport.available()) {
+			new Setting(containerEl)
+				.setName("Browser bookmarks")
+				.setDesc(
+					"Importing bookmarks reads a file on the computer, which a phone has no way " +
+						"to do. This setting appears on desktop."
+				);
+			return;
+		}
+
+		new Setting(containerEl)
+			.setName("Browser bookmarks")
+			.setDesc(
+				"Bookmark pages in your browser as you always have, and Skybox writes a note for " +
+					"each new one while Obsidian is open. It reads one file, the Chromium " +
+					"bookmarks file named below, and nothing else; it only ever adds, so a " +
+					"bookmark deleted in the browser leaves its note where it is."
+			)
+			.addToggle((toggle) =>
+				toggle.setValue(this.plugin.settings.bookmarksEnabled).onChange(async (value) => {
+					this.plugin.settings.bookmarksEnabled = value;
+					if (value && !this.plugin.settings.bookmarksPath) {
+						this.plugin.settings.bookmarksPath = findBookmarkFiles()[0] ?? "";
+					}
+					await this.plugin.saveSettings();
+					this.display();
+					if (value) void this.plugin.bookmarks.syncAloud();
+				})
+			);
+
+		if (!this.plugin.settings.bookmarksEnabled) return;
+
+		const found = findBookmarkFiles();
+		new Setting(containerEl)
+			.setName("Bookmarks file")
+			.setDesc(
+				found.length > 0
+					? `Found on this computer: ${found.join(", ")}`
+					: "No Chromium bookmarks file turned up in the usual places. Paste the path to one."
+			)
+			.addText((text) =>
+				text
+					.setPlaceholder("~/.config/BraveSoftware/Brave-Browser/Default/Bookmarks")
+					.setValue(this.plugin.settings.bookmarksPath)
+					.onChange(async (value) => {
+						this.plugin.settings.bookmarksPath = value;
+						await this.plugin.saveSettings();
+					})
+			)
+			.addButton((button) =>
+				button.setButtonText("Sync now").onClick(() => void this.plugin.bookmarks.syncAloud())
+			);
+
+		new Setting(containerEl)
+			.setName("Bookmarks folder")
+			.setDesc("Where bookmark notes are written. The vault root if this is empty.")
+			.addText((text) =>
+				text
+					.setPlaceholder("bookmarks")
+					.setValue(this.plugin.settings.bookmarksFolder)
+					.onChange(async (value) => {
+						this.plugin.settings.bookmarksFolder = value;
+						await this.plugin.saveSettings();
+					})
+			);
 	}
 
 	display(): void {
@@ -63,6 +137,8 @@ export class SkyboxSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					})
 			);
+
+		this.bookmarkSettings(containerEl);
 
 		new Setting(containerEl)
 			.setName("Images embedded in notes")

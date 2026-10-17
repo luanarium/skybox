@@ -44,6 +44,12 @@ export interface SkyboxSettings {
 	ignoredFolders: string;
 	/** Keep images that notes embed out of the grid until something is searched. */
 	hideEmbedded: boolean;
+	/** Read the browser's bookmarks file and write a note for each one. */
+	bookmarksEnabled: boolean;
+	/** The Chromium bookmarks file to read; `~` is expanded. */
+	bookmarksPath: string;
+	/** Where bookmark notes are written. */
+	bookmarksFolder: string;
 }
 
 export const DEFAULT_SETTINGS: SkyboxSettings = {
@@ -58,6 +64,9 @@ export const DEFAULT_SETTINGS: SkyboxSettings = {
 	nameFromFirstLine: true,
 	ignoredFolders: "",
 	hideEmbedded: true,
+	bookmarksEnabled: false,
+	bookmarksPath: "",
+	bookmarksFolder: "bookmarks",
 };
 
 /** The tag an image gets for being embedded in a note; nothing writes it. */
