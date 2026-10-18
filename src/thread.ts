@@ -36,8 +36,6 @@ export interface Thread {
 	with: string;
 	messages: ThreadMessage[];
 	unread: boolean;
-	/** The other party's picture, where the backend offers one. */
-	avatar?: string;
 }
 
 /** The tag every thread note carries, so the grid can ask for them. */
@@ -56,7 +54,6 @@ export function threadNote(thread: Thread): string {
 		`thread_id: ${yamlValue(thread.id)}`,
 		`thread_source: ${thread.source}`,
 		`thread_with: ${yamlValue(thread.with)}`,
-		...(thread.avatar ? [`thread_avatar: ${yamlValue(thread.avatar)}`] : []),
 		`subject: ${yamlValue(thread.subject || "(no subject)")}`,
 		`updated: ${stamp(lastAt(thread))}`,
 		// What a reply answers. Without it a reply starts its own thread at

@@ -39,7 +39,6 @@ export function MailOverlay({ item, onClose }: MailOverlayProps) {
 	// The id a reply answers, which the note carries because the messages in
 	// its body do not.
 	const lastId = String(front.thread_last ?? "");
-	const avatar = typeof front.thread_avatar === "string" ? front.thread_avatar : "";
 	const thread = useMemo<Thread>(
 		() => ({
 			id: String(front.thread_id ?? ""),
@@ -146,22 +145,8 @@ export function MailOverlay({ item, onClose }: MailOverlayProps) {
 
 					<div className="mail-body">
 						<div className="mail-with">
-							{/*
-							 * The square a buddy icon goes in, kept whether or
-							 * not the backend has one: an instant message
-							 * window has always had a face in the corner.
-							 */}
-							<span className="mail-buddy">
-								{avatar ? (
-									<img src={avatar} alt="" loading="lazy" />
-								) : (
-									<span className="mail-buddy-blank">{initial(thread.with)}</span>
-								)}
-							</span>
-							<span className="mail-with-text">
-								{thread.source === "mastodon" ? "Instant message with" : "Conversation with"}
-								<strong>{thread.with}</strong>
-							</span>
+							{thread.source === "mastodon" ? "Direct message with" : "Conversation with"}{" "}
+							<strong>{thread.with}</strong>
 						</div>
 
 						<ol className="mail-thread">
@@ -171,7 +156,7 @@ export function MailOverlay({ item, onClose }: MailOverlayProps) {
 									className={message.mine ? "is-mine" : ""}
 								>
 									<div className="mail-message-head">
-										<span className="mail-who">{shortName(message.who)}:</span>
+										<span className="mail-who">{message.who}</span>
 										<time dateTime={new Date(message.at).toISOString()}>
 											{when(message.at)}
 										</time>
@@ -220,15 +205,8 @@ export function MailOverlay({ item, onClose }: MailOverlayProps) {
 								}}
 							/>
 							<div className="mail-send">
-								<button
-									className="mail-send-button"
-									disabled={sending}
-									onClick={() => void send()}
-								>
-									<span className="mail-send-hand" aria-hidden="true">
-										☛
-									</span>
-									<span className="mail-send-word">{sending ? "Sending" : "Send"}</span>
+								<button disabled={sending} onClick={() => void send()}>
+									{sending ? "Sending…" : "Send"}
 								</button>
 							</div>
 						</div>
@@ -247,18 +225,6 @@ export function cleanHtml(html: string): string {
 		.replace(/<div>/gi, "<p>")
 		.replace(/<\/div>/gi, "</p>")
 		.trim();
-}
-
-/** `Ada <ada@example.org>` reads as `Ada` once you know who you are talking to. */
-export function shortName(who: string): string {
-	const named = /^([^<]+)</.exec(who);
-	if (named) return named[1].trim();
-	const handle = /@([^>\s]+)/.exec(who);
-	return handle ? handle[1].split("@")[0] : who;
-}
-
-function initial(who: string): string {
-	return (shortName(who).trim()[0] ?? "?").toUpperCase();
 }
 
 function when(at: number): string {

@@ -353,12 +353,8 @@ a directory on a computer.
 ### The window
 
 The thread opens in XP's chrome rather than Obsidian's, because a conversation that came from mail
-should look like mail. On a phone it takes the shape an instant message window had: the whole
-screen in portrait, a square in the corner for the other party's picture, each line opening with
-who said it in their own colour, and Send at the bottom right under a hand pointing at it. The
-chrome is the vendored XP slice; the arrangement is AIM's, drawn here rather than copied, and the
-menu bar full of File and Insert is left in 2003 where it belongs. Messages run oldest first, each
-with who said it and when. The composer is a `contenteditable` with bold and italic, so
+should look like mail. Messages run oldest first, each with who said it and when, yours shaded
+against the window's own paper. The composer is a `contenteditable` with bold and italic, so
 emphasis happens where you are typing rather than as markup you type around, and what it sends is
 `multipart/alternative`: your words as plain text, and the same words with the emphasis as HTML.
 What a reply may carry is deliberately small, just emphasis, breaks and links, so nothing a composer

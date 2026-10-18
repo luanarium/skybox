@@ -29,7 +29,7 @@ interface RawStatus {
 interface RawConversation {
 	id?: string;
 	unread?: boolean;
-	accounts?: { acct?: string; display_name?: string; avatar_static?: string }[];
+	accounts?: { acct?: string; display_name?: string }[];
 	last_status?: RawStatus;
 }
 
@@ -111,8 +111,6 @@ export class DirectMessages {
 				with: partyOf(conversation),
 				messages,
 				unread: Boolean(conversation.unread),
-				// The buddy icon, which is what the window keeps a square for.
-				avatar: conversation.accounts?.[0]?.avatar_static,
 			};
 
 			const existing = this.noteFor(thread.id, folder);
