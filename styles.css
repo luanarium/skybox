@@ -1823,3 +1823,160 @@ body.skybox-standalone .titlebar-button-container:focus-within {
 	border-radius: 0;
 	box-shadow: none;
 }
+
+/* ---- the instant message window ---------------------------------- *
+ *
+ * Taken from an AIM 5.9 window: the white page with each line opening
+ * in the speaker's own colour, a square for a buddy icon, and Send in
+ * the corner under a pointing hand. The chrome around it is the XP
+ * slice above; what is drawn here is what XP.css has no part for.
+ * Nothing of AIM's own art is copied, only its arrangement.
+ * ------------------------------------------------------------------ */
+
+.skybox-mail .mail-with {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.skybox-mail .mail-with-text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	line-height: 1.3;
+}
+
+.skybox-mail .mail-with-text strong {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.skybox-mail .mail-buddy {
+	flex: 0 0 auto;
+	width: 48px;
+	height: 48px;
+	overflow: hidden;
+	border: 1px solid #7f9db9;
+	background: #fff;
+	box-shadow: inset -1px -1px #e8e6dc, inset 1px 1px #aca899;
+}
+
+.skybox-mail .mail-buddy img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.skybox-mail .mail-buddy-blank {
+	display: grid;
+	width: 100%;
+	height: 100%;
+	place-items: center;
+	background: linear-gradient(180deg, #fdfdfb, #e9e7dc);
+	color: #7a7a70;
+	font-family: "Trebuchet MS", Tahoma, sans-serif;
+	font-size: 22px;
+	font-weight: 700;
+}
+
+/* Each line opens with who said it, in their own colour, as AIM did. */
+.skybox-mail .mail-thread li {
+	padding: 4px 8px;
+	border-bottom: none;
+}
+
+.skybox-mail .mail-message-head {
+	display: inline;
+	margin: 0;
+}
+
+.skybox-mail .mail-who {
+	color: #0000c0;
+	font-weight: 700;
+}
+
+.skybox-mail .mail-thread li.is-mine {
+	background: transparent;
+}
+
+.skybox-mail .mail-thread li.is-mine .mail-who {
+	color: #c00000;
+}
+
+.skybox-mail .mail-message-head time {
+	margin-left: 6px;
+	color: #9a9a92;
+	font-size: 10px;
+}
+
+.skybox-mail .mail-thread p {
+	display: inline;
+	margin-left: 4px;
+}
+
+/* Send, bottom right, under a hand that points at it. */
+.skybox-mail .mail-send-button {
+	display: flex;
+	min-width: 64px;
+	flex-direction: column;
+	align-items: center;
+	gap: 1px;
+	padding: 4px 10px 3px;
+	line-height: 1;
+}
+
+.skybox-mail .mail-send-hand {
+	font-size: 15px;
+	color: #4a4a44;
+}
+
+.skybox-mail .mail-send-word {
+	color: #b00000;
+	font-weight: 700;
+	font-size: 11px;
+	border-bottom: 2px solid #b00000;
+}
+
+.skybox-mail .mail-send-button:disabled .mail-send-word {
+	color: #8d8d86;
+	border-bottom-color: #8d8d86;
+}
+
+/*
+ * Portrait: the window fills the phone, the thread takes what is left
+ * after the buddy icon and the composer, and the keyboard pushes
+ * nothing off the bottom because nothing is pinned there.
+ */
+.is-mobile .skybox-mail .mail-window {
+	border-top-left-radius: 0;
+	border-top-right-radius: 0;
+	padding-bottom: 0;
+}
+
+.is-mobile .skybox-mail .mail-title-bar {
+	border-radius: 0;
+}
+
+.is-mobile .skybox-mail .mail-body {
+	margin: 6px;
+	gap: 6px;
+}
+
+.is-mobile .skybox-mail .mail-buddy {
+	width: 40px;
+	height: 40px;
+}
+
+.is-mobile .skybox-mail .mail-write {
+	min-height: 64px;
+	max-height: 35vh;
+}
+
+.is-mobile .skybox-mail .mail-composer {
+	padding-bottom: calc(6px + var(--keyboard-height, 0px));
+}
+
+.is-mobile .skybox-mail .mail-tools {
+	flex-wrap: wrap;
+}
