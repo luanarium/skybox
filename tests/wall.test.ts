@@ -6,6 +6,8 @@ import {
 	wallSourceOf,
 	wallTag,
 	isKeptPost,
+	frontFromText,
+	quoteIds,
 	WALL_FOLLOWS,
 	WALL_PREFIX,
 } from "../src/wall";
@@ -71,7 +73,7 @@ assert.deepStrictEqual(narrowWall(posts, [toChip("someone")!], "tea").map((each)
 // conversation needs.
 const note = keptNote(post("9", "a pot of oolong", ["tea", "pottery"], ["https://example.social/p.jpg"]));
 assert.ok(note.includes("source: https://example.social/@someone/9"), note);
-assert.ok(note.includes("mastodon_id: 9"), note);
+assert.ok(note.includes('mastodon_id: "9"'), note);
 assert.ok(note.includes("image: https://example.social/p.jpg"), note);
 assert.ok(note.includes("  - wall"), note);
 assert.ok(note.includes("  - tea"), note);
@@ -118,3 +120,43 @@ assert.strictEqual(
 assert.strictEqual(isKeptPost({ tags: ["wall"] }), false, "no status, no post");
 assert.strictEqual(isKeptPost(undefined), false);
 assert.strictEqual(isKeptPost({}), false);
+
+// A status id is eighteen digits, which is more than a number holds exactly,
+// so it has to come back as the digits that were written.
+const big = post("115398012345678901", "oolong, slowly", ["tea"]);
+const bigNote = keptNote(big);
+assert.ok(bigNote.includes('mastodon_id: "115398012345678901"'), "the id is quoted");
+const read = frontFromText(bigNote);
+assert.strictEqual(read.mastodon_id, "115398012345678901");
+assert.strictEqual(read.mastodon_account, "acc1");
+assert.deepStrictEqual(read.tags, ["wall", "tea"]);
+assert.strictEqual(read.source, big.url);
+
+// And the note reads back whole even before Obsidian has parsed it, which is
+// what kept a post opened a moment after keeping from coming up blank.
+const uncached = postFromNote({}, bigNote);
+assert.ok(uncached, "a note is enough on its own");
+assert.strictEqual(uncached.id, "115398012345678901");
+assert.strictEqual(uncached.accountId, "acc1");
+assert.strictEqual(uncached.text, "oolong, slowly");
+assert.notStrictEqual(
+	String(Number(uncached.id)),
+	uncached.id,
+	"the point being that a number could not have carried it"
+);
+
+// Nothing before the words is nothing to read.
+assert.deepStrictEqual(frontFromText("no properties here"), {});
+
+// A post kept before the ids were quoted is put right where it is found, and
+// one kept since is left alone.
+const bare = bigNote
+	.replace('mastodon_id: "115398012345678901"', "mastodon_id: 115398012345678901")
+	.replace('mastodon_account: "acc1"', "mastodon_account: acc1");
+const put = quoteIds(bare);
+assert.ok(put, "bare ids are something to put right");
+assert.ok(put.includes('mastodon_id: "115398012345678901"'));
+assert.ok(put.includes('mastodon_account: "acc1"'));
+assert.strictEqual(put.split("---\n")[2], bare.split("---\n")[2], "the words are untouched");
+assert.strictEqual(quoteIds(bigNote), null, "nothing to do is nothing written");
+assert.strictEqual(quoteIds("no properties here"), null);

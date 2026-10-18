@@ -4,7 +4,7 @@ import { useSkybox } from "../context";
 import { ensureFolder, noteTitle, uniquePath } from "../ingest";
 import type { WallPost } from "../mastodon";
 import type { Item } from "../types";
-import { postFromNote, WALL_TAG } from "../wall";
+import { postFromNote, quoteIds, WALL_TAG } from "../wall";
 import { guarded } from "../writes";
 import { Post } from "./Post";
 
@@ -37,6 +37,12 @@ export function WallOverlay({
 			if (!live) return;
 			const front = app.metadataCache.getFileCache(item.file)?.frontmatter ?? {};
 			setPost(postFromNote(front as Record<string, unknown>, body));
+			// Posts kept before the ids were quoted are put right in passing.
+			if (quoteIds(body)) {
+				void guarded(() =>
+					app.vault.process(item.file, (current) => quoteIds(current) ?? current)
+				);
+			}
 		});
 		return () => {
 			live = false;
@@ -108,10 +114,11 @@ export function keptNote(post: WallPost): string {
 		`source: ${post.url}`,
 		`author: ${quote(`@${post.handle}`)}`,
 		`created: ${new Date(post.at || Date.now()).toISOString().slice(0, 10)}`,
-		`mastodon_id: ${post.id}`,
+		// Quoted, because a status id is longer than YAML's numbers go.
+		`mastodon_id: "${post.id}"`,
 		`mastodon_url: ${post.url}`,
 	];
-	if (post.accountId) lines.push(`mastodon_account: ${post.accountId}`);
+	if (post.accountId) lines.push(`mastodon_account: "${post.accountId}"`);
 	if (post.media[0]) lines.push(`image: ${post.media[0]}`);
 	lines.push("tags:", `  - ${WALL_TAG}`);
 	for (const tag of post.tags) lines.push(`  - ${tag}`);

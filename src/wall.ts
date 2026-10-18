@@ -61,11 +61,78 @@ export function isKeptPost(front: Record<string, unknown> | undefined): boolean 
 	return tags.some((tag) => tag.replace(/^#/, "").toLowerCase() === WALL_TAG);
 }
 
+/**
+ * The properties out of the note's own text.
+ *
+ * Obsidian's cache is the usual way to read these and for a kept post it is
+ * the wrong way twice. It may not have parsed the note yet, which is why a
+ * post kept a moment ago came up blank, and YAML reads a status id as a
+ * number, which is longer than a number holds exactly: the last digits are
+ * rounded away and the thread is then asked for a status that does not exist.
+ * The text has the digits, so the text is what is read.
+ */
+export function frontFromText(text: string): Record<string, unknown> {
+	const block = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
+	if (!block) return {};
+	const front: Record<string, unknown> = {};
+	let list: string | null = null;
+	for (const line of block[1].split(/\r?\n/)) {
+		const item = /^\s*-\s+(.*)$/.exec(line);
+		if (item && list) {
+			(front[list] as string[]).push(unquote(item[1]));
+			continue;
+		}
+		const pair = /^([A-Za-z_][\w-]*):\s*(.*)$/.exec(line);
+		if (!pair) continue;
+		const [, key, value] = pair;
+		if (value.trim() === "") {
+			// A key with nothing after it opens a list.
+			list = key;
+			front[key] = [];
+		} else {
+			list = null;
+			front[key] = unquote(value.trim());
+		}
+	}
+	return front;
+}
+
+function unquote(value: string): string {
+	const text = value.trim();
+	if (text.length > 1 && (text[0] === '"' || text[0] === "'") && text.at(-1) === text[0]) {
+		return text.slice(1, -1).replace(/\\"/g, '"');
+	}
+	return text;
+}
+
+/**
+ * The same note with its ids quoted, or nothing if they already are.
+ *
+ * Skybox wrote the first kept posts with bare ids, and everything that reads
+ * those properties through Obsidian's cache, the unread tag among them, gets
+ * a rounded number back. Quoting the line changes no words and settles it.
+ */
+export function quoteIds(text: string): string | null {
+	const lines = text.split("\n");
+	if (lines[0]?.trim() !== "---") return null;
+	let changed = false;
+	for (let i = 1; i < lines.length; i++) {
+		if (lines[i].trim() === "---") break;
+		const pair = /^(mastodon_id|mastodon_account):[ \t]*(.+?)\s*$/.exec(lines[i]);
+		if (!pair || pair[2].startsWith('"') || pair[2].startsWith("'")) continue;
+		lines[i] = `${pair[1]}: "${pair[2]}"`;
+		changed = true;
+	}
+	return changed ? lines.join("\n") : null;
+}
+
 /** A kept post, read back from the note that kept it. */
 export function postFromNote(
-	front: Record<string, unknown>,
+	cached: Record<string, unknown>,
 	body: string
 ): WallPost | null {
+	// The note's own text wins wherever it says anything.
+	const front = { ...cached, ...frontFromText(body) };
 	const id = front.mastodon_id ? String(front.mastodon_id) : "";
 	if (!id) return null;
 	const handle = String(front.author ?? "").replace(/^@/, "");
