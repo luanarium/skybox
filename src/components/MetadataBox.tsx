@@ -4,6 +4,7 @@ import { useSkybox } from "../context";
 import { Conversation } from "./Conversation";
 import { Icon } from "./Icon";
 import { useBack } from "./useBack";
+import { clientFor } from "../sharing";
 import { unreadTotal } from "../mastodon";
 import { coverClass } from "../cover";
 import { coverLink, sameCover } from "../preview";
@@ -22,7 +23,7 @@ interface MetadataBoxProps {
 }
 
 export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: MetadataBoxProps) {
-	const { app, index, interactions } = useSkybox();
+	const { app, index, settings, interactions } = useSkybox();
 	const [draft, setDraft] = useState("");
 	/**
 	 * Shown straight away, then reconciled with the index: a tag written to
@@ -168,6 +169,14 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 	const [sheeted, setSheeted] = useState(false);
 	const [typingHere, setTypingHere] = useState(false);
 	/*
+	 * How many comments there are, which is what the button should say: the
+	 * thread is read once when the card opens and again when the panel
+	 * closes, since replying is the usual reason for the number to change.
+	 * Nested replies count too, so this is the thread rather than Mastodon's
+	 * own `replies_count`, which only counts what answers the post directly.
+	 */
+	const [comments, setComments] = useState<number | null>(null);
+	/*
 	 * Back closes the thread rather than the card it is drawn over, which
 	 * takes a modal standing in Obsidian's stack of closeable things. A modal
 	 * keeps focus to itself, though, so while the reply box has the cursor
@@ -176,6 +185,26 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 	 */
 	const closeSheet = useCallback(() => setSheeted(false), []);
 	useBack(app, sheeted && !typingHere, closeSheet);
+
+	useEffect(() => {
+		if (!statusId || !Platform.isMobile || sheeted) return;
+		const client = clientFor(app, settings);
+		if (!client) return;
+		let live = true;
+		void client
+			.replies(statusId)
+			.then((thread) => {
+				if (live) setComments(thread.length);
+			})
+			.catch(() => {
+				// A count nobody could fetch is a button that says Comments.
+				if (live) setComments(null);
+			});
+		return () => {
+			live = false;
+		};
+	}, [app, settings, statusId, sheeted]);
+
 	const waiting = statusId ? unreadTotal(interactions.unreadFor(statusId)) : 0;
 	/*
 	 * A shared card opens on its conversation, because that is the part that
@@ -192,7 +221,10 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 			{statusId && note && Platform.isMobile && (
 				<section className="skybox-meta-section">
 					<button className="skybox-thread-open" onClick={() => setSheeted(true)}>
-						{waiting > 0 ? `${waiting} ${waiting === 1 ? "comment" : "comments"}` : "Comments"}
+						{comments === null
+							? "Comments"
+							: `${comments} ${comments === 1 ? "comment" : "comments"}`}
+						{waiting > 0 ? " ·" : ""}
 					</button>
 				</section>
 			)}
@@ -217,7 +249,11 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 						>
 							<Icon name="arrow-left" />
 						</button>
-						<h2>{waiting > 0 ? `${waiting} ${waiting === 1 ? "comment" : "comments"}` : "Comments"}</h2>
+						<h2>
+							{comments === null
+								? "Comments"
+								: `${comments} ${comments === 1 ? "comment" : "comments"}`}
+						</h2>
 					</div>
 					<Conversation note={note} statusId={statusId} />
 				</div>
