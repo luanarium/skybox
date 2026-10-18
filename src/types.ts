@@ -70,7 +70,8 @@ export const DEFAULT_SETTINGS: SkyboxSettings = {
 	standalone: false,
 	expandOnShare: false,
 	focusEditor: false,
-	mobileColumns: "auto",
+	// A phone in the hand reads better as two columns than as one.
+	mobileColumns: "2",
 	theme: "follow",
 	coverArt: true,
 	nameFromFirstLine: true,
