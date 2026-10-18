@@ -63,3 +63,27 @@ assert.ok(!excerpt.includes("article itself"), excerpt);
 // words rather than as tags.
 const htmlish = plainExcerpt("Before.\n\n<div class=\"x\"><img src=\"a.png\"><p>After.</p></div>");
 assert.strictEqual(htmlish, "Before. After.", htmlish);
+
+// A `cover` property points at a file however it was written.
+import { coverLink, coverTarget, sameCover, webImage } from "../src/preview";
+
+assert.strictEqual(coverTarget("[[shots/a.png]]"), "shots/a.png");
+assert.strictEqual(coverTarget("![[a.png]]"), "a.png");
+assert.strictEqual(coverTarget("[[a.png|thumb]]"), "a.png");
+assert.strictEqual(coverTarget("[[a.png#top]]"), "a.png");
+assert.strictEqual(coverTarget("a.png"), "a.png");
+assert.strictEqual(coverTarget('"a.png"'), "a.png");
+assert.strictEqual(coverTarget("https://x.dev/a.png"), null, "a web address is not a vault file");
+assert.strictEqual(coverTarget(""), null);
+assert.strictEqual(coverTarget(undefined), null);
+
+assert.strictEqual(coverLink("shots/a.png"), "[[shots/a.png]]");
+
+// Matching tolerates the short form a link may have been written in.
+assert.ok(sameCover("[[shots/a.png]]", "shots/a.png"));
+assert.ok(sameCover("[[a.png]]", "shots/a.png"));
+assert.ok(!sameCover("[[b.png]]", "shots/a.png"));
+assert.ok(!sameCover(undefined, "shots/a.png"));
+
+assert.strictEqual(webImage("https://x.dev/a.png"), "https://x.dev/a.png");
+assert.strictEqual(webImage("a.png"), null);

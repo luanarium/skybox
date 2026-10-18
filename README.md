@@ -24,8 +24,8 @@ way of looking at them.
   vault.
 - **Images are notes too,** each with a sidecar beside it holding its tags and thoughts. An image a
   note embeds belongs to that note, and stays out of the way.
-- **Notes get cover art,** a gradient of their own drawn from the path, so the grid is not a wall of
-  words.
+- **Notes show what they hold.** A note that embeds an image puts the first one on its card, and the
+  right pane lets you pick another. A note with no picture draws one, a gradient of its own.
 - **Immersive.** Standalone mode gives the whole window to the pane, and the window controls hide
   until the pointer reaches the top.
 
@@ -81,6 +81,7 @@ releases on startup, so a new version arrives on its own.
 | `src/search.ts` | Chips, `prepareSimpleSearch` matching, excerpts |
 | `src/compact.ts` | The shortest-column compactor and the card geometry |
 | `src/cover.ts` | Which cover a note gets drawn, from its path |
+| `src/preview.ts` | Which picture a card shows, and the `cover` property |
 | `src/autoname.ts` | Naming a new note after its first line |
 | `src/ignore.ts` | Folders the index leaves alone |
 | `src/bookmarks.ts` | Reading the browser's bookmarks file into notes |
@@ -276,6 +277,18 @@ Two rules keep it out of the way. Only a note still called `Untitled` (or `Untit
 so a note you named yourself keeps its name however its first line reads; and once it has a name,
 rewriting the first line is editing, not naming. **Name notes from their first line** in the
 settings turns it off.
+
+## What a card shows
+
+A note that embeds an image has a picture already, and the first one is almost always what the note
+is about, so it becomes the card and the drawn gradient steps aside. A note that would rather show a
+different one says so in a `cover` property, which the right pane writes when you pick from the
+images the note holds: it offers every embedded image and the drawn cover as the last choice, so
+going back to the gradient is the same gesture as picking a picture.
+
+The order a card follows is the cover you chose, then a picture fetched for a bookmark, then the
+first thing the note embeds, then the drawn one. `src/preview.ts` holds the reading of a `cover`
+value, which may be `[[a.png]]`, `![[a.png]]`, `[[a.png|alias]]` or a bare path.
 
 ## Cover art
 

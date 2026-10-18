@@ -1,4 +1,5 @@
 import { isIgnored, parseIgnored } from "./ignore";
+import { coverTarget, webImage } from "./preview";
 import { type App, type TAbstractFile, TFile, getAllTags } from "obsidian";
 import {
 	EMBEDDED_TAG,
@@ -182,14 +183,18 @@ export class VaultIndex {
 
 	private index(file: TFile): void {
 		if (file.extension === "md") {
-			this.items.set(file.path, this.noteItem(file));
-			// What this note embeds may have just changed, and an image's card
-			// carries whether anything embeds it.
+			// Embeds first: a note's own card shows the first image it holds,
+			// and an image's card carries whether anything embeds it. Both
+			// read what this note embeds, so it is worked out before either.
 			const before = this.embedsBy.get(file.path) ?? [];
 			const after = this.embedsOf(file);
-			if (before.join("\u0000") !== after.join("\u0000")) {
+			const moved = before.join("\u0000") !== after.join("\u0000");
+			if (moved) {
 				this.embedsBy.set(file.path, after);
 				this.refreshEmbedded();
+			}
+			this.items.set(file.path, this.noteItem(file));
+			if (moved) {
 				for (const path of new Set([...before, ...after])) {
 					const image = this.app.vault.getAbstractFileByPath(path);
 					if (image instanceof TFile && this.items.has(path)) this.index(image);
@@ -216,8 +221,7 @@ export class VaultIndex {
 			headings: (cache?.headings ?? []).map((h) => h.heading),
 			excerpt: "",
 			embedded: false,
-			// A bookmark that has been out and looked at its page has one.
-			preview: this.settings.bookmarkImages ? webImage(cache?.frontmatter?.image) : null,
+			preview: this.previewOf(file, cache?.frontmatter),
 		};
 	}
 
@@ -245,6 +249,25 @@ export class VaultIndex {
 		};
 	}
 
+	/**
+	 * The picture a note's card shows: the cover it chose, then a picture
+	 * fetched for a bookmark, then the first image it embeds. A note that
+	 * holds a picture should show it rather than a drawn one.
+	 */
+	private previewOf(file: TFile, front: Record<string, unknown> | undefined): string | null {
+		const chosen = coverTarget(front?.cover);
+		if (chosen) {
+			const target = this.app.metadataCache.getFirstLinkpathDest(chosen, file.path);
+			if (target instanceof TFile) return this.app.vault.getResourcePath(target);
+		}
+		const remote = this.settings.bookmarkImages ? webImage(front?.image) : null;
+		if (remote) return remote;
+		const first = this.embedsBy.get(file.path)?.[0];
+		if (!first) return null;
+		const embedded = this.app.vault.getAbstractFileByPath(first);
+		return embedded instanceof TFile ? this.app.vault.getResourcePath(embedded) : null;
+	}
+
 	private titleOf(file: TFile, fromFrontmatter: unknown): string {
 		if (typeof fromFrontmatter === "string" && fromFrontmatter.trim()) {
 			return fromFrontmatter.trim();
@@ -255,11 +278,6 @@ export class VaultIndex {
 	private notify(): void {
 		for (const listener of this.listeners) listener();
 	}
-}
-
-/** Only a web address is worth putting in an `img`, and only as itself. */
-function webImage(value: unknown): string | null {
-	return typeof value === "string" && /^https?:\/\//i.test(value.trim()) ? value.trim() : null;
 }
 
 function tagNames(tags: string[] | null): string[] {

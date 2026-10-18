@@ -1209,3 +1209,40 @@ body.skybox-standalone .titlebar-button-container:focus-within {
 	object-fit: cover;
 	background: var(--background-secondary);
 }
+
+/*
+ * Picking which of a note's images its card shows. The drawn cover is one of
+ * the choices, at the end, so going back to it is the same gesture as picking
+ * a picture.
+ */
+.skybox-meta-covers {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.skybox-meta-cover {
+	all: unset;
+	width: 46px;
+	height: 46px;
+	overflow: hidden;
+	border-radius: var(--radius-s);
+	box-shadow: 0 0 0 1px var(--background-modifier-border);
+	cursor: pointer;
+}
+
+.skybox-meta-cover img,
+.skybox-meta-cover .skybox-cover {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.skybox-meta-cover:hover {
+	box-shadow: 0 0 0 1px var(--background-modifier-border-hover);
+}
+
+.skybox-meta-cover.is-chosen {
+	box-shadow: 0 0 0 2px var(--interactive-accent);
+}

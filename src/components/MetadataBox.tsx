@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Notice, Platform, TFile } from "obsidian";
 import { useSkybox } from "../context";
+import { coverClass } from "../cover";
+import { coverLink, sameCover } from "../preview";
+import { isImageExtension } from "../types";
 import { guarded } from "../writes";
 
 interface MetadataBoxProps {
@@ -30,6 +33,46 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 	const properties = Object.entries(frontmatter).filter(
 		([key]) => key !== "tags" && key !== "tag" && key !== "hash"
 	);
+
+	/**
+	 * The images this note embeds, which are what its card can show. The first
+	 * is the cover unless one has been picked, so a note with only one image
+	 * has nothing to choose and the row stays away.
+	 */
+	const embedded = useMemo(() => {
+		if (!note || note.extension !== "md") return [];
+		const cache = app.metadataCache.getFileCache(note);
+		const found: TFile[] = [];
+		for (const embed of cache?.embeds ?? []) {
+			const target = app.metadataCache.getFirstLinkpathDest(embed.link, note.path);
+			if (
+				target instanceof TFile &&
+				isImageExtension(target.extension) &&
+				!found.some((seen) => seen.path === target.path)
+			) {
+				found.push(target);
+			}
+		}
+		return found;
+	}, [app, note?.path, note?.stat.mtime]);
+
+	const chosen = embedded.find((image) => sameCover(frontmatter.cover, image.path));
+	const cover = chosen ?? embedded[0];
+
+	/** Picking the one already showing puts the drawn cover back. */
+	const pickCover = async (image: TFile | null) => {
+		if (!note) return;
+		await guarded(() =>
+			app.fileManager.processFrontMatter(note, (front) => {
+				if (!image || (embedded[0] && image.path === embedded[0].path && !front.cover)) {
+					delete front.cover;
+					return;
+				}
+				front.cover = coverLink(image.path);
+			})
+		);
+		index.ensure(note);
+	};
 
 	/** Only frontmatter tags can be taken off here; the body's are the body's. */
 	const written = new Set(frontmatterTags(frontmatter));
@@ -150,6 +193,33 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 					</datalist>
 				)}
 			</section>
+
+			{embedded.length > 1 && (
+				<section className="skybox-meta-section">
+					<h4>Cover</h4>
+					<div className="skybox-meta-covers">
+						{embedded.map((image) => (
+							<button
+								key={image.path}
+								className={`skybox-meta-cover${
+									cover?.path === image.path ? " is-chosen" : ""
+								}`}
+								aria-label={`Use ${image.name} as the cover`}
+								onClick={() => void pickCover(image)}
+							>
+								<img src={app.vault.getResourcePath(image)} alt="" loading="lazy" />
+							</button>
+						))}
+						<button
+							className={`skybox-meta-cover is-drawn${cover ? "" : " is-chosen"}`}
+							aria-label="Use the drawn cover"
+							onClick={() => void pickCover(null)}
+						>
+							<span className={coverClass(file.path)} />
+						</button>
+					</div>
+				</section>
+			)}
 
 			{properties.length > 0 && (
 				<section className="skybox-meta-section">
