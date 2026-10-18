@@ -9,6 +9,10 @@ It takes its shape from [mymind](https://mymind.com): everything you keep in one
 by typing rather than filed by hand. Obsidian holds the notes and the images; Skybox is the other
 way of looking at them.
 
+![The grid: notes, images and bookmarks side by side](docs/images/cards.gif)
+
+![Typing narrows the grid as you go](docs/images/scroll.gif)
+
 - **One pane over the whole vault.** Notes and images, most recently modified first. Typing makes
   chips, chips narrow the search, `#word` matches tags alone.
 - **Make, change and throw away from the grid.** New notes open into Obsidian's own editor, live
