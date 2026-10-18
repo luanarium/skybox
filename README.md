@@ -19,7 +19,7 @@ way of looking at them.
   preview and all. Right-click a card, or long-press on a phone, to copy or delete it.
 - **A note names itself** from its first line, once the typing settles. Rename it yourself and it is
   yours.
-- **Drop things in,** from the desktop or straight out of a browser window. Anything already in the
+- **Drag and drop,** from the desktop or straight out of a browser window. Anything already in the
   vault asks before it writes a second copy.
 - **Bookmarks arrive on their own,** with no browser extension: point it at your browser's bookmarks
   file and keep bookmarking as you do. Each page is read once for its description, its picture and
