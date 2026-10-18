@@ -398,6 +398,57 @@ yours, not what makes it yours to rewrite.
 A card from the wall is somebody else's, so the long press offers nothing: there is nothing there to
 copy into your vault or to throw away that would mean anything.
 
+### Boosting and following
+
+Boost sits with the counts, under the post. It posts to `/reblog`, or to `/unreblog` when it is
+already on, and takes the count from what the instance answers rather than guessing, so a post
+somebody else boosted while you were reading does not come back with a number one too low.
+
+Follow sits beside the handle, where you are looking when you decide. It cannot be drawn honestly
+without knowing whether you already follow them, so the card asks `/accounts/relationships` for that
+one account and shows a dash until the answer lands. An older token with no `read:follows` cannot be
+told, and then the button says follow rather than nothing at all: following somebody twice is the
+same as following them once, and a missing scope explains itself the moment it is pressed.
+
+Both act at once, with no confirmation, because both are undone by pressing again. That is a
+different bargain from posting and deleting your own card, which always ask.
+
+### What a boost actually is
+
+A boost on a timeline is a status of its own, by whoever boosted it, with the real post nested
+inside and nothing of its own to say. Drawn as it arrives it would be a blank card with the wrong
+name on it, so it is unwrapped: the words, the picture, the author, the handle and the account are
+the post that was written, with a quiet line above the name saying who passed it on. Follow then
+follows the author, which is who you meant.
+
+Paging has to count the other way. `max_id` walks timeline entries, not the posts inside them, so a
+post keeps the entry it arrived as alongside its own id and the next page is asked for from that.
+Ask with the inner id and a boost of something old sends you back weeks.
+
+### Paging
+
+A wall asks for forty posts, and reaching the bottom asks for forty more from where the last one
+left off. It is the same sentinel that pages the vault, reading `IntersectionObserver`, and it only
+changes which of the two it tells: the vault already has its results and moves a limit, while the
+wall has to ask. A page that comes back empty is the end, and nothing asks again until the chip
+changes. Requests do not overlap, so a fast scroll asks once rather than four times.
+
+### Keeping
+
+**Keep this** writes a note in your intake folder, named from the post's first words, carrying the
+post's text, a link to it, its picture, its author, the tags it was posted with, and the ids the
+thread and the follow button need. It is the Web Clipper property shape a bookmark uses, which is
+deliberate: a kept post is something somebody published and you held on to.
+
+The status id is written in quotes, which matters more than it sounds. Mastodon ids are eighteen
+digits and YAML reads a bare one as a number, which holds fifteen exactly, so the last digits round
+away and the thread is then asked for a status that does not exist. A kept post is also read from
+the note's own text rather than from Obsidian's cache, since a post kept a moment ago is a note the
+cache has not parsed yet. A post kept before this was true is put right where it is opened.
+
+What tells a kept post from a note you shared yourself is the `wall` tag, since both end up with a
+`mastodon_id`. Yours is a note to edit. Theirs is a post to read.
+
 ## Sharing to Mastodon
 
 Tag a card with the sharing tag and it is posted: the note's title and words, the page's link where
@@ -408,6 +459,37 @@ post nobody saw.
 
 The post's id and address are written into the note's frontmatter as `mastodon_id` and
 `mastodon_url`, which is what ties the two together through a rename.
+
+### Connecting an account
+
+Settings, Share to Mastodon. Two fields: the instance your account is on, typed however you like it
+since a host is a host, and a token you make yourself on that instance under Preferences,
+Development, New application. **Check** verifies it and says who you are connected as, which is
+worth pressing once so a wrong paste is found now rather than at the moment you tag something.
+
+The scopes are worth getting right, since each one buys one thing:
+
+| Scope | What stops working without it |
+|---|---|
+| `write:statuses` | posting a card, replying in a thread, boosting |
+| `write:media` | the picture on a shared image |
+| `read:statuses` | the thread beside a card, a hashtag wall, the home timeline |
+| `read:follows` | knowing whether you already follow a post's author |
+| `write:follows` | the follow button |
+
+Emptying the instance turns the whole thing off: no walls, no threads, no sharing. Emptying the
+token disconnects. Revoking is done on the instance, which is the only place a revocation means
+anything.
+
+Nothing in the plugin sees your password, nothing is proxied, and `src/mastodon.ts` is the only file
+that speaks to a network at all. Everything else in Skybox reads and writes the vault.
+
+### What reaches other people
+
+Reading a wall or a thread is reading. Posting, replying, boosting and following are the only things
+that reach anybody else, and each is either asked for first or undone by pressing again. A wall is
+never written to the vault, so nothing you scrolled past is in your notes, and clearing the chip
+leaves no trace of it.
 
 ### What is waiting: `#comments`
 
@@ -602,6 +684,13 @@ index, so they are the tags already in the vault.
 
 The index is taken again when `metadataCache` fires `resolved`: before that, tags and headings read
 as empty for files the cache has not reached yet.
+
+Four tags mean something to Skybox. Your sharing tag, whatever you called it, posts the card it is
+added to. `bookmark` is written by a clipped page and `wall` by a kept post, and that second one is
+what decides whether a note opens as a post or as markdown. `#embedded` and `#comments` are not
+written anywhere at all: they are derived at index time, one from a note holding an image, the other
+from a thread with something in it you have not seen. A chip beginning `#!` is not a tag either, it
+is a question for your instance.
 
 ## Standalone chrome
 

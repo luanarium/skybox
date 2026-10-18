@@ -42,7 +42,10 @@ export function Post({
 				if (live) setFollowing(who.has(post.accountId));
 			})
 			.catch(() => {
-				if (live) setFollowing(null);
+				// An older token has no read:follows. Offering to follow is
+				// better than a button that can never answer: following is
+				// idempotent, and a missing scope says so when pressed.
+				if (live) setFollowing(false);
 			});
 		return () => {
 			live = false;
@@ -93,7 +96,7 @@ export function Post({
 					{post.accountId && (
 						<button
 							className={`skybox-wall-follow${following ? " is-on" : ""}`}
-							disabled={busy || following === null}
+							disabled={busy}
 							onClick={() => void follow()}
 						>
 							{following === null ? "…" : following ? "following" : "follow"}

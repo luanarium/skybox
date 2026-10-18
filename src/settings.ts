@@ -184,8 +184,10 @@ export class SkyboxSettingTab extends PluginSettingTab {
 				connected
 					? "A token is stored on this computer. Replacing it here replaces it there; " +
 						"emptying it disconnects. Revoking is done on your instance."
-					: "Make one on your instance under Preferences, Development, New application, " +
-						"with the scopes write:statuses, write:media and read:statuses."
+					: "Make one on your instance under Preferences, Development, New " +
+						"application. Sharing needs write:statuses, write:media and " +
+						"read:statuses; a wall also needs read:follows and write:follows " +
+						"for the home timeline and the follow button."
 			)
 			.addText((text) => {
 				text.setPlaceholder(connected ? "stored on this computer" : "paste the token")
