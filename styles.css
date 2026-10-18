@@ -1537,3 +1537,8 @@ body.skybox-standalone .titlebar-button-container:focus-within {
 .is-mobile .skybox-thread-panel .skybox-thread-reply textarea {
 	min-height: 96px;
 }
+
+/* Stands in Obsidian's stack of closeable things, and does nothing else. */
+.skybox-back-catcher {
+	display: none !important;
+}

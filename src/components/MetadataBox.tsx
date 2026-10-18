@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Notice, Platform, TFile } from "obsidian";
 import { useSkybox } from "../context";
 import { Conversation } from "./Conversation";
 import { Icon } from "./Icon";
+import { useBack } from "./useBack";
 import { unreadTotal } from "../mastodon";
 import { coverClass } from "../cover";
 import { coverLink, sameCover } from "../preview";
@@ -165,6 +166,9 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 	 * button that says how much is waiting.
 	 */
 	const [sheeted, setSheeted] = useState(false);
+	// Back closes the thread rather than the card it is drawn over.
+	const closeSheet = useCallback(() => setSheeted(false), []);
+	useBack(app, sheeted, closeSheet);
 	const waiting = statusId ? unreadTotal(interactions.unreadFor(statusId)) : 0;
 	/*
 	 * A shared card opens on its conversation, because that is the part that
@@ -198,7 +202,7 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 						<button
 							className="skybox-back-arrow"
 							aria-label="Back to the card"
-							onClick={() => setSheeted(false)}
+							onClick={closeSheet}
 						>
 							<Icon name="arrow-left" />
 						</button>
