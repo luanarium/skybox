@@ -33,6 +33,23 @@ export interface MastodonStatus {
 
 export type Visibility = "public" | "unlisted" | "private" | "direct";
 
+/** A post on the wall: what a hashtag timeline hands back. */
+export interface WallPost {
+	id: string;
+	url: string;
+	author: string;
+	handle: string;
+	avatar: string;
+	text: string;
+	/** Pictures the post carries, as addresses. */
+	media: string[];
+	tags: string[];
+	at: number;
+	repliesCount: number;
+	favouritesCount: number;
+	reblogsCount: number;
+}
+
 /** One post in the thread under a shared card. */
 export interface MastodonReply {
 	id: string;
@@ -292,6 +309,19 @@ export class Mastodon {
 		return (context.ancestors ?? []).map((status) => String(status.id ?? ""));
 	}
 
+	/**
+	 * What the fediverse is saying under a hashtag. Public, so it needs no
+	 * account beyond the one connecting, and nothing of it is kept.
+	 */
+	async hashtag(tag: string, limit = 40): Promise<WallPost[]> {
+		const name = tag.replace(/^#/, "").trim();
+		if (!name) return [];
+		const raw = (await this.call(
+			`/api/v1/timelines/tag/${encodeURIComponent(name)}?limit=${limit}`
+		)) as Record<string, unknown>[];
+		return (Array.isArray(raw) ? raw : []).map(readWallPost);
+	}
+
 	/** The direct-message conversations this account is in. */
 	async conversations(): Promise<unknown[]> {
 		const raw = (await this.call("/api/v1/conversations?limit=40")) as unknown[];
@@ -358,6 +388,32 @@ function readReply(raw: Record<string, unknown>): MastodonReply {
 		at: String(raw.created_at ?? ""),
 		favouritesCount: Number(raw.favourites_count ?? 0),
 		inReplyTo: raw.in_reply_to_id ? String(raw.in_reply_to_id) : null,
+	};
+}
+
+function readWallPost(raw: Record<string, unknown>): WallPost {
+	const account = (raw.account ?? {}) as Record<string, unknown>;
+	const media = ((raw.media_attachments ?? []) as Record<string, unknown>[])
+		.filter((item) => item.type === "image" || item.type === "gifv")
+		.map((item) => String(item.preview_url ?? item.url ?? ""))
+		.filter(Boolean);
+	const at = Date.parse(String(raw.created_at ?? ""));
+	const handle = String(account.acct ?? "");
+	return {
+		id: String(raw.id ?? ""),
+		url: typeof raw.url === "string" ? raw.url : "",
+		author: String(account.display_name || handle),
+		handle,
+		avatar: typeof account.avatar_static === "string" ? account.avatar_static : "",
+		text: htmlToText(typeof raw.content === "string" ? raw.content : ""),
+		media,
+		tags: ((raw.tags ?? []) as Record<string, unknown>[])
+			.map((tag) => String(tag.name ?? ""))
+			.filter(Boolean),
+		at: Number.isNaN(at) ? 0 : at,
+		repliesCount: Number(raw.replies_count ?? 0),
+		favouritesCount: Number(raw.favourites_count ?? 0),
+		reblogsCount: Number(raw.reblogs_count ?? 0),
 	};
 }
 

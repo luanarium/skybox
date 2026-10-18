@@ -34,6 +34,9 @@ way of looking at them.
   cards, unread first when you type `#mail`. Opening one shows the thread in a window that remembers
   what mail looked like, with a composer that does bold and italic where you are typing. Mastodon
   direct messages come in the same way, through the same window.
+- **`#!tea` fills the grid with the fediverse.** A chip beginning with `#!` asks your instance for
+  that hashtag's public timeline instead of asking the vault. Open one to read it and reply in the
+  thread; keep one and it becomes an ordinary card with its conversation attached.
 - **Share a card by tagging it.** Connect a Mastodon account and a tag posts the card, image and
   all. The thread comes back beside the note, with a box to reply from. Untag it and the post goes.
 - **Immersive.** Standalone mode gives the whole window to the pane, and the window controls hide
@@ -97,6 +100,7 @@ releases on startup, so a new version arrives on its own.
 | `src/maildir.ts` | Mail as files, and flags as filenames |
 | `src/mail.ts` | Maildir into conversations, and replies into the outbox |
 | `src/dm.ts` | Mastodon direct messages as the same conversations |
+| `src/wall.ts` | A hashtag's timeline as cards, and the chip that asks for it |
 | `src/thread.ts` | What a conversation is in the vault, whoever carried it |
 | `src/sharing.ts` | Posting a card when it is tagged, and deleting when it is not |
 | `src/interactions.ts` | What has happened to a shared card, and what is unread |
@@ -359,6 +363,27 @@ emphasis happens where you are typing rather than as markup you type around, and
 `multipart/alternative`: your words as plain text, and the same words with the emphasis as HTML.
 What a reply may carry is deliberately small, just emphasis, breaks and links, so nothing a composer
 collects can reach anybody's mail client.
+
+## The wall
+
+Type a chip beginning `#!` and the grid stops asking the vault and asks your instance: `#!tea` is
+that hashtag's public timeline, drawn as cards in the same masonry, pictures and all. Other chips
+narrow what came back, so `#!tea oolong` is the obvious thing. Nothing of it is written anywhere.
+Clear the chip and the wall is gone, which is the right relationship to have with somebody else's
+timeline.
+
+Opening a post shows it where it is, with the thread beside it: the same conversation a shared card
+has, because it is the same thing, statuses answering a status. So a reply from the wall goes out
+as you, in the right place, without the post ever having been yours.
+
+**Keep this** writes an ordinary note: the post's words, its picture, its author, and the id of the
+status it came from. From then on it is a card like any other. It is searched, it carries the `wall`
+tag and the post's own tags, its conversation keeps working as the thread grows, and what is unread
+in it reaches the `#comments` tag and the plus button with everything else. The wall is a window;
+keeping is what makes something yours.
+
+A card from the wall is somebody else's, so the long press offers nothing: there is nothing there to
+copy into your vault or to throw away that would mean anything.
 
 ## Sharing to Mastodon
 

@@ -64,7 +64,7 @@ export function Card({ item, index, named, fresh, dropped, onOpen, onMenu }: Car
 		<div
 			className={`skybox-card is-${item.kind}${fresh ? " is-fresh" : ""}${
 				dropped ? " is-dropped" : ""
-			}`}
+			}${item.remote ? " is-wall" : ""}`}
 			style={style}
 			role="button"
 			tabIndex={0}

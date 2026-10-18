@@ -1823,3 +1823,81 @@ body.skybox-standalone .titlebar-button-container:focus-within {
 	border-radius: 0;
 	box-shadow: none;
 }
+
+/* ---- the wall ----------------------------------------------------- */
+
+/*
+ * A hashtag's public timeline in the same grid as the vault. Nothing of it
+ * is kept, so a card from the wall says whose it is rather than pretending
+ * to be yours.
+ */
+.skybox-wall-body {
+	gap: 0;
+}
+
+.skybox-wall-post {
+	flex: 1 1 auto;
+	min-width: 0;
+	padding: 16px;
+	overflow-y: auto;
+}
+
+.skybox-wall-who {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 10px;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+
+.skybox-wall-who img {
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.skybox-wall-who time {
+	margin-left: auto;
+	color: var(--text-faint);
+}
+
+.skybox-wall-post > p {
+	margin: 0 0 12px;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	font-size: var(--font-text-size);
+}
+
+.skybox-wall-media {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.skybox-wall-media img {
+	max-width: 100%;
+	max-height: 320px;
+	border-radius: var(--radius-m);
+	object-fit: contain;
+	background: var(--background-secondary);
+}
+
+.skybox-wall-counts {
+	display: flex;
+	gap: 12px;
+	color: var(--text-faint);
+	font-size: var(--font-ui-smaller);
+}
+
+/* A card from the wall wears its author's name rather than a note's title. */
+.skybox-card.is-wall .skybox-card-title::after {
+	content: " ·";
+	color: var(--text-faint);
+}
+
+.is-mobile .skybox-wall-body {
+	flex-direction: column;
+}

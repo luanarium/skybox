@@ -256,7 +256,7 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 								: `${comments} ${comments === 1 ? "comment" : "comments"}`}
 						</h2>
 					</div>
-					<Conversation note={note} statusId={statusId} />
+					<Conversation title={note.basename} statusId={statusId} />
 				</div>
 			)}
 
@@ -278,7 +278,7 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 			)}
 
 			{statusId && note && !Platform.isMobile && tab === "thread" && (
-				<Conversation note={note} statusId={statusId} />
+				<Conversation title={note.basename} statusId={statusId} />
 			)}
 
 			{(Platform.isMobile || tab === "note") && (

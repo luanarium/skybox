@@ -25,6 +25,11 @@ export interface Item {
 	preview: string | null;
 	/** A conversation with something in it nobody has read. */
 	unread: boolean;
+	/**
+	 * Where this card came from, when it came from the fediverse rather than
+	 * the vault. Anything that would touch a file checks this first.
+	 */
+	remote?: import("./mastodon").WallPost;
 }
 
 export interface SkyboxSettings {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Notice, type TFile } from "obsidian";
+import { Notice } from "obsidian";
 import { useSkybox } from "../context";
 import {
 	type MastodonReply,
@@ -28,7 +28,7 @@ interface Answering {
 	handle: string;
 }
 
-export function Conversation({ note, statusId }: { note: TFile; statusId: string }) {
+export function Conversation({ title, statusId }: { title: string; statusId: string }) {
 	const { app, settings, interactions } = useSkybox();
 	const [status, setStatus] = useState<MastodonStatus | null>(null);
 	const [replies, setReplies] = useState<MastodonReply[]>([]);
@@ -148,7 +148,7 @@ export function Conversation({ note, statusId }: { note: TFile; statusId: string
 
 					{status?.url && (
 						<a className="skybox-thread-link" href={status.url}>
-							{note.basename} on Mastodon
+							{title} on Mastodon
 						</a>
 					)}
 

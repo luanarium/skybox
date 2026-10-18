@@ -16,6 +16,9 @@ import { Icon } from "./components/Icon";
 import { Lightbox } from "./components/Lightbox";
 import { MailOverlay } from "./components/MailOverlay";
 import { Masonry } from "./components/Masonry";
+import { WallOverlay } from "./components/WallOverlay";
+import { clientFor } from "./sharing";
+import { narrowWall, wallItem, wallTagOf } from "./wall";
 import { NoteOverlay } from "./components/NoteOverlay";
 import { Sheet } from "./components/Sheet";
 import { SearchBox } from "./components/SearchBox";
@@ -65,7 +68,38 @@ export function App() {
 		);
 	}, [waiting]);
 
+	/*
+	 * A chip beginning `#!` asks the fediverse instead of the vault, and the
+	 * grid fills with that hashtag's public timeline. Nothing of it is kept:
+	 * clearing the chip clears the wall.
+	 */
+	const tag = wallTagOf(chips);
 	useEffect(() => {
+		if (!tag) return;
+		let current = true;
+		const client = clientFor(app, settings);
+		if (!client) {
+			setResults([]);
+			return;
+		}
+		void client
+			.hashtag(tag)
+			.then((posts) => {
+				if (!current) return;
+				setResults(narrowWall(posts, chips, tag).map(wallItem));
+				setFresh(new Set());
+			})
+			.catch((error) => {
+				console.error("Skybox: could not read that hashtag", error);
+				if (current) setResults([]);
+			});
+		return () => {
+			current = false;
+		};
+	}, [app, settings, tag, chips]);
+
+	useEffect(() => {
+		if (tag) return;
 		let current = true;
 		void search(index, chips, settings.hideEmbedded).then((found) => {
 			if (!current) return;
@@ -77,7 +111,7 @@ export function App() {
 		return () => {
 			current = false;
 		};
-	}, [index, chips, version, settings.hideEmbedded]);
+	}, [index, chips, version, settings.hideEmbedded, tag]);
 
 	useEffect(() => setLimit(PAGE), [chips]);
 
@@ -226,6 +260,8 @@ export function App() {
 	const itemMenu = useCallback(
 		(item: Item, x: number, y: number) => {
 			const menu = new Menu();
+			// Somebody else's post is not ours to copy out of or throw away.
+			if (item.remote) return;
 			menu.addItem((entry) =>
 				entry
 					.setTitle("Copy")
@@ -294,6 +330,10 @@ export function App() {
 		event.target instanceof Element && event.target.closest(".skybox-overlay") !== null;
 
 	const card = (item: Item) => {
+		// A post on the wall is read where it is, and kept only if asked.
+		if (item.remote) {
+			return <WallOverlay item={item} onClose={close} />;
+		}
 		if (item.kind === "image") {
 			return <Lightbox item={item} onClose={close} onOpenPath={openPath} />;
 		}
