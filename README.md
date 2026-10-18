@@ -23,11 +23,11 @@ other way of looking at them, and it writes nothing of its own to make that work
   of a browser window, and they are taken into the vault, hashed, and shown as cards. A file whose
   contents are already in the vault asks before it writes a second copy. On a phone, anything shared
   to Obsidian arrives the same way.
-- **Bookmarks arrive on their own.** Bookmark a page in your browser the way you always have, and
-  Skybox writes a note for it while Obsidian is open. It reads the one file Chromium browsers keep
-  their bookmarks in, with no extension and no server, and only ever adds: curating happens in the
-  vault, where searching is better than any browser's bookmark manager. Desktop only, off until you
-  turn it on.
+- **Bookmarks arrive on their own, with no browser extension.** Skybox imports simple bookmarks by
+  itself: switch it on, point it at a supported browser's bookmarks file, and bookmark pages the way
+  you always have. There is nothing to install in the browser, no server, and nothing to paste. It
+  only ever adds, so curating happens in the vault, where searching beats any browser's bookmark
+  manager. Desktop only, and inactive until you set it up.
 - **Images are things you kept, not attachments.** Every image gets a card with a sidecar note for
   its tags and thoughts, so Obsidian's own tag pane sees them. An image a *note* embeds belongs to
   that note, so it stays out of the everything view until you search for it.
@@ -122,8 +122,9 @@ vault. Everything about views, transitions and window chrome still has to be loo
 
 ## Browser bookmarks
 
-Chromium browsers keep their bookmarks in one JSON file and rewrite it whenever one changes, so
-`src/bookmarks.ts` reads that file and writes a note for every bookmark the vault has not got yet:
+Skybox imports bookmarks on its own, without a browser extension. Chromium browsers keep their
+bookmarks in one JSON file and rewrite it whenever one changes, so `src/bookmarks.ts` reads that
+file and writes a note for every bookmark the vault has not got yet:
 the URL and the date in frontmatter, the browser's folder names as tags. It looks on load, when the
 window comes back to the front, and every five minutes, and an unchanged file costs one `stat`.
 Deduplication is by the `url` in frontmatter, read through the metadata cache, so a note moved or
@@ -143,6 +144,16 @@ already knows, a template can fill them, and a person reading the properties pan
 expect. It also means Skybox will not import a page you have already clipped, since deduplication
 reads `source` across the whole vault, whoever wrote it. Notes from earlier imports used a `url`
 key, which still counts as imported, so nothing arrives twice.
+
+**Supported browsers** are the Chromium family, which is most of them: Brave, Chrome, Edge,
+Vivaldi, Chromium itself, and anything else built on it, whether installed natively, as a Flatpak or
+as a Snap. The settings look in the usual places for all of those and offer what they find, and any
+path can be typed in by hand. Firefox keeps its bookmarks in `places.sqlite` rather than JSON, so it
+is not supported yet and is on the list below.
+
+**Simple bookmarks** is the honest description of what arrives: a title, a link, a date and the
+folders it came from. Not the page's text, author or description, which is what the list below is
+about, and what Obsidian's Web Clipper does today for anyone who wants it now.
 
 Why the file rather than something tidier: Brave's own sync is end-to-end encrypted between Brave
 installs with nothing for a third party to hook, and `chrome.bookmarks` belongs to extensions, which
