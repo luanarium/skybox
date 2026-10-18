@@ -23,13 +23,12 @@ other way of looking at them, and it writes nothing of its own to make that work
   of a browser window, and they are taken into the vault, hashed, and shown as cards. A file whose
   contents are already in the vault asks before it writes a second copy. On a phone, anything shared
   to Obsidian arrives the same way.
-- **Bookmarks arrive on their own, with no browser extension.** Skybox imports simple bookmarks by
-  itself: switch it on, point it at a supported browser's bookmarks file, and bookmark pages the way
-  you always have. Each page can be asked once for what it says about itself, so the card carries
-  the page's own description and picture. There is nothing to install in the browser, no server, and
-  nothing to paste. It
-  only ever adds, so curating happens in the vault, where searching beats any browser's bookmark
-  manager. Desktop only, and inactive until you set it up.
+- **Bookmarks arrive on their own, with no browser extension.** Switch it on, point it at a
+  supported browser's bookmarks file, and bookmark pages the way you always have. Each new page is
+  asked once for what it says about itself, so the card carries the page's own description and
+  picture rather than a bare link. There is nothing to install in the browser, no server, and
+  nothing to paste, and it only ever adds, so curating happens in the vault, where searching beats
+  any browser's bookmark manager. Desktop only, and inactive until you set it up.
 - **Images are things you kept, not attachments.** Every image gets a card with a sidecar note for
   its tags and thoughts, so Obsidian's own tag pane sees them. An image a *note* embeds belongs to
   that note, so it stays out of the everything view until you search for it.
