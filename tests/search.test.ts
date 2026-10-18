@@ -59,6 +59,7 @@ function note(path: string, title: string, tags: string[], headings: string[], m
 		headings,
 		excerpt: "",
 		embedded: false,
+		preview: null,
 	};
 }
 
@@ -74,6 +75,7 @@ function image(path: string, tags: string[], mtime: number, embedded = false): I
 		headings: [],
 		excerpt: "",
 		embedded,
+		preview: null,
 	};
 }
 

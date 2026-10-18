@@ -94,7 +94,15 @@ export function Card({ item, index, named, fresh, dropped, onOpen, onMenu }: Car
 				}
 			}}
 		>
-			{item.kind === "note" && settings.coverArt && (
+			{item.kind === "note" && item.preview && (
+				<img
+					className="skybox-card-image skybox-card-preview"
+					src={item.preview}
+					alt=""
+					loading="lazy"
+				/>
+			)}
+			{item.kind === "note" && !item.preview && settings.coverArt && (
 				// Decoration, not content: the title below says what this is.
 				<div
 					className={coverClass(item.id)}

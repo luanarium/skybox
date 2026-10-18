@@ -26,6 +26,11 @@ export class TFile {}
 /** Enough of a class for `instanceof` where a test never opens an editor. */
 export class MarkdownView {}
 
+/** Nothing under test goes out to the network; this is here to link. */
+export async function requestUrl(): Promise<{ status: number; text: string; headers: Record<string, string> }> {
+	throw new Error("requestUrl is not available in the headless tests");
+}
+
 /** Headless is neither desktop nor phone; the pure parts do not ask. */
 export const Platform = { isDesktopApp: false, isMobile: false };
 

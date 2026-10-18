@@ -54,6 +54,8 @@ export const COVER_HEIGHT = 120;
 
 export function estimateHeight(item: Item, cover = false): number {
 	if (item.kind === "image") return 260;
-	// A cover is drawn above the title, so the first guess has to carry it.
-	return (cover ? COVER_HEIGHT : 0) + 96 + Math.min(180, Math.ceil(item.excerpt.length / 40) * 22);
+	// A cover or a preview is drawn above the title, so the first guess has to
+	// carry it. A preview's real height arrives with the picture.
+	const top = item.preview ? COVER_HEIGHT : cover ? COVER_HEIGHT : 0;
+	return top + 96 + Math.min(180, Math.ceil(item.excerpt.length / 40) * 22);
 }

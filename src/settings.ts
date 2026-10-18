@@ -97,6 +97,22 @@ export class SkyboxSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
+			.setName("Ask each page about itself")
+			.setDesc(
+				"Fetch each newly bookmarked page once and keep what it declares for its own " +
+					"social cards: a description, an author, a date and a preview image, which " +
+					"the card shows instead of cover art. This is the only part of Skybox that " +
+					"goes out to the network, a handful of pages per look, each asked once " +
+					"whether or not it answers. Off, a bookmark stays a title and a link."
+			)
+			.addToggle((toggle) =>
+				toggle.setValue(this.plugin.settings.bookmarksFetch).onChange(async (value) => {
+					this.plugin.settings.bookmarksFetch = value;
+					await this.plugin.saveSettings();
+				})
+			);
+
+		new Setting(containerEl)
 			.setName("Bookmarks folder")
 			.setDesc("Where bookmark notes are written. The vault root if this is empty.")
 			.addText((text) =>

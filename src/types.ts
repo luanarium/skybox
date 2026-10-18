@@ -21,6 +21,8 @@ export interface Item {
 	excerpt: string;
 	/** Some note embeds this image, so it is part of that note's page. */
 	embedded: boolean;
+	/** A picture the card can show instead of cover art, from `image`. */
+	preview: string | null;
 }
 
 export interface SkyboxSettings {
@@ -50,6 +52,8 @@ export interface SkyboxSettings {
 	bookmarksPath: string;
 	/** Where bookmark notes are written. */
 	bookmarksFolder: string;
+	/** Fetch each bookmarked page once, for what it says about itself. */
+	bookmarksFetch: boolean;
 }
 
 export const DEFAULT_SETTINGS: SkyboxSettings = {
@@ -67,6 +71,7 @@ export const DEFAULT_SETTINGS: SkyboxSettings = {
 	bookmarksEnabled: false,
 	bookmarksPath: "",
 	bookmarksFolder: "bookmarks",
+	bookmarksFetch: false,
 };
 
 /** The tag an image gets for being embedded in a note; nothing writes it. */

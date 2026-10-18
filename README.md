@@ -25,7 +25,9 @@ other way of looking at them, and it writes nothing of its own to make that work
   to Obsidian arrives the same way.
 - **Bookmarks arrive on their own, with no browser extension.** Skybox imports simple bookmarks by
   itself: switch it on, point it at a supported browser's bookmarks file, and bookmark pages the way
-  you always have. There is nothing to install in the browser, no server, and nothing to paste. It
+  you always have. Each page can be asked once for what it says about itself, so the card carries
+  the page's own description and picture. There is nothing to install in the browser, no server, and
+  nothing to paste. It
   only ever adds, so curating happens in the vault, where searching beats any browser's bookmark
   manager. Desktop only, and inactive until you set it up.
 - **Images are things you kept, not attachments.** Every image gets a card with a sidecar note for
@@ -92,6 +94,7 @@ releases on startup, so a new version arrives on its own.
 | `src/autoname.ts` | Naming a new note after its first line |
 | `src/ignore.ts` | Folders the index leaves alone |
 | `src/bookmarks.ts` | Reading the browser's bookmarks file into notes |
+| `src/metadata.ts` | What a page declares about itself, read out of its HTML |
 | `src/ingest.ts` | The one intake path: hash, dedupe, write |
 | `src/share.ts` | Mobile share intake and the bring-back |
 | `src/sidecar.ts` | `<name>.<ext>.md` beside an image: its tags and thoughts |
@@ -152,8 +155,32 @@ path can be typed in by hand. Firefox keeps its bookmarks in `places.sqlite` rat
 is not supported yet and is on the list below.
 
 **Simple bookmarks** is the honest description of what arrives: a title, a link, a date and the
-folders it came from. Not the page's text, author or description, which is what the list below is
-about, and what Obsidian's Web Clipper does today for anyone who wants it now.
+folders it came from. Not the page's text, which is what Obsidian's Web Clipper does today for
+anyone who wants it now.
+
+### Asking a page about itself
+
+Pages declare a summary for the social cards other sites show them in: a title, a description, an
+image, often an author and a date. **Ask each page about itself** in the settings fetches each newly
+bookmarked page once and keeps what it declared, filling the `description`, `author`, `published`
+and `image` properties the clipper's shape leaves room for. The card then shows the page's own
+picture instead of cover art, and the description lands in the note body, where a card's excerpt
+comes from, so a bookmark reads as more than its own URL.
+
+`src/metadata.ts` does the reading, as string work rather than `DOMParser`, which keeps it testable
+without a browser and stops half-broken HTML costing everything else in the head. Open Graph is
+preferred over the older plain `name=` tags, relative image URLs are made absolute, entities are
+decoded, and a date is kept only when one can actually be read out of what the page said.
+
+This is the only part of Skybox that goes out to the network, so it is a switch of its own, off by
+default and separate from the import. Eight pages per look, each asked once: a `fetched` date goes
+into the note whether or not the page answered, so nothing is asked twice, and a long-kept bookmarks
+file fills in over several passes rather than fetching hundreds of pages at once. Notes that came
+from somewhere else are left alone, since the pass only touches notes carrying the `bookmark` tag.
+
+Worth knowing: a preview image is shown from wherever the page keeps it, so displaying those cards
+fetches images from those hosts. Turning the switch off stops new fetching and leaves the images
+already recorded in place.
 
 Why the file rather than something tidier: Brave's own sync is end-to-end encrypted between Brave
 installs with nothing for a third party to hook, and `chrome.bookmarks` belongs to extensions, which
@@ -179,28 +206,21 @@ properties, the two sit side by side: neither imports a page the other has alrea
 
 ### Where this is going
 
-What is there now is the drop-in: a note with a title, a URL and the folders it came from. The
-reason to want more is that a bookmark is the thinnest thing in the vault, the only card with
-nothing to search but its own title. Ideas in rough order of how much they would change that, none
-of them built yet:
+A bookmark now carries what its page says about itself, which was the first and largest of these.
+What is left, in rough order of how much it would change things, none of it built yet:
 
-1. **Page metadata.** The `author`, `published` and `description` the clipper's shape leaves room
-   for, plus the preview image a page declares for itself, fetched once when the bookmark arrives.
-   That makes the note read like the page rather than like a link, and gives the card a picture
-   instead of cover art. It needs network requests, through Obsidian's
-   `requestUrl` so there is no CORS in the way, which is a line worth crossing deliberately: a
-   bookmark import that quietly fetches every page you ever saved is a different thing from one
-   that reads a local file.
-2. **Readable text.** The article itself, extracted the way a reader mode does it and written into
+1. **Readable text.** The article itself, extracted the way a reader mode does it and written into
    the note body, so a bookmark is searchable by what it said and survives the page going away.
-   Bigger: extraction is fiddly, the text has to be kept out of the way of your own notes on it, and
-   it wants a re-fetch when a page changes.
-3. **Favicons.** Cheaper than a preview image and almost as good at telling cards apart at a glance.
-4. **Firefox.** Its bookmarks live in `places.sqlite`, which needs a SQLite reader rather than a
+   Extraction is the hard part: telling the story from the newsletter box and the cookie notice is
+   what libraries like Defuddle, which Obsidian's own clipper uses, exist for. Doing it badly is
+   worse than not doing it, and doing it well means a dependency this project has so far done
+   without.
+2. **Favicons.** For the pages that declare no preview image, so every card has something.
+3. **Firefox.** Its bookmarks live in `places.sqlite`, which needs a SQLite reader rather than a
    JSON parse, so the Chromium family came first. An export file is the easy half of this.
-5. **More than one source at a time.** Several profiles, or several browsers, instead of the single
+4. **More than one source at a time.** Several profiles, or several browsers, instead of the single
    path the settings take now.
-6. **Noticing deletions.** Not acting on them, but saying so: a note for a bookmark that is no
+5. **Noticing deletions.** Not acting on them, but saying so: a note for a bookmark that is no
    longer in the browser could say as much, and leave what to do about it to you.
 
 On a phone none of this applies, since there is no file to read. Bookmarks arrive there the way

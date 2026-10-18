@@ -1,4 +1,5 @@
-import { type App, Notice, Platform } from "obsidian";
+import { type App, Notice, Platform, TFile, requestUrl } from "obsidian";
+import { hasMeta, parseMetadata } from "./metadata";
 import { ensureFolder, noteTitle, uniquePath } from "./ingest";
 import type { SkyboxSettings } from "./types";
 import { guarded } from "./writes";
@@ -284,7 +285,10 @@ export class BookmarkImport {
 		}
 
 		const bookmarks = parseBookmarks(json);
-		if (bookmarks.length === 0) return 0;
+		if (bookmarks.length === 0) {
+			await this.enrich();
+			return 0;
+		}
 
 		const already = this.importedUrls();
 		const folder = await ensureFolder(this.app, this.settings.bookmarksFolder);
@@ -300,7 +304,75 @@ export class BookmarkImport {
 				console.error("Skybox: could not write a bookmark note", error);
 			}
 		}
+		await this.enrich();
 		return written;
+	}
+
+	/**
+	 * What a page says about itself, written into the notes that have not
+	 * asked yet. A bookmark is a title and a link until this runs; afterwards
+	 * it carries the page's own description, author, date and preview image,
+	 * which is what makes a card look like the thing it points at.
+	 *
+	 * A handful at a time, because the first import of a long-kept bookmarks
+	 * file would otherwise fetch hundreds of pages at once. The rest are
+	 * picked up by later passes, and `fetched` marks the ones that have been
+	 * asked, so a page with nothing to say is not asked again.
+	 */
+	private async enrich(limit = 8): Promise<void> {
+		if (!this.settings.bookmarksFetch) return;
+		let budget = limit;
+		for (const file of this.app.vault.getMarkdownFiles()) {
+			if (budget <= 0) return;
+			const front = this.app.metadataCache.getFileCache(file)?.frontmatter;
+			const source = front?.source;
+			if (typeof source !== "string" || !/^https?:\/\//i.test(source)) continue;
+			if (front?.fetched) continue;
+			// Only the notes this wrote: a page clipped by something else is
+			// that tool's business, and may already hold more than this could.
+			const tags = front?.tags;
+			const ours = Array.isArray(tags)
+				? tags.includes(BOOKMARK_TAG)
+				: typeof tags === "string" && tags.split(/[,\s]+/).includes(BOOKMARK_TAG);
+			if (!ours) continue;
+			budget--;
+			await this.describe(file, source);
+		}
+	}
+
+	/** One page, asked once, and what it said written down. */
+	private async describe(file: TFile, source: string): Promise<void> {
+		const today = new Date().toISOString().slice(0, 10);
+		let html = "";
+		try {
+			const response = await requestUrl({ url: source, throw: false });
+			const type = response.headers?.["content-type"] ?? response.headers?.["Content-Type"] ?? "";
+			if (response.status < 400 && /html/i.test(type)) html = response.text;
+		} catch (error) {
+			console.error("Skybox: could not read", source, error);
+		}
+
+		const meta = html ? parseMetadata(html, source) : null;
+		await guarded(async () => {
+			await this.app.fileManager.processFrontMatter(file, (front) => {
+				// Asked and answered, even when the answer was nothing: the
+				// page does not get asked again on every sync.
+				front.fetched = today;
+				if (!meta || !hasMeta(meta)) return;
+				if (meta.description && !front.description) front.description = meta.description;
+				if (meta.author && !front.author) front.author = meta.author;
+				if (meta.published && !front.published) front.published = meta.published;
+				if (meta.image && !front.image) front.image = meta.image;
+				if (meta.site && !front.site) front.site = meta.site;
+			});
+			// The description also goes in the body, where a card's excerpt
+			// comes from: a bookmark should read as more than its own URL.
+			if (meta?.description) {
+				await this.app.vault.process(file, (text) =>
+					text.includes(meta.description as string) ? text : `${text.trimEnd()}\n\n${meta.description}\n`
+				);
+			}
+		});
 	}
 
 	/**

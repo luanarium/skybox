@@ -216,6 +216,8 @@ export class VaultIndex {
 			headings: (cache?.headings ?? []).map((h) => h.heading),
 			excerpt: "",
 			embedded: false,
+			// A bookmark that has been out and looked at its page has one.
+			preview: webImage(cache?.frontmatter?.image),
 		};
 	}
 
@@ -239,6 +241,7 @@ export class VaultIndex {
 			headings: [],
 			excerpt: "",
 			embedded,
+			preview: null,
 		};
 	}
 
@@ -252,6 +255,11 @@ export class VaultIndex {
 	private notify(): void {
 		for (const listener of this.listeners) listener();
 	}
+}
+
+/** Only a web address is worth putting in an `img`, and only as itself. */
+function webImage(value: unknown): string | null {
+	return typeof value === "string" && /^https?:\/\//i.test(value.trim()) ? value.trim() : null;
 }
 
 function tagNames(tags: string[] | null): string[] {

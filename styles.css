@@ -1135,3 +1135,14 @@ body.skybox-standalone .titlebar-button-container:focus-within {
 .is-mobile .skybox-cover {
 	height: 96px;
 }
+
+/*
+ * A bookmark that has been out and read its page has a picture of its own.
+ * It is remote, so it may be slow or gone: the space it would take is held
+ * by the same background a cover would have drawn.
+ */
+.skybox-card-preview {
+	max-height: 220px;
+	object-fit: cover;
+	background: var(--background-secondary);
+}
