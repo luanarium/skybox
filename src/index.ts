@@ -217,7 +217,7 @@ export class VaultIndex {
 			excerpt: "",
 			embedded: false,
 			// A bookmark that has been out and looked at its page has one.
-			preview: webImage(cache?.frontmatter?.image),
+			preview: this.settings.bookmarkImages ? webImage(cache?.frontmatter?.image) : null,
 		};
 	}
 

@@ -161,26 +161,30 @@ anyone who wants it now.
 ### Asking a page about itself
 
 Pages declare a summary for the social cards other sites show them in: a title, a description, an
-image, often an author and a date. **Ask each page about itself** in the settings fetches each newly
-bookmarked page once and keeps what it declared, filling the `description`, `author`, `published`
-and `image` properties the clipper's shape leaves room for. The card then shows the page's own
-picture instead of cover art, and the description lands in the note body, where a card's excerpt
-comes from, so a bookmark reads as more than its own URL.
+image, often an author and a date. Each newly bookmarked page is asked once, and what it declared
+fills the `description`, `author`, `published` and `image` properties the clipper's shape leaves
+room for. The card then shows the page's own picture instead of cover art, and the description lands
+in the note body, where a card's excerpt comes from, so a bookmark reads as more than its own URL.
+
+This is part of importing a bookmark rather than a thing to switch on separately, because a link
+with nothing to read is not worth keeping twice over. **Preview images** in the settings turns the
+pictures off for anyone who would rather have cover art, and what each page said is still kept in
+the note's properties.
 
 `src/metadata.ts` does the reading, as string work rather than `DOMParser`, which keeps it testable
 without a browser and stops half-broken HTML costing everything else in the head. Open Graph is
 preferred over the older plain `name=` tags, relative image URLs are made absolute, entities are
 decoded, and a date is kept only when one can actually be read out of what the page said.
 
-This is the only part of Skybox that goes out to the network, so it is a switch of its own, off by
-default and separate from the import. Eight pages per look, each asked once: a `fetched` date goes
-into the note whether or not the page answered, so nothing is asked twice, and a long-kept bookmarks
-file fills in over several passes rather than fetching hundreds of pages at once. Notes that came
-from somewhere else are left alone, since the pass only touches notes carrying the `bookmark` tag.
+This is the only part of Skybox that goes out to the network, and it only runs for a vault that has
+set the import up. Eight pages per look, each asked once: a `fetched` date goes into the note
+whether or not the page answered, so nothing is asked twice, and a long-kept bookmarks file fills in
+over several passes rather than fetching hundreds of pages at once. Notes that came from somewhere
+else are left alone, since the pass only touches notes carrying the `bookmark` tag or sitting in the
+bookmarks folder.
 
 Worth knowing: a preview image is shown from wherever the page keeps it, so displaying those cards
-fetches images from those hosts. Turning the switch off stops new fetching and leaves the images
-already recorded in place.
+reaches those hosts. **Preview images** off stops that, and the cards draw cover art instead.
 
 Why the file rather than something tidier: Brave's own sync is end-to-end encrypted between Brave
 installs with nothing for a third party to hook, and `chrome.bookmarks` belongs to extensions, which

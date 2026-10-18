@@ -319,7 +319,9 @@ export class BookmarkImport {
 	 * What a page says about itself, written into the notes that have not
 	 * asked yet. A bookmark is a title and a link until this runs; afterwards
 	 * it carries the page's own description, author, date and preview image,
-	 * which is what makes a card look like the thing it points at.
+	 * which is what makes a card look like the thing it points at. It is part
+	 * of importing a bookmark rather than a thing to turn on separately: a
+	 * link with nothing to read is not worth having twice over.
 	 *
 	 * A handful at a time, because the first import of a long-kept bookmarks
 	 * file would otherwise fetch hundreds of pages at once. The rest are
@@ -327,7 +329,6 @@ export class BookmarkImport {
 	 * asked, so a page with nothing to say is not asked again.
 	 */
 	private async enrich(fresh: { file: TFile; source: string }[] = [], limit = 8): Promise<void> {
-		if (!this.settings.bookmarksFetch) return;
 		let budget = limit;
 		// The ones just written, which no cache knows about yet.
 		for (const note of fresh) {

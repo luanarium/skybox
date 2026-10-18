@@ -52,8 +52,8 @@ export interface SkyboxSettings {
 	bookmarksPath: string;
 	/** Where bookmark notes are written. */
 	bookmarksFolder: string;
-	/** Fetch each bookmarked page once, for what it says about itself. */
-	bookmarksFetch: boolean;
+	/** Show the picture a bookmarked page offers, where it offers one. */
+	bookmarkImages: boolean;
 }
 
 export const DEFAULT_SETTINGS: SkyboxSettings = {
@@ -71,7 +71,7 @@ export const DEFAULT_SETTINGS: SkyboxSettings = {
 	bookmarksEnabled: false,
 	bookmarksPath: "",
 	bookmarksFolder: "bookmarks",
-	bookmarksFetch: false,
+	bookmarkImages: true,
 };
 
 /** The tag an image gets for being embedded in a note; nothing writes it. */

@@ -31,12 +31,13 @@ export class SkyboxSettingTab extends PluginSettingTab {
 			.setName("Browser bookmarks")
 			.setDesc(
 				"Bookmark pages in your browser as you always have, and Skybox writes a note for " +
-					"each new one. It reads one file, the Chromium bookmarks file named below, and " +
-					"nothing else; it only ever adds, so a bookmark deleted in the browser leaves " +
-					"its note where it is. Leave this unconfigured and nothing happens: no file is " +
-					"read, no note is written, and your bookmarking carries on as it is. A " +
-					"bookmark note holds a title, a link and the folders it came from; if you want " +
-					"the page's text, author and description as well, Obsidian's own Web Clipper " +
+					"each new one. It reads one file, the Chromium bookmarks file named below, " +
+					"and asks each new page once for what it says about itself, so a note " +
+					"carries the page's own description, author, date and picture rather than a " +
+					"bare link. It only ever adds, so a bookmark deleted in the browser leaves " +
+					"its note where it is. Leave this unconfigured and nothing happens: no file " +
+					"is read, no page is fetched, no note is written, and your bookmarking " +
+					"carries on as it is. For a page's full text, Obsidian's own Web Clipper " +
 					"does that today, and these notes carry its properties, so the two sit side " +
 					"by side and neither imports a page the other already saved."
 			);
@@ -97,18 +98,19 @@ export class SkyboxSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Ask each page about itself")
+			.setName("Preview images")
 			.setDesc(
-				"Fetch each newly bookmarked page once and keep what it declares for its own " +
-					"social cards: a description, an author, a date and a preview image, which " +
-					"the card shows instead of cover art. This is the only part of Skybox that " +
-					"goes out to the network, a handful of pages per look, each asked once " +
-					"whether or not it answers. Off, a bookmark stays a title and a link."
+				"Show the picture a page offers for its own social cards, where it offers one, " +
+					"in place of cover art. The picture is loaded from wherever the page keeps " +
+					"it, so showing these cards reaches those hosts; off, cards draw cover art " +
+					"and nothing is loaded. What the page said about itself is kept in the " +
+					"note's properties either way."
 			)
 			.addToggle((toggle) =>
-				toggle.setValue(this.plugin.settings.bookmarksFetch).onChange(async (value) => {
-					this.plugin.settings.bookmarksFetch = value;
+				toggle.setValue(this.plugin.settings.bookmarkImages).onChange(async (value) => {
+					this.plugin.settings.bookmarkImages = value;
 					await this.plugin.saveSettings();
+					this.plugin.index.build();
 				})
 			);
 
