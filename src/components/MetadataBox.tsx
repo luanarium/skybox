@@ -221,10 +221,11 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 			{statusId && note && Platform.isMobile && (
 				<section className="skybox-meta-section">
 					<button className="skybox-thread-open" onClick={() => setSheeted(true)}>
-						{comments === null
-							? "Comments"
-							: `${comments} ${comments === 1 ? "comment" : "comments"}`}
-						{waiting > 0 ? " ·" : ""}
+						{waiting > 0
+							? `${waiting} unread ${waiting === 1 ? "comment" : "comments"}`
+							: comments === null
+								? "Comments"
+								: `${comments} ${comments === 1 ? "comment" : "comments"}`}
 					</button>
 				</section>
 			)}
