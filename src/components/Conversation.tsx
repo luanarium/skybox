@@ -1,7 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Notice, type TFile } from "obsidian";
 import { useSkybox } from "../context";
-import type { MastodonReply, MastodonStatus, Visibility } from "../mastodon";
+import {
+	type MastodonReply,
+	type MastodonStatus,
+	type ThreadNode,
+	type Visibility,
+	threadTree,
+} from "../mastodon";
 import { clientFor } from "../sharing";
 
 /**
@@ -10,8 +16,18 @@ import { clientFor } from "../sharing";
  * What is shown is read from the instance each time the tab is opened, and
  * nothing is written into the vault: a conversation belongs to the server it
  * happened on, and a copy in the note would be stale the moment someone else
- * replied. Replying posts as the connected account, in the same thread.
+ * replied. Replying posts as the connected account, in the thread, under
+ * whichever reply was answered.
  */
+
+/** How far in a reply is drawn before the column gives up indenting. */
+const DEEPEST = 3;
+
+interface Answering {
+	id: string;
+	handle: string;
+}
+
 export function Conversation({ note, statusId }: { note: TFile; statusId: string }) {
 	const { app, settings } = useSkybox();
 	const [status, setStatus] = useState<MastodonStatus | null>(null);
@@ -20,6 +36,8 @@ export function Conversation({ note, statusId }: { note: TFile; statusId: string
 	const [trouble, setTrouble] = useState("");
 	const [draft, setDraft] = useState("");
 	const [sending, setSending] = useState(false);
+	const [answering, setAnswering] = useState<Answering | null>(null);
+	const box = useRef<HTMLTextAreaElement>(null);
 
 	const read = useCallback(async () => {
 		const client = clientFor(app, settings);
@@ -47,6 +65,19 @@ export function Conversation({ note, statusId }: { note: TFile; statusId: string
 		void read();
 	}, [read]);
 
+	const tree = useMemo(() => threadTree(replies, statusId), [replies, statusId]);
+
+	/**
+	 * Answering someone starts the reply with their handle, the way every
+	 * Mastodon client does: a reply nests either way, but the person is only
+	 * told about it if they are mentioned in it.
+	 */
+	const answer = (reply: MastodonReply) => {
+		setAnswering({ id: reply.id, handle: reply.handle });
+		setDraft((current) => (current.includes(`@${reply.handle}`) ? current : `@${reply.handle} `));
+		window.setTimeout(() => box.current?.focus(), 0);
+	};
+
 	const send = async () => {
 		const text = draft.trim();
 		if (!text || sending) return;
@@ -54,8 +85,14 @@ export function Conversation({ note, statusId }: { note: TFile; statusId: string
 		if (!client) return;
 		setSending(true);
 		try {
-			await client.post(text, settings.mastodonVisibility as Visibility, [], statusId);
+			await client.post(
+				text,
+				settings.mastodonVisibility as Visibility,
+				[],
+				answering?.id ?? statusId
+			);
 			setDraft("");
+			setAnswering(null);
 			await read();
 		} catch (error) {
 			new Notice(
@@ -65,6 +102,25 @@ export function Conversation({ note, statusId }: { note: TFile; statusId: string
 			setSending(false);
 		}
 	};
+
+	const branch = (nodes: ThreadNode[], depth = 0) => (
+		<ol className="skybox-thread-list" style={{ marginLeft: depth === 0 ? 0 : 10 }}>
+			{nodes.map((node) => (
+				<li key={node.reply.id}>
+					<div className="skybox-thread-who">
+						{node.reply.avatar && <img src={node.reply.avatar} alt="" loading="lazy" />}
+						<a href={node.reply.url}>@{node.reply.handle}</a>
+						<time dateTime={node.reply.at}>{when(node.reply.at)}</time>
+					</div>
+					<p>{node.reply.text}</p>
+					<button className="skybox-thread-answer" onClick={() => answer(node.reply)}>
+						reply
+					</button>
+					{node.children.length > 0 && branch(node.children, Math.min(depth + 1, DEEPEST))}
+				</li>
+			))}
+		</ol>
+	);
 
 	return (
 		<div className="skybox-thread">
@@ -96,22 +152,23 @@ export function Conversation({ note, statusId }: { note: TFile; statusId: string
 
 					{replies.length === 0 && <p className="skybox-meta-none">nobody has replied yet</p>}
 
-					<ol className="skybox-thread-list">
-						{replies.map((reply) => (
-							<li key={reply.id}>
-								<div className="skybox-thread-who">
-									{reply.avatar && <img src={reply.avatar} alt="" loading="lazy" />}
-									<a href={reply.url}>@{reply.handle}</a>
-									<time dateTime={reply.at}>{when(reply.at)}</time>
-								</div>
-								<p>{reply.text}</p>
-							</li>
-						))}
-					</ol>
+					{tree.length > 0 && branch(tree)}
 
 					<div className="skybox-thread-reply">
+						{answering && (
+							<div className="skybox-thread-answering">
+								<span>replying to @{answering.handle}</span>
+								<button
+									aria-label="Reply to the post instead"
+									onClick={() => setAnswering(null)}
+								>
+									×
+								</button>
+							</div>
+						)}
 						<textarea
-							placeholder="reply as yourself"
+							ref={box}
+							placeholder={answering ? `reply to @${answering.handle}` : "reply as yourself"}
 							value={draft}
 							disabled={sending}
 							onChange={(event) => setDraft(event.target.value)}
@@ -124,7 +181,7 @@ export function Conversation({ note, statusId }: { note: TFile; statusId: string
 							}}
 						/>
 						<button disabled={sending || draft.trim() === ""} onClick={() => void send()}>
-							{sending ? "posting…" : "reply"}
+							{sending ? "posting…" : answering ? "reply to @" + answering.handle : "reply"}
 						</button>
 					</div>
 				</>

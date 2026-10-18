@@ -1373,3 +1373,39 @@ body.skybox-standalone .titlebar-button-container:focus-within {
 .skybox-thread-reply button {
 	align-self: flex-end;
 }
+
+.skybox-thread-answer {
+	all: unset;
+	color: var(--text-faint);
+	font-size: var(--font-ui-smaller);
+	cursor: pointer;
+}
+
+.skybox-thread-answer:hover {
+	color: var(--interactive-accent);
+}
+
+/* A nested reply hangs off the one it answers. */
+.skybox-thread-list .skybox-thread-list {
+	margin-top: 10px;
+	padding-left: 10px;
+	border-left: 2px solid var(--background-modifier-border);
+}
+
+.skybox-thread-answering {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}
+
+.skybox-thread-answering button {
+	all: unset;
+	cursor: pointer;
+	color: var(--text-faint);
+}
+
+.skybox-thread-answering button:hover {
+	color: var(--text-normal);
+}

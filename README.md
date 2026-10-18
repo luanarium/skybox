@@ -297,12 +297,18 @@ The post's id and address are written into the note's frontmatter as `mastodon_i
 
 ### The conversation, beside the note
 
-A shared card's right pane gains a second tab. **Properties** is everything a card has always shown;
-**Conversation** is the thread: who replied, what they said, how many favourites and boosts it has
-collected, a link to the post itself, and a box at the foot of the column to reply from. Replying
-posts as the connected account, in the same thread, at the visibility set in the settings, and the
-thread is read again straight afterwards so your reply appears where it will appear to everyone
-else.
+A shared card's right pane gains a second tab, and a card that has been posted opens on it, because
+the properties are in the note and have not moved while the thread is somewhere else and may have.
+**Properties** is everything a card has always shown; **Conversation** is the thread: who replied,
+what they said, how many favourites and boosts it collected, a link to the post, and a box at the
+foot of the column to reply from.
+
+A Mastodon thread is a tree, since every status says what it answers, so each reply carries its own
+reply button and the thread nests under the one being answered. Answering someone starts the box
+with their handle, the way every Mastodon client does, because a reply nests either way but the
+person is only told about it if they are mentioned in it. Replying with nobody chosen answers the
+post itself. Either way it posts as the connected account at the visibility in the settings, and the
+thread is read again straight afterwards so your reply sits where everyone else will see it.
 
 Nothing is written into the vault. A conversation belongs to the server it happened on, and a copy
 in the note would be stale the moment somebody else replied, so the tab reads the instance each time

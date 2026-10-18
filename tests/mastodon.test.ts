@@ -1,5 +1,12 @@
 import * as assert from "node:assert";
-import { composePost, htmlToText, multipartBody, normalizeInstance } from "../src/mastodon";
+import {
+	composePost,
+	htmlToText,
+	multipartBody,
+	normalizeInstance,
+	threadTree,
+	type MastodonReply,
+} from "../src/mastodon";
 import { hasShareTag } from "../src/sharing";
 
 // An instance is a host however it was typed.
@@ -52,3 +59,41 @@ assert.ok(hasShareTag(["Share", "cooking"], "share"));
 assert.ok(!hasShareTag(["sharing"], "share"));
 assert.ok(!hasShareTag([], "share"));
 assert.ok(!hasShareTag(["share"], ""));
+
+// A thread is a tree: each reply says what it answers, and the client puts
+// them back together.
+const reply = (id: string, inReplyTo: string | null): MastodonReply => ({
+	id,
+	author: id,
+	handle: id,
+	avatar: "",
+	text: id,
+	url: "",
+	at: "",
+	favouritesCount: 0,
+	inReplyTo,
+});
+
+const tree = threadTree(
+	[reply("a", "root"), reply("b", "a"), reply("c", "root"), reply("d", "b")],
+	"root"
+);
+assert.deepStrictEqual(
+	tree.map((node) => node.reply.id),
+	["a", "c"],
+	"replies to the post itself are the top of the thread"
+);
+assert.deepStrictEqual(tree[0].children.map((node) => node.reply.id), ["b"]);
+assert.deepStrictEqual(tree[0].children[0].children.map((node) => node.reply.id), ["d"]);
+assert.strictEqual(tree[1].children.length, 0);
+
+// A reply whose parent is missing from the context still shows up.
+const orphaned = threadTree([reply("x", "gone")], "root");
+assert.deepStrictEqual(orphaned.map((node) => node.reply.id), ["x"]);
+
+// A reply that somehow answers itself does not become its own child.
+const looped = threadTree([reply("y", "y")], "root");
+assert.deepStrictEqual(looped.map((node) => node.reply.id), ["y"]);
+assert.strictEqual(looped[0].children.length, 0);
+
+assert.deepStrictEqual(threadTree([], "root"), []);

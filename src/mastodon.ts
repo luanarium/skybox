@@ -45,6 +45,35 @@ export interface MastodonReply {
 	/** ISO 8601, as the server gives it. */
 	at: string;
 	favouritesCount: number;
+	/** What this one answers: another reply, or the post itself. */
+	inReplyTo: string | null;
+}
+
+/** A reply with whatever answers it, so a thread reads as a thread. */
+export interface ThreadNode {
+	reply: MastodonReply;
+	children: ThreadNode[];
+}
+
+/**
+ * A thread is a tree: Mastodon hands back the descendants of a post as a flat
+ * list, each saying what it answers, and a client puts them back together.
+ * Anything whose parent is missing from the list hangs off the root, so a
+ * reply is never lost to a gap.
+ */
+export function threadTree(replies: MastodonReply[], rootId: string): ThreadNode[] {
+	const nodes = new Map<string, ThreadNode>();
+	for (const reply of replies) nodes.set(reply.id, { reply, children: [] });
+
+	const roots: ThreadNode[] = [];
+	for (const reply of replies) {
+		const node = nodes.get(reply.id);
+		if (!node) continue;
+		const parent = reply.inReplyTo && reply.inReplyTo !== rootId ? nodes.get(reply.inReplyTo) : null;
+		if (parent && parent !== node) parent.children.push(node);
+		else roots.push(node);
+	}
+	return roots;
 }
 
 /** `mastodon.social`, `https://mastodon.social/`, and the like, all one thing. */
@@ -240,6 +269,7 @@ function readReply(raw: Record<string, unknown>): MastodonReply {
 		url: typeof raw.url === "string" ? raw.url : "",
 		at: String(raw.created_at ?? ""),
 		favouritesCount: Number(raw.favourites_count ?? 0),
+		inReplyTo: raw.in_reply_to_id ? String(raw.in_reply_to_id) : null,
 	};
 }
 
