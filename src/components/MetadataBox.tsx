@@ -156,9 +156,15 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 	 * note is, and what was said about it.
 	 */
 	const statusId = frontmatter.mastodon_id ? String(frontmatter.mastodon_id) : "";
-	const [tab, setTab] = useState<"note" | "thread">("note");
+	const [tab, setTab] = useState<"note" | "thread">(statusId ? "thread" : "note");
+	/*
+	 * A shared card opens on its conversation, because that is the part that
+	 * is somewhere else and may have moved since you last looked. An empty
+	 * thread is still the right place to be: the reply box is there, and a
+	 * card you have just shared is one you have something to say about.
+	 */
 	useEffect(() => {
-		if (!statusId) setTab("note");
+		setTab(statusId ? "thread" : "note");
 	}, [statusId]);
 
 	return (
