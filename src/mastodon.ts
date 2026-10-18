@@ -36,6 +36,8 @@ export type Visibility = "public" | "unlisted" | "private" | "direct";
 /** One post in the thread under a shared card. */
 export interface MastodonReply {
 	id: string;
+	/** Who wrote it, which decides whether this plugin may delete it. */
+	accountId: string;
 	/** The display name, falling back to the handle where there is none. */
 	author: string;
 	handle: string;
@@ -262,6 +264,7 @@ function readReply(raw: Record<string, unknown>): MastodonReply {
 	const handle = String(account.acct ?? account.username ?? "");
 	return {
 		id: String(raw.id ?? ""),
+		accountId: String(account.id ?? ""),
 		author: String(account.display_name || handle),
 		handle,
 		avatar: typeof account.avatar_static === "string" ? account.avatar_static : "",

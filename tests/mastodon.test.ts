@@ -64,6 +64,7 @@ assert.ok(!hasShareTag(["share"], ""));
 // them back together.
 const reply = (id: string, inReplyTo: string | null): MastodonReply => ({
 	id,
+	accountId: "me",
 	author: id,
 	handle: id,
 	avatar: "",

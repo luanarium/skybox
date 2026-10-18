@@ -1,7 +1,7 @@
 import { type App, Notice, TFile } from "obsidian";
 import { ask } from "./confirm";
 import type { VaultIndex } from "./index";
-import { Mastodon, composePost, type Visibility } from "./mastodon";
+import { Mastodon, composePost, type MastodonReply, type Visibility } from "./mastodon";
 import { isImageExtension, sidecarTargetPath, type SkyboxSettings } from "./types";
 import { guarded } from "./writes";
 
@@ -170,17 +170,34 @@ export class Sharing {
 		const client = clientFor(this.app, this.settings);
 		if (!client) return;
 
-		// What is about to be lost, said plainly: a thread other people have
-		// replied in is not the same as a post nobody saw.
-		const status = await client.status(String(statusId));
-		const replies = status?.repliesCount ?? 0;
+		/*
+		 * What is about to be lost, said plainly. Mastodon does not cascade a
+		 * delete: every reply is a status of its own and outlives the post it
+		 * answered. Your own replies can go with it, and are counted here so
+		 * the number is in the question; anyone else's stay where they are,
+		 * on their own servers, now answering nothing.
+		 */
+		const [status, thread] = await Promise.all([
+			client.status(String(statusId)),
+			client.replies(String(statusId)).catch((): MastodonReply[] => []),
+		]);
+		const me = await client.verify().catch(() => null);
+		const mine = me ? thread.filter((reply) => reply.accountId === me.id) : [];
+		const theirs = thread.length - mine.length;
 		const reactions = (status?.favouritesCount ?? 0) + (status?.reblogsCount ?? 0);
-		const said =
-			replies > 0 || reactions > 0
-				? `It has ${replies} ${replies === 1 ? "reply" : "replies"} and ${reactions} ${
-						reactions === 1 ? "reaction" : "reactions"
-					}, which go with it.`
-				: "Nobody has replied to it.";
+
+		const said = [
+			mine.length > 0
+				? `${mine.length} ${mine.length === 1 ? "reply" : "replies"} of your own go with it.`
+				: "",
+			theirs > 0
+				? `${theirs} ${theirs === 1 ? "reply" : "replies"} by other people stay where they are, answering a post that is no longer there.`
+				: "",
+			reactions > 0 ? `${reactions} ${reactions === 1 ? "reaction" : "reactions"} go too.` : "",
+			thread.length === 0 && reactions === 0 ? "Nobody has replied to it." : "",
+		]
+			.filter(Boolean)
+			.join(" ");
 
 		const sure = await ask(this.app, {
 			title: "Delete the post?",
@@ -197,6 +214,18 @@ export class Sharing {
 		}
 
 		try {
+			// Deepest first, so nothing is left answering something already
+			// gone while the rest are still going.
+			let removed = 0;
+			for (const reply of [...mine].reverse()) {
+				try {
+					await client.deleteStatus(reply.id);
+					removed++;
+				} catch (error) {
+					// One stubborn reply is not a reason to keep the post.
+					console.error("Skybox: could not delete a reply", error);
+				}
+			}
 			await client.deleteStatus(String(statusId));
 			await guarded(() =>
 				this.app.fileManager.processFrontMatter(note, (front) => {
@@ -204,7 +233,11 @@ export class Sharing {
 					delete front.mastodon_url;
 				})
 			);
-			new Notice("The post is gone.");
+			new Notice(
+				removed > 0
+					? `The post is gone, with ${removed} of your ${removed === 1 ? "reply" : "replies"}.`
+					: "The post is gone."
+			);
 		} catch (error) {
 			console.error("Skybox: could not delete the post", error);
 			new Notice(`Skybox could not delete that post: ${message(error)}`);
