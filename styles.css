@@ -1842,6 +1842,14 @@ body.skybox-standalone .titlebar-button-container:focus-within {
 	overflow-y: auto;
 }
 
+/* A post that reached you through somebody else says so, quietly, above the
+   name of whoever wrote it. */
+.skybox-wall-passed {
+	margin: 0 0 6px;
+	color: var(--text-faint);
+	font-size: var(--font-ui-smaller);
+}
+
 .skybox-wall-who {
 	display: flex;
 	align-items: center;
@@ -1887,9 +1895,49 @@ body.skybox-standalone .titlebar-button-container:focus-within {
 
 .skybox-wall-counts {
 	display: flex;
+	align-items: center;
 	gap: 12px;
 	color: var(--text-faint);
 	font-size: var(--font-ui-smaller);
+}
+
+/* Boost, follow and keep: the three things you can do to somebody else's post,
+   each a quiet word until it is on. */
+.skybox-wall-follow,
+.skybox-wall-boost,
+.skybox-wall-keep {
+	padding: 2px 10px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	background: transparent;
+	box-shadow: none;
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	cursor: pointer;
+}
+
+.skybox-wall-follow:hover,
+.skybox-wall-boost:hover,
+.skybox-wall-keep:hover {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+.skybox-wall-follow.is-on,
+.skybox-wall-boost.is-on {
+	border-color: var(--interactive-accent);
+	color: var(--interactive-accent);
+}
+
+.skybox-wall-keep {
+	margin-left: auto;
+}
+
+.skybox-wall-follow:disabled,
+.skybox-wall-boost:disabled,
+.skybox-wall-keep:disabled {
+	opacity: 0.6;
+	cursor: default;
 }
 
 /* A card from the wall wears its author's name rather than a note's title. */

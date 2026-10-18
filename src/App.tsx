@@ -18,12 +18,19 @@ import { MailOverlay } from "./components/MailOverlay";
 import { Masonry } from "./components/Masonry";
 import { WallOverlay } from "./components/WallOverlay";
 import { clientFor } from "./sharing";
-import { narrowWall, wallItem, wallTagOf } from "./wall";
+import { narrowWall, wallItem, wallSourceOf } from "./wall";
 import { NoteOverlay } from "./components/NoteOverlay";
 import { Sheet } from "./components/Sheet";
 import { SearchBox } from "./components/SearchBox";
 
 const PAGE = 100;
+
+/** The oldest post on the wall, which is where the next page starts. */
+function lastPostId(items: Item[]): string {
+	const last = items[items.length - 1];
+	// A boost pages by its own id, not by the id of the post inside it.
+	return last?.remote?.entryId || last?.remote?.id || "";
+}
 
 export function App() {
 	const { app, index, settings, bus, leaf, interactions, setStandalone } = useSkybox();
@@ -73,30 +80,61 @@ export function App() {
 	 * grid fills with that hashtag's public timeline. Nothing of it is kept:
 	 * clearing the chip clears the wall.
 	 */
-	const tag = wallTagOf(chips);
+	const source = wallSourceOf(chips);
+	const tag = source?.tag ?? null;
+	/** How far down the wall has been read, for asking for the next page. */
+	const [wall, setWall] = useState<Item[]>([]);
+	const [wallEnd, setWallEnd] = useState(false);
+	const reading = useRef(false);
+
+	const readWall = useCallback(
+		async (before: string) => {
+			if (!source || reading.current) return;
+			const client = clientFor(app, settings);
+			if (!client) {
+				setWall([]);
+				return;
+			}
+			reading.current = true;
+			try {
+				const posts =
+					source.kind === "home"
+						? await client.home(40, before)
+						: await client.hashtag(source.tag, 40, before);
+				const fresh = narrowWall(posts, chips, source.tag).map(wallItem);
+				// A page that brings nothing back is the end of the wall.
+				setWallEnd(posts.length === 0);
+				setWall((current) => {
+					if (!before) return fresh;
+					const seen = new Set(current.map((item) => item.id));
+					return [...current, ...fresh.filter((item) => !seen.has(item.id))];
+				});
+			} catch (error) {
+				console.error("Skybox: could not read that wall", error);
+				if (!before) setWall([]);
+			} finally {
+				reading.current = false;
+			}
+		},
+		[app, settings, source?.kind, source?.tag, chips]
+	);
+
 	useEffect(() => {
-		if (!tag) return;
-		let current = true;
-		const client = clientFor(app, settings);
-		if (!client) {
-			setResults([]);
+		if (!source) {
+			setWall([]);
+			setWallEnd(false);
 			return;
 		}
-		void client
-			.hashtag(tag)
-			.then((posts) => {
-				if (!current) return;
-				setResults(narrowWall(posts, chips, tag).map(wallItem));
-				setFresh(new Set());
-			})
-			.catch((error) => {
-				console.error("Skybox: could not read that hashtag", error);
-				if (current) setResults([]);
-			});
-		return () => {
-			current = false;
-		};
-	}, [app, settings, tag, chips]);
+		setWallEnd(false);
+		void readWall("");
+	}, [source?.kind, source?.tag, readWall]);
+
+	useEffect(() => {
+		if (tag) {
+			setResults(wall);
+			setFresh(new Set());
+		}
+	}, [tag, wall]);
 
 	useEffect(() => {
 		if (tag) return;
@@ -144,13 +182,18 @@ export function App() {
 		const target = sentinel.current;
 		if (!target || typeof IntersectionObserver === "undefined") return;
 		const observer = new IntersectionObserver((entries) => {
-			if (entries.some((entry) => entry.isIntersecting)) {
-				setLimit((current) => current + PAGE);
+			if (!entries.some((entry) => entry.isIntersecting)) return;
+			// On the wall the next page is somebody else's to send; in the
+			// vault it is already here and only the limit moves.
+			if (tag) {
+				if (!wallEnd) void readWall(lastPostId(wall));
+				return;
 			}
+			setLimit((current) => current + PAGE);
 		});
 		observer.observe(target);
 		return () => observer.disconnect();
-	}, [results.length]);
+	}, [results.length, tag, wall, wallEnd, readWall]);
 
 	const open = useCallback((item: Item) => {
 		// A phone runs no view transition, so nothing there needs naming for one.
@@ -344,7 +387,12 @@ export function App() {
 		return <NoteOverlay item={item} onClose={close} onOpenPath={openPath} />;
 	};
 
-	const shown = useMemo(() => results.slice(0, limit), [results, limit]);
+	// The vault pages by moving a limit; the wall pages by asking for more, so
+	// everything it has already been given is on screen.
+	const shown = useMemo(
+		() => (tag ? results : results.slice(0, limit)),
+		[results, limit, tag]
+	);
 	const expanded = expandedId ? results.find((item) => item.id === expandedId) ?? index.get(expandedId) : undefined;
 
 	return (

@@ -1,5 +1,13 @@
 import * as assert from "node:assert";
-import { narrowWall, wallItem, wallTag, wallTagOf, WALL_PREFIX } from "../src/wall";
+import {
+	narrowWall,
+	postFromNote,
+	wallItem,
+	wallSourceOf,
+	wallTag,
+	WALL_FOLLOWS,
+	WALL_PREFIX,
+} from "../src/wall";
 import { keptNote } from "../src/components/WallOverlay";
 import { toChip } from "../src/search";
 import type { WallPost } from "../src/mastodon";
@@ -9,6 +17,7 @@ const post = (id: string, text: string, tags: string[] = [], media: string[] = [
 	url: `https://example.social/@someone/${id}`,
 	author: "Someone",
 	handle: "someone@example.social",
+	accountId: "acc1",
 	avatar: "https://example.social/avatar.png",
 	text,
 	media,
@@ -17,6 +26,10 @@ const post = (id: string, text: string, tags: string[] = [], media: string[] = [
 	repliesCount: 2,
 	favouritesCount: 7,
 	reblogsCount: 1,
+	boosted: false,
+	favourited: false,
+	entryId: id,
+	boostedBy: "",
 });
 
 // A chip beginning `#!` asks the fediverse; everything else asks the vault.
@@ -25,9 +38,15 @@ assert.strictEqual(wallTag(toChip("#!tea")!), "tea");
 assert.strictEqual(wallTag(toChip("#!Tea")!), "tea", "a tag is a tag whatever its case");
 assert.strictEqual(wallTag(toChip("#tea")!), null, "a plain tag is the vault's");
 assert.strictEqual(wallTag(toChip("tea")!), null);
-assert.strictEqual(wallTagOf([toChip("cup")!, toChip("#!tea")!]), "tea");
-assert.strictEqual(wallTagOf([toChip("#tea")!]), null);
-assert.strictEqual(wallTagOf([]), null);
+assert.deepStrictEqual(wallSourceOf([toChip("cup")!, toChip("#!tea")!]), { kind: "tag", tag: "tea" });
+assert.strictEqual(wallSourceOf([toChip("#tea")!]), null);
+assert.strictEqual(wallSourceOf([]), null);
+
+// `#!follows` asks for the people you follow rather than for a hashtag.
+assert.deepStrictEqual(wallSourceOf([toChip(`#!${WALL_FOLLOWS}`)!]), {
+	kind: "home",
+	tag: "follows",
+});
 
 // A post becomes a card without a file behind it.
 const card = wallItem(post("1", "a pot of oolong", ["tea"], ["https://example.social/pic.jpg"]));
@@ -57,3 +76,31 @@ assert.ok(note.includes("  - wall"), note);
 assert.ok(note.includes("  - tea"), note);
 assert.ok(note.includes("a pot of oolong"), note);
 assert.ok(note.includes("author: \"@someone@example.social\""), note);
+
+// A kept post reads back out of its note, so it is drawn the same way it was
+// on the wall rather than shown as markdown to edit.
+const keptAgain = keptNote(post("9", "a pot of oolong", ["tea"], ["https://example.social/p.jpg"]));
+const front = {
+	title: "Someone",
+	source: "https://example.social/@someone/9",
+	author: "@someone@example.social",
+	created: "2026-10-18",
+	mastodon_id: "9",
+	mastodon_url: "https://example.social/@someone/9",
+	mastodon_account: "acc1",
+	image: "https://example.social/p.jpg",
+	tags: ["wall", "tea"],
+};
+const back = postFromNote(front, keptAgain);
+assert.ok(back);
+assert.strictEqual(back.id, "9");
+assert.strictEqual(back.author, "Someone");
+assert.strictEqual(back.handle, "someone@example.social");
+assert.strictEqual(back.accountId, "acc1", "the account id is what follow needs");
+assert.deepStrictEqual(back.media, ["https://example.social/p.jpg"]);
+assert.ok(back.text.includes("a pot of oolong"), back.text);
+assert.ok(!back.text.includes("---"), "the frontmatter is not the post");
+assert.ok(!back.text.includes("https://example.social/@someone/9"), "nor is the link at the foot");
+
+// A note that was never a post reads back as nothing rather than as a blank one.
+assert.strictEqual(postFromNote({ title: "an ordinary note" }, "words"), null);

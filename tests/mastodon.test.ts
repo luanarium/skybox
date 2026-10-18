@@ -6,6 +6,7 @@ import {
 	normalizeInstance,
 	threadTree,
 	type MastodonReply,
+	readWallPost,
 } from "../src/mastodon";
 import { hasShareTag } from "../src/sharing";
 
@@ -119,3 +120,42 @@ assert.deepStrictEqual(
 	["answer", "later"],
 	"inside a branch the order is as it happened"
 );
+
+// A boost on a timeline is a status wrapping somebody else's. What goes on the
+// wall is the post that was written, said to have been passed on by whoever
+// boosted it, and the next page counts the boost rather than the post.
+const boosted = readWallPost({
+	id: "99",
+	created_at: "2026-10-18T09:00:00Z",
+	account: { id: "b1", acct: "passer@example.social", display_name: "Passer" },
+	content: "",
+	reblog: {
+		id: "12",
+		url: "https://example.social/@writer/12",
+		created_at: "2026-10-17T09:00:00Z",
+		content: "<p>a pot of oolong</p>",
+		account: { id: "w1", acct: "writer@example.social", display_name: "Writer" },
+		reblogs_count: 3,
+		reblogged: true,
+		tags: [{ name: "tea" }],
+	},
+});
+assert.strictEqual(boosted.id, "12", "the post is the one that was written");
+assert.strictEqual(boosted.text, "a pot of oolong");
+assert.strictEqual(boosted.handle, "writer@example.social");
+assert.strictEqual(boosted.accountId, "w1", "following follows the author, not the booster");
+assert.strictEqual(boosted.boostedBy, "passer@example.social");
+assert.strictEqual(boosted.entryId, "99", "paging counts timeline entries");
+assert.strictEqual(boosted.boosted, true);
+assert.strictEqual(boosted.reblogsCount, 3);
+assert.deepStrictEqual(boosted.tags, ["tea"]);
+
+// A plain post is its own entry, boosted by nobody.
+const plain = readWallPost({
+	id: "12",
+	content: "<p>tea</p>",
+	account: { id: "w1", acct: "writer@example.social" },
+});
+assert.strictEqual(plain.entryId, "12");
+assert.strictEqual(plain.boostedBy, "");
+assert.strictEqual(plain.boosted, false);

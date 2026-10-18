@@ -39,6 +39,8 @@ export interface WallPost {
 	url: string;
 	author: string;
 	handle: string;
+	/** The account's own id, which following and unfollowing need. */
+	accountId: string;
 	avatar: string;
 	text: string;
 	/** Pictures the post carries, as addresses. */
@@ -48,6 +50,17 @@ export interface WallPost {
 	repliesCount: number;
 	favouritesCount: number;
 	reblogsCount: number;
+	/** Whether this account has already boosted or favourited it. */
+	boosted: boolean;
+	favourited: boolean;
+	/**
+	 * The timeline entry this post arrived as. A boost is an entry of its own
+	 * wrapping somebody else's post, and asking for the next page counts
+	 * entries, so paging follows this while everything else follows `id`.
+	 */
+	entryId: string;
+	/** Who boosted it, where it reached this timeline through a boost. */
+	boostedBy: string;
 }
 
 /** One post in the thread under a shared card. */
@@ -313,13 +326,60 @@ export class Mastodon {
 	 * What the fediverse is saying under a hashtag. Public, so it needs no
 	 * account beyond the one connecting, and nothing of it is kept.
 	 */
-	async hashtag(tag: string, limit = 40): Promise<WallPost[]> {
+	async hashtag(tag: string, limit = 40, before = ""): Promise<WallPost[]> {
 		const name = tag.replace(/^#/, "").trim();
 		if (!name) return [];
+		const page = before ? `&max_id=${encodeURIComponent(before)}` : "";
 		const raw = (await this.call(
-			`/api/v1/timelines/tag/${encodeURIComponent(name)}?limit=${limit}`
+			`/api/v1/timelines/tag/${encodeURIComponent(name)}?limit=${limit}${page}`
 		)) as Record<string, unknown>[];
 		return (Array.isArray(raw) ? raw : []).map(readWallPost);
+	}
+
+	/** What the people this account follows have been saying. */
+	async home(limit = 40, before = ""): Promise<WallPost[]> {
+		const page = before ? `&max_id=${encodeURIComponent(before)}` : "";
+		const raw = (await this.call(`/api/v1/timelines/home?limit=${limit}${page}`)) as Record<
+			string,
+			unknown
+		>[];
+		return (Array.isArray(raw) ? raw : []).map(readWallPost);
+	}
+
+	/** Boosting, and taking it back. */
+	async boost(id: string, on: boolean): Promise<WallPost> {
+		const raw = (await this.call(`/api/v1/statuses/${id}/${on ? "reblog" : "unreblog"}`, {
+			method: "POST",
+		})) as Record<string, unknown>;
+		// Boosting answers with the boost, which carries the original inside,
+		// and reading a post already looks through that.
+		return readWallPost(raw);
+	}
+
+	async favourite(id: string, on: boolean): Promise<WallPost> {
+		const raw = (await this.call(`/api/v1/statuses/${id}/${on ? "favourite" : "unfavourite"}`, {
+			method: "POST",
+		})) as Record<string, unknown>;
+		return readWallPost(raw);
+	}
+
+	/** Following, and unfollowing, by account rather than by post. */
+	async follow(accountId: string, on: boolean): Promise<boolean> {
+		const raw = (await this.call(`/api/v1/accounts/${accountId}/${on ? "follow" : "unfollow"}`, {
+			method: "POST",
+		})) as { following?: boolean };
+		return Boolean(raw.following);
+	}
+
+	/** Which of these accounts this one already follows. */
+	async following(accountIds: string[]): Promise<Set<string>> {
+		if (accountIds.length === 0) return new Set();
+		const query = accountIds.map((id) => `id[]=${encodeURIComponent(id)}`).join("&");
+		const raw = (await this.call(`/api/v1/accounts/relationships?${query}`)) as {
+			id?: string;
+			following?: boolean;
+		}[];
+		return new Set((Array.isArray(raw) ? raw : []).filter((r) => r.following).map((r) => String(r.id)));
 	}
 
 	/** The direct-message conversations this account is in. */
@@ -391,7 +451,15 @@ function readReply(raw: Record<string, unknown>): MastodonReply {
 	};
 }
 
-function readWallPost(raw: Record<string, unknown>): WallPost {
+export function readWallPost(entry: Record<string, unknown>): WallPost {
+	// A boost is a status of its own carrying the real one. What belongs on the
+	// wall is the post somebody wrote, with a line saying who passed it on.
+	const boost =
+		entry.reblog && typeof entry.reblog === "object"
+			? (entry.reblog as Record<string, unknown>)
+			: null;
+	const raw = boost ?? entry;
+	const by = boost ? ((entry.account ?? {}) as Record<string, unknown>) : null;
 	const account = (raw.account ?? {}) as Record<string, unknown>;
 	const media = ((raw.media_attachments ?? []) as Record<string, unknown>[])
 		.filter((item) => item.type === "image" || item.type === "gifv")
@@ -404,6 +472,7 @@ function readWallPost(raw: Record<string, unknown>): WallPost {
 		url: typeof raw.url === "string" ? raw.url : "",
 		author: String(account.display_name || handle),
 		handle,
+		accountId: String(account.id ?? ""),
 		avatar: typeof account.avatar_static === "string" ? account.avatar_static : "",
 		text: htmlToText(typeof raw.content === "string" ? raw.content : ""),
 		media,
@@ -414,6 +483,10 @@ function readWallPost(raw: Record<string, unknown>): WallPost {
 		repliesCount: Number(raw.replies_count ?? 0),
 		favouritesCount: Number(raw.favourites_count ?? 0),
 		reblogsCount: Number(raw.reblogs_count ?? 0),
+		boosted: raw.reblogged === true,
+		favourited: raw.favourited === true,
+		entryId: String(entry.id ?? raw.id ?? ""),
+		boostedBy: by ? String(by.acct ?? "") : "",
 	};
 }
 

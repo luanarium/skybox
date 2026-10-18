@@ -1,32 +1,50 @@
-import { useState } from "react";
-import { Notice } from "obsidian";
+import { useEffect, useState } from "react";
+import { Notice, TFile } from "obsidian";
 import { useSkybox } from "../context";
 import { ensureFolder, noteTitle, uniquePath } from "../ingest";
 import type { WallPost } from "../mastodon";
 import type { Item } from "../types";
+import { postFromNote } from "../wall";
 import { guarded } from "../writes";
-import { Conversation } from "./Conversation";
+import { Post } from "./Post";
 
 /**
- * A post from the wall, read where it is.
+ * A post, on the wall or kept.
  *
- * Nothing of a hashtag timeline is written anywhere until it is asked for, so
- * this draws from what the instance said and keeps nothing. The thread under
- * it is the same conversation a shared card has, because it is the same
- * thing: statuses answering a status.
- *
- * Keeping one writes an ordinary note carrying the post's id, which is what
- * makes it an ordinary card afterwards: it is searched, it is tagged, its
- * conversation keeps working, and the unread count follows it.
+ * A card from the wall carries its post; a kept one carries a note, and the
+ * post is read back out of it, so what you see is the same either way. The
+ * note is never shown as markdown to edit: it is a copy of something somebody
+ * else wrote, and the part of it that goes on changing is the thread, which
+ * is read live.
  */
-export function WallOverlay({ item, onClose }: { item: Item; onClose: (keepFocus?: boolean) => void }) {
+export function WallOverlay({
+	item,
+	onClose,
+}: {
+	item: Item;
+	onClose: (keepFocus?: boolean) => void;
+}) {
 	const { app, index, settings } = useSkybox();
-	const post = item.remote as WallPost;
-	const [kept, setKept] = useState<string | null>(null);
+	const [post, setPost] = useState<WallPost | null>(item.remote ?? null);
+	const [kept, setKept] = useState(!item.remote);
 	const [keeping, setKeeping] = useState(false);
 
+	// A kept post lives in a note; read it back rather than asking the server.
+	useEffect(() => {
+		if (item.remote) return;
+		let live = true;
+		void app.vault.cachedRead(item.file).then((body) => {
+			if (!live) return;
+			const front = app.metadataCache.getFileCache(item.file)?.frontmatter ?? {};
+			setPost(postFromNote(front as Record<string, unknown>, body));
+		});
+		return () => {
+			live = false;
+		};
+	}, [app, item.file, item.mtime, item.remote]);
+
 	const keep = async () => {
-		if (keeping || kept) return;
+		if (keeping || kept || !post) return;
 		setKeeping(true);
 		try {
 			const folder = await ensureFolder(app, settings.intakeFolder);
@@ -37,7 +55,7 @@ export function WallOverlay({ item, onClose }: { item: Item; onClose: (keepFocus
 			);
 			const file = await guarded(() => app.vault.create(path, keptNote(post)));
 			index.ensure(file);
-			setKept(file.path);
+			setKept(true);
 			new Notice("Kept, and the conversation comes with it.");
 		} catch (error) {
 			new Notice(
@@ -57,51 +75,32 @@ export function WallOverlay({ item, onClose }: { item: Item; onClose: (keepFocus
 		>
 			<div className="skybox-expanded skybox-wall">
 				<header className="skybox-expanded-head">
-					<h2>{post.author || `@${post.handle}`}</h2>
+					<h2>{post?.author || item.title}</h2>
 					<div className="skybox-expanded-actions">
-						<button disabled={keeping || kept !== null} onClick={() => void keep()}>
-							{kept ? "kept" : keeping ? "keeping…" : "keep this"}
-						</button>
 						<button className="skybox-close" aria-label="Close" onClick={() => onClose()}>
 							×
 						</button>
 					</div>
 				</header>
 
-				<div className="skybox-expanded-body skybox-wall-body">
-					<article className="skybox-wall-post">
-						<div className="skybox-wall-who">
-							{post.avatar && <img src={post.avatar} alt="" loading="lazy" />}
-							<a href={post.url}>@{post.handle}</a>
-							<time dateTime={new Date(post.at).toISOString()}>
-								{new Date(post.at).toLocaleString()}
-							</time>
-						</div>
-						<p>{post.text}</p>
-						{post.media.length > 0 && (
-							<div className="skybox-wall-media">
-								{post.media.map((address) => (
-									<img key={address} src={address} alt="" loading="lazy" />
-								))}
-							</div>
-						)}
-						<div className="skybox-wall-counts">
-							<span>{post.repliesCount} replies</span>
-							<span>{post.favouritesCount} favourites</span>
-							<span>{post.reblogsCount} boosts</span>
-						</div>
-					</article>
-
-					<aside className="skybox-meta">
-						<Conversation title={post.author || `@${post.handle}`} statusId={post.id} />
-					</aside>
-				</div>
+				{post ? (
+					<Post
+						post={post}
+						kept={kept || keeping}
+						onKeep={item.remote ? () => void keep() : undefined}
+					/>
+				) : (
+					<div className="skybox-expanded-body">
+						<p className="skybox-meta-none">this post could not be read back</p>
+					</div>
+				)}
 			</div>
 		</div>
 	);
 }
 
-/** What keeping a post writes: the same properties a clipped page carries. */
+/** What keeping a post writes: the properties a clipped page carries, plus
+ * the ids the thread and the follow button need. */
 export function keptNote(post: WallPost): string {
 	const lines = [
 		"---",
@@ -112,6 +111,7 @@ export function keptNote(post: WallPost): string {
 		`mastodon_id: ${post.id}`,
 		`mastodon_url: ${post.url}`,
 	];
+	if (post.accountId) lines.push(`mastodon_account: ${post.accountId}`);
 	if (post.media[0]) lines.push(`image: ${post.media[0]}`);
 	lines.push("tags:", "  - wall");
 	for (const tag of post.tags) lines.push(`  - ${tag}`);
@@ -122,3 +122,5 @@ export function keptNote(post: WallPost): string {
 function quote(value: string): string {
 	return /^[\w][\w ,.'()/@-]*$/.test(value) ? value : `"${value.replace(/"/g, '\\"')}"`;
 }
+
+export type { TFile };

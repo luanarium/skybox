@@ -24,13 +24,57 @@ export function wallTag(chip: Chip): string | null {
 	return text.startsWith(WALL_PREFIX) ? text.slice(1).toLowerCase() : null;
 }
 
-/** The first wall tag among the chips, which is the one the grid shows. */
-export function wallTagOf(chips: Chip[]): string | null {
+/** `#!follows` asks for the people you follow rather than for a hashtag. */
+export const WALL_FOLLOWS = "follows";
+
+export interface WallSource {
+	kind: "tag" | "home";
+	tag: string;
+}
+
+/** The first wall chip among them, which is the one the grid shows. */
+export function wallSourceOf(chips: Chip[]): WallSource | null {
 	for (const chip of chips) {
 		const tag = wallTag(chip);
-		if (tag) return tag;
+		if (!tag) continue;
+		return tag === WALL_FOLLOWS ? { kind: "home", tag } : { kind: "tag", tag };
 	}
 	return null;
+}
+
+/** A kept post, read back from the note that kept it. */
+export function postFromNote(
+	front: Record<string, unknown>,
+	body: string
+): WallPost | null {
+	const id = front.mastodon_id ? String(front.mastodon_id) : "";
+	if (!id) return null;
+	const handle = String(front.author ?? "").replace(/^@/, "");
+	const at = Date.parse(String(front.created ?? ""));
+	// The note's own words, less the frontmatter and the link at the foot.
+	const words = body
+		.replace(/^---[\s\S]*?\n---\n/, "")
+		.replace(/^<https?:\/\/[^>]*>\s*$/gm, "")
+		.trim();
+	return {
+		id,
+		url: String(front.mastodon_url ?? front.source ?? ""),
+		author: String(front.title ?? handle),
+		handle,
+		accountId: String(front.mastodon_account ?? ""),
+		avatar: "",
+		text: words,
+		media: typeof front.image === "string" ? [front.image] : [],
+		tags: Array.isArray(front.tags) ? front.tags.map(String) : [],
+		at: Number.isNaN(at) ? 0 : at,
+		repliesCount: 0,
+		favouritesCount: 0,
+		reblogsCount: 0,
+		boosted: false,
+		favourited: false,
+		entryId: id,
+		boostedBy: "",
+	};
 }
 
 /**

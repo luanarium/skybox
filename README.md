@@ -35,8 +35,10 @@ way of looking at them.
   what mail looked like, with a composer that does bold and italic where you are typing. Mastodon
   direct messages come in the same way, through the same window.
 - **`#!tea` fills the grid with the fediverse.** A chip beginning with `#!` asks your instance for
-  that hashtag's public timeline instead of asking the vault. Open one to read it and reply in the
-  thread; keep one and it becomes an ordinary card with its conversation attached.
+  that hashtag's public timeline instead of asking the vault, and `#!follows` asks for the people you
+  follow. Open one to read it, boost it, follow whoever wrote it, and reply in the thread; keep one
+  and it becomes a card of your own that still looks and behaves like the post it is. Reaching the
+  bottom of a wall fetches more.
 - **Share a card by tagging it.** Connect a Mastodon account and a tag posts the card, image and
   all. The thread comes back beside the note, with a box to reply from. Untag it and the post goes.
 - **Immersive.** Standalone mode gives the whole window to the pane, and the window controls hide
@@ -100,7 +102,8 @@ releases on startup, so a new version arrives on its own.
 | `src/maildir.ts` | Mail as files, and flags as filenames |
 | `src/mail.ts` | Maildir into conversations, and replies into the outbox |
 | `src/dm.ts` | Mastodon direct messages as the same conversations |
-| `src/wall.ts` | A hashtag's timeline as cards, and the chip that asks for it |
+| `src/wall.ts` | A hashtag or home timeline as cards, the chip that asks for it, and a kept post read back |
+| `src/components/Post.tsx` | A post, drawn the same way on the wall and once kept |
 | `src/thread.ts` | What a conversation is in the vault, whoever carried it |
 | `src/sharing.ts` | Posting a card when it is tagged, and deleting when it is not |
 | `src/interactions.ts` | What has happened to a shared card, and what is unread |
@@ -367,20 +370,30 @@ collects can reach anybody's mail client.
 ## The wall
 
 Type a chip beginning `#!` and the grid stops asking the vault and asks your instance: `#!tea` is
-that hashtag's public timeline, drawn as cards in the same masonry, pictures and all. Other chips
-narrow what came back, so `#!tea oolong` is the obvious thing. Nothing of it is written anywhere.
-Clear the chip and the wall is gone, which is the right relationship to have with somebody else's
-timeline.
+that hashtag's public timeline, drawn as cards in the same masonry, pictures and all. `#!follows` is
+the other wall, your home timeline, the recent posts of everybody you follow. Other chips narrow
+what came back, so `#!tea oolong` is the obvious thing. Nothing of it is written anywhere. Clear the
+chip and the wall is gone, which is the right relationship to have with somebody else's timeline.
+
+A wall goes on as far as the instance will serve it. Scrolling to the bottom asks for the next forty
+posts from where the last one left off, the same gesture that pages the vault, until the instance
+has no more to give.
 
 Opening a post shows it where it is, with the thread beside it: the same conversation a shared card
 has, because it is the same thing, statuses answering a status. So a reply from the wall goes out
-as you, in the right place, without the post ever having been yours.
+as you, in the right place, without the post ever having been yours. **Boost** sits with the counts
+and **follow** sits beside the author's name, where both belong, and the follow button knows whether
+you already do before it offers.
 
-**Keep this** writes an ordinary note: the post's words, its picture, its author, and the id of the
-status it came from. From then on it is a card like any other. It is searched, it carries the `wall`
-tag and the post's own tags, its conversation keeps working as the thread grows, and what is unread
-in it reaches the `#comments` tag and the plus button with everything else. The wall is a window;
-keeping is what makes something yours.
+**Keep this** writes an ordinary note: the post's words, its picture, its author, and the ids the
+thread and the follow button need. From then on it is a card like any other. It is searched, it
+carries the `wall` tag and the post's own tags, its conversation keeps working as the thread grows,
+and what is unread in it reaches the `#comments` tag and the plus button with everything else.
+
+What it is not is markdown to edit. Opening a kept post reads the post back out of its note and
+draws it exactly as the wall drew it, picture, handle, boost, follow, thread and all, because it is
+a copy of something somebody else wrote. The wall is a window; keeping is what makes something
+yours, not what makes it yours to rewrite.
 
 A card from the wall is somebody else's, so the long press offers nothing: there is nothing there to
 copy into your vault or to throw away that would mean anything.
