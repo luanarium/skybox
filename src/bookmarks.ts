@@ -325,19 +325,36 @@ export class BookmarkImport {
 		for (const file of this.app.vault.getMarkdownFiles()) {
 			if (budget <= 0) return;
 			const front = this.app.metadataCache.getFileCache(file)?.frontmatter;
-			const source = front?.source;
-			if (typeof source !== "string" || !/^https?:\/\//i.test(source)) continue;
 			if (front?.fetched) continue;
-			// Only the notes this wrote: a page clipped by something else is
-			// that tool's business, and may already hold more than this could.
-			const tags = front?.tags;
-			const ours = Array.isArray(tags)
-				? tags.includes(BOOKMARK_TAG)
-				: typeof tags === "string" && tags.split(/[,\s]+/).includes(BOOKMARK_TAG);
-			if (!ours) continue;
+			const source = this.sourceOf(file, front);
+			if (!source) continue;
 			budget--;
 			await this.describe(file, source);
 		}
+	}
+
+	/**
+	 * The page a note is about, when the note is one of this plugin's. A page
+	 * clipped by something else is that tool's business and may already hold
+	 * more than this could, so the `bookmark` tag is what marks ours.
+	 *
+	 * Imports written before the properties matched the Web Clipper's used a
+	 * `url` key and no tag. Those are recognised by living in the bookmarks
+	 * folder, and `describe` brings them up to date as it goes.
+	 */
+	private sourceOf(file: TFile, front: Record<string, unknown> | undefined): string | null {
+		const web = (value: unknown): string | null =>
+			typeof value === "string" && /^https?:\/\//i.test(value.trim()) ? value.trim() : null;
+
+		const tags = front?.tags;
+		const tagged = Array.isArray(tags)
+			? tags.includes(BOOKMARK_TAG)
+			: typeof tags === "string" && tags.split(/[,\s]+/).includes(BOOKMARK_TAG);
+		if (tagged) return web(front?.source) ?? web(front?.url);
+
+		const folder = this.settings.bookmarksFolder.trim().replace(/^\/+|\/+$/g, "");
+		const inFolder = folder ? file.path.startsWith(`${folder}/`) : !file.path.includes("/");
+		return inFolder ? web(front?.url) : null;
 	}
 
 	/** One page, asked once, and what it said written down. */
@@ -358,6 +375,21 @@ export class BookmarkImport {
 				// Asked and answered, even when the answer was nothing: the
 				// page does not get asked again on every sync.
 				front.fetched = today;
+				// An older import, brought up to the shape the clipper uses.
+				if (!front.source && typeof front.url === "string") {
+					front.source = front.url;
+					delete front.url;
+				}
+				if (typeof front.added === "string" && !front.created) {
+					front.created = front.added;
+					delete front.added;
+				}
+				const tags: unknown = front.tags;
+				if (Array.isArray(tags)) {
+					if (!tags.includes(BOOKMARK_TAG)) tags.unshift(BOOKMARK_TAG);
+				} else if (!tags) {
+					front.tags = [BOOKMARK_TAG];
+				}
 				if (!meta || !hasMeta(meta)) return;
 				if (meta.description && !front.description) front.description = meta.description;
 				if (meta.author && !front.author) front.author = meta.author;
