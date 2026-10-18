@@ -1,8 +1,5 @@
 # Skybox
 
-<!-- Replace this placeholder with the demo GIF, keeping the path or updating it here. -->
-![Skybox: a masonry search pane over your vault](docs/images/skybox.png)
-
 An Obsidian plugin that opens the vault as a wall of cards you can search, on desktop and Android.
 
 It takes its shape from [mymind](https://mymind.com): everything you keep in one visual place, found
