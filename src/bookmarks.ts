@@ -1,4 +1,5 @@
 import { type App, Notice, Platform, TFile, requestUrl } from "obsidian";
+import { extractArticle, withArticle } from "./article";
 import { hasMeta, parseMetadata } from "./metadata";
 import { ensureFolder, noteTitle, uniquePath } from "./ingest";
 import type { SkyboxSettings } from "./types";
@@ -417,6 +418,17 @@ export class BookmarkImport {
 				await this.app.vault.process(file, (text) =>
 					text.includes(meta.description as string) ? text : `${text.trimEnd()}\n\n${meta.description}\n`
 				);
+			}
+			// Then the page itself, under a heading of its own at the end, so
+			// anything written above it stays first and stays yours.
+			if (html && this.settings.bookmarkArticle) {
+				const article = await extractArticle(html, source);
+				if (article) {
+					await this.app.vault.process(file, (text) => withArticle(text, article));
+					await this.app.fileManager.processFrontMatter(file, (front) => {
+						if (!front.words) front.words = article.words;
+					});
+				}
 			}
 		});
 	}

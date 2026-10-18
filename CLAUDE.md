@@ -112,6 +112,7 @@ touch .hotreload                                       # Hot Reload reloads on r
 ## Adding App Logic
 
 - Use what the stack already provides first, then mature conventions in the wild that slot in. No new dependencies and no additions to the stack.
+- One exception, taken deliberately on 2026-10-17: `defuddle`, pinned exactly, for reading the article out of a bookmarked page. It is the library Obsidian's own Web Clipper uses, it is reached from `src/article.ts` alone, it is loaded on first use rather than at startup, and it runs only on desktop. Raise anything else that would add a dependency rather than adding it.
 
 ## Terms
 

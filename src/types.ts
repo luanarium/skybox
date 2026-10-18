@@ -54,6 +54,8 @@ export interface SkyboxSettings {
 	bookmarksFolder: string;
 	/** Show the picture a bookmarked page offers, where it offers one. */
 	bookmarkImages: boolean;
+	/** Keep the article itself in the note, not only what the page says of it. */
+	bookmarkArticle: boolean;
 }
 
 export const DEFAULT_SETTINGS: SkyboxSettings = {
@@ -72,6 +74,7 @@ export const DEFAULT_SETTINGS: SkyboxSettings = {
 	bookmarksPath: "",
 	bookmarksFolder: "bookmarks",
 	bookmarkImages: true,
+	bookmarkArticle: true,
 };
 
 /** The tag an image gets for being embedded in a note; nothing writes it. */

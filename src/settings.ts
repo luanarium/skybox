@@ -98,6 +98,22 @@ export class SkyboxSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
+			.setName("Keep the page's text")
+			.setDesc(
+				"Read the article out of each bookmarked page and keep it in the note, under a " +
+					"heading of its own at the end, so the bookmark is searchable by what the " +
+					"page said and survives the page going away. The reading is done by " +
+					"Defuddle, the same library Obsidian's own Web Clipper uses. Off, a note " +
+					"keeps the title, the link and what the page says about itself."
+			)
+			.addToggle((toggle) =>
+				toggle.setValue(this.plugin.settings.bookmarkArticle).onChange(async (value) => {
+					this.plugin.settings.bookmarkArticle = value;
+					await this.plugin.saveSettings();
+				})
+			);
+
+		new Setting(containerEl)
 			.setName("Preview images")
 			.setDesc(
 				"Show the picture a page offers for its own social cards, where it offers one, " +

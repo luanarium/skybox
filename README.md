@@ -18,7 +18,8 @@ way of looking at them.
 - **Drop things in,** from the desktop or straight out of a browser window. Anything already in the
   vault asks before it writes a second copy.
 - **Bookmarks arrive on their own,** with no browser extension: point it at your browser's bookmarks
-  file and keep bookmarking as you do. Each page is asked once for its own description and picture.
+  file and keep bookmarking as you do. Each page is read once for its description, its picture and
+  the article itself, so a bookmark is searchable by what the page said.
 - **Images are notes too,** each with a sidecar beside it holding its tags and thoughts. An image a
   note embeds belongs to that note, and stays out of the way.
 - **Notes get cover art,** a gradient of their own drawn from the path, so the grid is not a wall of
@@ -82,6 +83,7 @@ releases on startup, so a new version arrives on its own.
 | `src/ignore.ts` | Folders the index leaves alone |
 | `src/bookmarks.ts` | Reading the browser's bookmarks file into notes |
 | `src/metadata.ts` | What a page declares about itself, read out of its HTML |
+| `src/article.ts` | The page's own text, read with Defuddle |
 | `src/ingest.ts` | The one intake path: hash, dedupe, write |
 | `src/share.ts` | Mobile share intake and the bring-back |
 | `src/sidecar.ts` | `<name>.<ext>.md` beside an image: its tags and thoughts |
@@ -141,9 +143,9 @@ as a Snap. The settings look in the usual places for all of those and offer what
 path can be typed in by hand. Firefox keeps its bookmarks in `places.sqlite` rather than JSON, so it
 is not supported yet and is on the list below.
 
-**Simple bookmarks** is the honest description of what arrives: a title, a link, a date and the
-folders it came from. Not the page's text, which is what Obsidian's Web Clipper does today for
-anyone who wants it now.
+**What arrives** is a title, a link, a date, the folders it came from, what the page says about
+itself, and the page's own text. Which is to say: the thing you would otherwise have opened a
+clipper for, without having opened anything.
 
 ### Asking a page about itself
 
@@ -195,23 +197,35 @@ the page's text, author and description today rather than when the list above ge
 own [Web Clipper](https://obsidian.md/clipper) does that, and since these notes carry its
 properties, the two sit side by side: neither imports a page the other has already saved.
 
+### The page itself
+
+**Keep the page's text** reads the article out of each bookmarked page and writes it into the note,
+under a `## Page text` heading at the end, so a bookmark is searchable by what the page said and
+survives the page going away. Anything written above that heading stays first and stays yours, and a
+note that already holds the text is left alone, since the copy in the vault may have been edited and
+the page may have moved on.
+
+The reading is done by [Defuddle](https://github.com/kepano/defuddle), the library Obsidian's own
+Web Clipper uses, so a bookmark gets the same reading a clip would have had. Extraction is the hard
+part of saving a web page, telling the article from the newsletter box and the cookie notice, and
+doing it badly is worse than not doing it at all.
+
+That is the one dependency this project has taken on beyond React. It doubles the plugin to about
+0.6 MB, which is still less than Kanban asks of the same phone. It is pinned to an exact version,
+reached from `src/article.ts` alone, loaded on first use rather than at startup, and never reached
+on a phone, where the fetch that feeds it does not run.
+
 ### Where this is going
 
-A bookmark now carries what its page says about itself, which was the first and largest of these.
-What is left, in rough order of how much it would change things, none of it built yet:
+A bookmark now carries what its page says about itself and the page's own text. What is left, in
+rough order of how much it would change things, none of it built yet:
 
-1. **Readable text.** The article itself, extracted the way a reader mode does it and written into
-   the note body, so a bookmark is searchable by what it said and survives the page going away.
-   Extraction is the hard part: telling the story from the newsletter box and the cookie notice is
-   what libraries like Defuddle, which Obsidian's own clipper uses, exist for. Doing it badly is
-   worse than not doing it, and doing it well means a dependency this project has so far done
-   without.
-2. **Favicons.** For the pages that declare no preview image, so every card has something.
-3. **Firefox.** Its bookmarks live in `places.sqlite`, which needs a SQLite reader rather than a
+1. **Favicons.** For the pages that declare no preview image, so every card has something.
+2. **Firefox.** Its bookmarks live in `places.sqlite`, which needs a SQLite reader rather than a
    JSON parse, so the Chromium family came first. An export file is the easy half of this.
-4. **More than one source at a time.** Several profiles, or several browsers, instead of the single
+3. **More than one source at a time.** Several profiles, or several browsers, instead of the single
    path the settings take now.
-5. **Noticing deletions.** Not acting on them, but saying so: a note for a bookmark that is no
+4. **Noticing deletions.** Not acting on them, but saying so: a note for a bookmark that is no
    longer in the browser could say as much, and leave what to do about it to you.
 
 On a phone none of this applies, since there is no file to read. Bookmarks arrive there the way
