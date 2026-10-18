@@ -30,6 +30,10 @@ way of looking at them.
   note embeds belongs to that note, and stays out of the way.
 - **Notes show what they hold.** A note that embeds an image puts the first one on its card, and the
   right pane lets you pick another. A note with no picture draws one, a gradient of its own.
+- **Mail arrives as conversations.** Point it at a Maildir that mbsync fills and threads become
+  cards, unread first when you type `#mail`. Opening one shows the thread in a window that remembers
+  what mail looked like, with a composer that does bold and italic where you are typing. Mastodon
+  direct messages come in the same way, through the same window.
 - **Share a card by tagging it.** Connect a Mastodon account and a tag posts the card, image and
   all. The thread comes back beside the note, with a box to reply from. Untag it and the post goes.
 - **Immersive.** Standalone mode gives the whole window to the pane, and the window controls hide
@@ -89,6 +93,11 @@ releases on startup, so a new version arrives on its own.
 | `src/cover.ts` | Which cover a note gets drawn, from its path |
 | `src/preview.ts` | Which picture a card shows, and the `cover` property |
 | `src/mastodon.ts` | The Mastodon client, and what can be worked out without one |
+| `src/mime.ts` | Reading a mail message: headers, encodings, character sets |
+| `src/maildir.ts` | Mail as files, and flags as filenames |
+| `src/mail.ts` | Maildir into conversations, and replies into the outbox |
+| `src/dm.ts` | Mastodon direct messages as the same conversations |
+| `src/thread.ts` | What a conversation is in the vault, whoever carried it |
 | `src/sharing.ts` | Posting a card when it is tagged, and deleting when it is not |
 | `src/interactions.ts` | What has happened to a shared card, and what is unread |
 | `src/components/Conversation.tsx` | The thread beside a shared card, and replying to it |
@@ -303,6 +312,45 @@ Two rules keep it out of the way. Only a note still called `Untitled` (or `Untit
 so a note you named yourself keeps its name however its first line reads; and once it has a name,
 rewriting the first line is editing, not naming. **Name notes from their first line** in the
 settings turns it off.
+
+## Mail
+
+Skybox does not speak IMAP or SMTP, and holds no password. Something else fetches, usually `mbsync`,
+and something else sends, usually `msmtp` over whatever is left in the outbox. In between, Skybox
+reads a Maildir, groups the messages into conversations by what answers what, and writes each
+conversation into the vault as a note. That last part is what makes a phone useful: the Maildir
+never leaves the computer, but the notes sync like everything else, so the mail is there,
+searchable, offline, with no mail protocol in sight.
+
+`src/mime.ts` reads a message as messages actually arrive: folded and repeated headers, words
+encoded for the seven-bit transports of 1992, a body that may be a tree of alternatives and
+attachments, each part with its own encoding and character set. No library does this: `TextDecoder`
+already knows the character sets and `atob` knows base64, which is most of what a MIME parser is
+for. `src/maildir.ts` treats mail as what it is on disk, one file per message with its flags in the
+filename, so marking a thread read is a rename that the next sync carries back to the server.
+
+**Reading is two-way without being two protocols.** A thread read on your phone sets `unread: false`
+in the note; the desktop sees that on its next pass and renames the Maildir file; `mbsync` tells the
+server. Replying anywhere writes an `.eml` into the outbox, and `msmtp` sends it when it next runs,
+which is the same bargain a PDA struck in 1999 and still a fair one.
+
+### Direct messages, in the same clothes
+
+A Mastodon conversation is a thread of messages addressed to the people in it and nobody else, which
+is near enough a mail thread to wear the same note, the same card and the same window. Switching it
+on brings them in beside the mail; the only difference the surface knows is one word of frontmatter
+saying which backend takes a reply. Unlike mail it works on a phone, since it is a call rather than
+a directory on a computer.
+
+### The window
+
+The thread opens in XP's chrome rather than Obsidian's, because a conversation that came from mail
+should look like mail. Messages run oldest first, each with who said it and when, yours shaded
+against the window's own paper. The composer is a `contenteditable` with bold and italic, so
+emphasis happens where you are typing rather than as markup you type around, and what it sends is
+`multipart/alternative`: your words as plain text, and the same words with the emphasis as HTML.
+What a reply may carry is deliberately small, just emphasis, breaks and links, so nothing a composer
+collects can reach anybody's mail client.
 
 ## Sharing to Mastodon
 

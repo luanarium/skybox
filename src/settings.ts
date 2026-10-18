@@ -1,5 +1,6 @@
 import { Notice, PluginSettingTab, Setting, type App } from "obsidian";
 import { BookmarkImport, findBookmarkFiles } from "./bookmarks";
+import { expandHome, homeDir } from "./bookmarks";
 import { normalizeInstance } from "./mastodon";
 import { clientFor, readToken, writeToken } from "./sharing";
 import type SkyboxPlugin from "./main";
@@ -248,6 +249,97 @@ export class SkyboxSettingTab extends PluginSettingTab {
 			);
 	}
 
+	/**
+	 * Mail, and direct messages that behave like mail. Nothing here fetches
+	 * or sends: `mbsync` fills the Maildir and `msmtp` empties the outbox,
+	 * which is why this asks for two paths rather than a password.
+	 */
+	private mailSettings(containerEl: HTMLElement): void {
+		new Setting(containerEl)
+			.setName("Mail")
+			.setDesc(
+				"Conversations as cards. Something else fetches your mail into a Maildir, " +
+					"usually mbsync, and something else sends what is left in the outbox, usually " +
+					"msmtp; Skybox reads the one and writes the other, so no password and no mail " +
+					"protocol come anywhere near the vault. Threads are written into the vault as " +
+					"notes, so a phone has the mail without any of this. Leave the paths empty and " +
+					"nothing happens."
+			);
+
+		new Setting(containerEl)
+			.setName("Maildir")
+			.setDesc("The mailbox to read, the one holding new and cur.")
+			.addText((text) =>
+				text
+					.setPlaceholder("~/Mail/mail/INBOX")
+					.setValue(this.plugin.settings.mailMaildir)
+					.onChange(async (value) => {
+						this.plugin.settings.mailMaildir = expandHome(value.trim(), homeDir());
+						await this.plugin.saveSettings();
+					})
+			)
+			.addButton((button) =>
+				button.setButtonText("Read now").onClick(async () => {
+					const written = await this.plugin.mail.sync();
+					new Notice(written === 0 ? "No new conversations." : `${written} updated.`);
+				})
+			);
+
+		new Setting(containerEl)
+			.setName("Outbox")
+			.setDesc("Where a reply is left for msmtp to send.")
+			.addText((text) =>
+				text
+					.setPlaceholder("~/Mail/outbox")
+					.setValue(this.plugin.settings.mailOutbox)
+					.onChange(async (value) => {
+						this.plugin.settings.mailOutbox = expandHome(value.trim(), homeDir());
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Your address")
+			.setDesc("Which messages in a thread are yours, and what a reply is sent as.")
+			.addText((text) =>
+				text
+					.setPlaceholder("you@example.net")
+					.setValue(this.plugin.settings.mailAddress)
+					.onChange(async (value) => {
+						this.plugin.settings.mailAddress = value.trim();
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Conversations folder")
+			.setDesc("Where thread notes are written.")
+			.addText((text) =>
+				text
+					.setPlaceholder("mail")
+					.setValue(this.plugin.settings.mailFolder)
+					.onChange(async (value) => {
+						this.plugin.settings.mailFolder = value.trim();
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Mastodon direct messages")
+			.setDesc(
+				"Bring direct messages in as conversations too, in the same cards and the same " +
+					"window. This one works on a phone, since it is a call rather than a directory " +
+					"on a computer, and it uses the account already connected above."
+			)
+			.addToggle((toggle) =>
+				toggle.setValue(this.plugin.settings.dmEnabled).onChange(async (value) => {
+					this.plugin.settings.dmEnabled = value;
+					await this.plugin.saveSettings();
+					if (value) void this.plugin.dms.sync();
+				})
+			);
+	}
+
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
@@ -304,6 +396,7 @@ export class SkyboxSettingTab extends PluginSettingTab {
 
 		this.bookmarkSettings(containerEl);
 		this.sharingSettings(containerEl);
+		this.mailSettings(containerEl);
 
 		new Setting(containerEl)
 			.setName("Images embedded in notes")

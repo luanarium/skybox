@@ -3,7 +3,9 @@ import { isBorrowing } from "./borrowed";
 import { Autonamer } from "./autoname";
 import { BookmarkImport } from "./bookmarks";
 import { Bus } from "./bus";
+import { DirectMessages } from "./dm";
 import { Interactions } from "./interactions";
+import { MailImport } from "./mail";
 import { Sharing } from "./sharing";
 import { VaultIndex } from "./index";
 import { SkyboxSettingTab } from "./settings";
@@ -19,6 +21,9 @@ const BOOKMARK_INTERVAL = 5 * 60 * 1000;
 /** How often a window left open asks what has happened to a shared card. */
 const UNREAD_INTERVAL = 4 * 60 * 1000;
 
+/** How often the Maildir and the conversations are looked at. */
+const MAIL_INTERVAL = 3 * 60 * 1000;
+
 export default class SkyboxPlugin extends Plugin {
 	settings: SkyboxSettings = { ...DEFAULT_SETTINGS };
 	index!: VaultIndex;
@@ -27,6 +32,8 @@ export default class SkyboxPlugin extends Plugin {
 	private autoname!: Autonamer;
 	bookmarks!: BookmarkImport;
 	private sharing!: Sharing;
+	mail!: MailImport;
+	dms!: DirectMessages;
 	interactions!: Interactions;
 	private backEl: HTMLElement | null = null;
 
@@ -37,6 +44,8 @@ export default class SkyboxPlugin extends Plugin {
 		this.autoname = new Autonamer(this.app, this.settings);
 		this.bookmarks = new BookmarkImport(this.app, this.settings);
 		this.sharing = new Sharing(this.app, this.index, this.settings);
+		this.mail = new MailImport(this.app, this.settings);
+		this.dms = new DirectMessages(this.app, this.settings);
 		this.register(() => this.autoname.dispose());
 		this.bus = new Bus();
 		this.share = new ShareIntake(
@@ -71,6 +80,19 @@ export default class SkyboxPlugin extends Plugin {
 			 * when the window comes forward, and on a slow timer; a card with
 			 * something waiting wears the unread tag until it is read.
 			 */
+			/*
+			 * Conversations, from whichever backend is set up. Mail is a
+			 * directory on this computer; direct messages are a call, so they
+			 * work on a phone too. Both end up as the same notes.
+			 */
+			const gather = () => {
+				void this.mail.sync();
+				void this.dms.sync();
+			};
+			gather();
+			this.registerDomEvent(window, "focus", gather);
+			this.registerInterval(window.setInterval(gather, MAIL_INTERVAL));
+
 			const look = () => void this.interactions.look(this.sharedStatusIds());
 			look();
 			this.registerDomEvent(window, "focus", look);

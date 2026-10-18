@@ -35,6 +35,9 @@ export async function requestUrl(): Promise<{ status: number; text: string; head
 export class Modal {}
 export class Setting {}
 
+/** Drawing an icon needs a document; nothing under test draws one. */
+export function setIcon(): void {}
+
 /** Headless is neither desktop nor phone; the pure parts do not ask. */
 export const Platform = { isDesktopApp: false, isMobile: false };
 

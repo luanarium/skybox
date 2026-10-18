@@ -292,6 +292,24 @@ export class Mastodon {
 		return (context.ancestors ?? []).map((status) => String(status.id ?? ""));
 	}
 
+	/** The direct-message conversations this account is in. */
+	async conversations(): Promise<unknown[]> {
+		const raw = (await this.call("/api/v1/conversations?limit=40")) as unknown[];
+		return Array.isArray(raw) ? raw : [];
+	}
+
+	/**
+	 * Everything said around one status, before and after it, which is what a
+	 * direct-message thread is when the last status is all you were given.
+	 */
+	async wholeThread(id: string): Promise<[unknown[], unknown[]]> {
+		const context = (await this.call(`/api/v1/statuses/${id}/context`)) as {
+			ancestors?: unknown[];
+			descendants?: unknown[];
+		};
+		return [context.ancestors ?? [], context.descendants ?? []];
+	}
+
 	/** What has been said under a post, oldest first. */
 	async replies(id: string): Promise<MastodonReply[]> {
 		const context = (await this.call(`/api/v1/statuses/${id}/context`)) as {

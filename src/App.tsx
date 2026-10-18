@@ -14,6 +14,7 @@ import { Card } from "./components/Card";
 import { Composer } from "./components/Composer";
 import { Icon } from "./components/Icon";
 import { Lightbox } from "./components/Lightbox";
+import { MailOverlay } from "./components/MailOverlay";
 import { Masonry } from "./components/Masonry";
 import { NoteOverlay } from "./components/NoteOverlay";
 import { Sheet } from "./components/Sheet";
@@ -292,12 +293,16 @@ export function App() {
 	const theirs = (event: React.DragEvent) =>
 		event.target instanceof Element && event.target.closest(".skybox-overlay") !== null;
 
-	const card = (item: Item) =>
-		item.kind === "image" ? (
-			<Lightbox item={item} onClose={close} onOpenPath={openPath} />
-		) : (
-			<NoteOverlay item={item} onClose={close} onOpenPath={openPath} />
-		);
+	const card = (item: Item) => {
+		if (item.kind === "image") {
+			return <Lightbox item={item} onClose={close} onOpenPath={openPath} />;
+		}
+		// A conversation is read as a conversation, not edited as a note.
+		if (app.metadataCache.getFileCache(item.file)?.frontmatter?.thread_id) {
+			return <MailOverlay item={item} onClose={close} onOpenPath={openPath} />;
+		}
+		return <NoteOverlay item={item} onClose={close} onOpenPath={openPath} />;
+	};
 
 	const shown = useMemo(() => results.slice(0, limit), [results, limit]);
 	const expanded = expandedId ? results.find((item) => item.id === expandedId) ?? index.get(expandedId) : undefined;

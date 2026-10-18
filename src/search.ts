@@ -1,6 +1,7 @@
 import { prepareSimpleSearch } from "obsidian";
 import type { VaultIndex } from "./index";
 import { ARTICLE_HEADING } from "./article";
+import { MAIL_TAG } from "./thread";
 import type { Item } from "./types";
 
 export interface Chip {
@@ -45,6 +46,10 @@ export async function search(
 	const all = index.all();
 	if (chips.length === 0) return hideEmbedded ? unembedded(all) : all;
 
+	// Asking for conversations is asking what is waiting in them, so the
+	// unread ones come first and the rest keep their order.
+	const wantsMail = chips.some((chip) => chip.tagOnly && chip.text.toLowerCase() === MAIL_TAG);
+
 	const matchers = chips.map((chip) =>
 		chip.tagOnly ? null : prepareSimpleSearch(chip.text)
 	);
@@ -75,7 +80,10 @@ export async function search(
 		if (matched) scored.push({ item, score });
 	}
 
-	scored.sort((a, b) => b.score - a.score || b.item.mtime - a.item.mtime);
+	scored.sort((a, b) => {
+		if (wantsMail && a.item.unread !== b.item.unread) return a.item.unread ? -1 : 1;
+		return b.score - a.score || b.item.mtime - a.item.mtime;
+	});
 	return scored.map((entry) => entry.item);
 }
 

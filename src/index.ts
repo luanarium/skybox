@@ -225,6 +225,8 @@ export class VaultIndex {
 			excerpt: "",
 			embedded: false,
 			preview: this.previewOf(file, cache?.frontmatter),
+			// A conversation says in its own frontmatter what is waiting.
+			unread: cache?.frontmatter?.unread === true,
 		};
 	}
 
@@ -249,6 +251,7 @@ export class VaultIndex {
 			excerpt: "",
 			embedded,
 			preview: null,
+			unread: false,
 		};
 	}
 

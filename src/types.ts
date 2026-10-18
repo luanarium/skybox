@@ -23,6 +23,8 @@ export interface Item {
 	embedded: boolean;
 	/** A picture the card can show instead of cover art, from `image`. */
 	preview: string | null;
+	/** A conversation with something in it nobody has read. */
+	unread: boolean;
 }
 
 export interface SkyboxSettings {
@@ -62,6 +64,16 @@ export interface SkyboxSettings {
 	mastodonTag: string;
 	/** How a shared post is addressed. */
 	mastodonVisibility: string;
+	/** The Maildir to read mail from; empty means mail is off. */
+	mailMaildir: string;
+	/** Where a reply is left for the mail transfer agent to send. */
+	mailOutbox: string;
+	/** Where thread notes are written. */
+	mailFolder: string;
+	/** Your own address, for telling your messages from theirs. */
+	mailAddress: string;
+	/** Bring Mastodon's direct messages in as threads as well. */
+	dmEnabled: boolean;
 }
 
 export const DEFAULT_SETTINGS: SkyboxSettings = {
@@ -85,6 +97,11 @@ export const DEFAULT_SETTINGS: SkyboxSettings = {
 	mastodonInstance: "",
 	mastodonTag: "share",
 	mastodonVisibility: "unlisted",
+	mailMaildir: "",
+	mailOutbox: "",
+	mailFolder: "mail",
+	mailAddress: "",
+	dmEnabled: false,
 };
 
 /** The tag an image gets for being embedded in a note; nothing writes it. */

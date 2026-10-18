@@ -172,7 +172,7 @@ function fs(): FileSystem | null {
 	}
 }
 
-function home(): string {
+export function homeDir(): string {
 	const host = window as unknown as {
 		require?: (id: string) => unknown;
 		process?: { env?: Record<string, string | undefined> };
@@ -218,7 +218,7 @@ const PROFILES = ["Default", "Profile 1", "Profile 2", "Profile 3"];
 /** Bookmarks files this machine actually has, for the settings to offer. */
 export function findBookmarkFiles(): string[] {
 	const node = fs();
-	const homedir = home();
+	const homedir = homeDir();
 	if (!node || !homedir) return [];
 	const found: string[] = [];
 	for (const dir of BROWSER_DIRS) {
@@ -259,7 +259,7 @@ export class BookmarkImport {
 		// happens on its own, not the button that says to look now.
 		if (!force && !this.settings.bookmarksEnabled) return null;
 		const node = fs();
-		const path = expandHome(this.settings.bookmarksPath.trim(), home());
+		const path = expandHome(this.settings.bookmarksPath.trim(), homeDir());
 		this.trouble = null;
 		if (!node) {
 			this.trouble = "this build has no access to the filesystem";
