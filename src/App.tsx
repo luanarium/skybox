@@ -11,6 +11,7 @@ import { withTransition } from "./transition";
 import { UNREAD_TAG, type Item } from "./types";
 import { BottomBar } from "./components/BottomBar";
 import { Card } from "./components/Card";
+import { Composer } from "./components/Composer";
 import { Icon } from "./components/Icon";
 import { Lightbox } from "./components/Lightbox";
 import { Masonry } from "./components/Masonry";
@@ -32,6 +33,7 @@ export function App() {
 	const [dropping, setDropping] = useState(false);
 	const [dropped, setDropped] = useState<Set<string>>(new Set());
 	const [typing, setTyping] = useState(false);
+	const [composing, setComposing] = useState(false);
 	const [fresh, setFresh] = useState<Set<string>>(new Set());
 	const seen = useRef(new Set<string>());
 	const sentinel = useRef<HTMLDivElement>(null);
@@ -340,7 +342,16 @@ export function App() {
 					<button
 						className={`skybox-plus${glowing ? " is-waiting" : ""}`}
 						aria-label={glowing ? `${waiting} waiting on shared cards` : "Add"}
-						onClick={(event) => (glowing ? showWaiting() : plusMenu(event))}
+						onClick={(event) => {
+							if (glowing) {
+								showWaiting();
+								return;
+							}
+							// A phone has no drag and drop and little room, so
+							// it keeps the menu; a desktop gets the box.
+							if (Platform.isMobile) plusMenu(event);
+							else setComposing(true);
+						}}
 						onContextMenu={(event) => {
 							event.preventDefault();
 							plusMenu(event);
@@ -381,6 +392,10 @@ export function App() {
 					event.target.value = "";
 				}}
 			/>
+
+			{composing && !Platform.isMobile && (
+				<Composer onClose={() => setComposing(false)} onOpenPath={openPath} />
+			)}
 
 			{expanded &&
 				(Platform.isMobile ? <Sheet onClose={dismiss}>{card(expanded)}</Sheet> : card(expanded))}

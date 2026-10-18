@@ -12,6 +12,9 @@ way of looking at them.
 
 - **One pane over the whole vault.** Notes and images, most recently modified first. Typing makes
   chips, chips narrow the search, `#word` matches tags alone.
+- **The plus button opens a box to write in** on a desktop, which takes files too: dropped into an
+  empty box a file becomes a card of its own, dropped into one with words in it, it is embedded in
+  what you are writing.
 - **Make, change and throw away from the grid.** New notes open into Obsidian's own editor, live
   preview and all. Right-click a card, or long-press on a phone, to copy or delete it.
 - **A note names itself** from its first line, once the typing settles. Rename it yourself and it is
@@ -89,6 +92,7 @@ releases on startup, so a new version arrives on its own.
 | `src/sharing.ts` | Posting a card when it is tagged, and deleting when it is not |
 | `src/interactions.ts` | What has happened to a shared card, and what is unread |
 | `src/components/Conversation.tsx` | The thread beside a shared card, and replying to it |
+| `src/components/Composer.tsx` | The box the plus button opens, and what a dropped file means |
 | `src/autoname.ts` | Naming a new note after its first line |
 | `src/ignore.ts` | Folders the index leaves alone |
 | `src/bookmarks.ts` | Reading the browser's bookmarks file into notes |
@@ -121,6 +125,21 @@ developer console previews the mobile layout.
 a shell, so these cover the modules that need no workspace: the compactor and card geometry, the
 sidecar and frontmatter rules, chips and search, and `ingest`'s duplicate branches against a fake
 vault. Everything about views, transitions and window chrome still has to be looked at in the app.
+
+## The composer
+
+On a desktop the plus button opens a box to write in rather than a menu. It takes files as well as
+words, and what a dropped file means depends on what is already there: dropped into an empty box it
+is a thing in its own right and becomes its own card, the same as dropping it on the grid; dropped
+into a box with words in it, it is part of what is being written, so it is embedded in the note. The
+line under the box says which of the two will happen, and changes as you type.
+
+Both routes go through `ingest`, so a file whose contents are already in the vault asks before it is
+written a second time whichever way it arrived. Saving writes the note into the intake folder and
+opens it, so the writing carries on where it left off, and leaving with words in the box asks first.
+
+A phone keeps the menu. There is no drag and drop to speak of there, and the room is better spent on
+the grid.
 
 ## Browser bookmarks
 

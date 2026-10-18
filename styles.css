@@ -1423,3 +1423,57 @@ body.skybox-standalone .titlebar-button-container:focus-within {
 .skybox-plus.is-waiting:hover {
 	background: var(--interactive-accent-hover);
 }
+
+/* ---- the composer ------------------------------------------------ */
+
+/*
+ * The box the plus button opens on a desktop. It takes files as well as
+ * words, and what a dropped file means depends on whether anything has been
+ * written yet, which the line under the box says.
+ */
+.skybox-composer {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	width: min(680px, 100%);
+	padding: 16px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-l);
+	background: var(--background-primary);
+	box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+.skybox-composer.is-over {
+	border-color: var(--interactive-accent);
+}
+
+.skybox-composer-text {
+	min-height: 180px;
+	resize: vertical;
+	border: none;
+	background: transparent;
+	font-family: var(--font-text);
+	font-size: var(--font-text-size);
+	line-height: 1.5;
+}
+
+.skybox-composer-text:focus {
+	border: none;
+	outline: none;
+	box-shadow: none;
+}
+
+.skybox-composer-foot {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.skybox-composer-hint {
+	color: var(--text-faint);
+	font-size: var(--font-ui-smaller);
+}
+
+.skybox-composer-foot button {
+	margin-left: auto;
+}
