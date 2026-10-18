@@ -33,6 +33,20 @@ export interface MastodonStatus {
 
 export type Visibility = "public" | "unlisted" | "private" | "direct";
 
+/** One post in the thread under a shared card. */
+export interface MastodonReply {
+	id: string;
+	/** The display name, falling back to the handle where there is none. */
+	author: string;
+	handle: string;
+	avatar: string;
+	text: string;
+	url: string;
+	/** ISO 8601, as the server gives it. */
+	at: string;
+	favouritesCount: number;
+}
+
 /** `mastodon.social`, `https://mastodon.social/`, and the like, all one thing. */
 export function normalizeInstance(value: string): string {
 	const trimmed = value.trim().replace(/\/+$/, "");
@@ -162,16 +176,30 @@ export class Mastodon {
 		}
 	}
 
-	async post(text: string, visibility: Visibility, mediaIds: string[] = []): Promise<MastodonStatus> {
+	async post(
+		text: string,
+		visibility: Visibility,
+		mediaIds: string[] = [],
+		inReplyTo?: string
+	): Promise<MastodonStatus> {
 		const status = (await this.call("/api/v1/statuses", {
 			method: "POST",
 			json: {
 				status: text,
 				visibility,
 				media_ids: mediaIds.length > 0 ? mediaIds : undefined,
+				in_reply_to_id: inReplyTo,
 			},
 		})) as Record<string, unknown>;
 		return readStatus(status);
+	}
+
+	/** What has been said under a post, oldest first. */
+	async replies(id: string): Promise<MastodonReply[]> {
+		const context = (await this.call(`/api/v1/statuses/${id}/context`)) as {
+			descendants?: Record<string, unknown>[];
+		};
+		return (context.descendants ?? []).map(readReply);
 	}
 
 	/** An image goes up first and is referenced by the post that follows. */
@@ -198,6 +226,21 @@ export class Mastodon {
 	async deleteStatus(id: string): Promise<void> {
 		await this.call(`/api/v1/statuses/${id}`, { method: "DELETE" });
 	}
+}
+
+function readReply(raw: Record<string, unknown>): MastodonReply {
+	const account = (raw.account ?? {}) as Record<string, unknown>;
+	const handle = String(account.acct ?? account.username ?? "");
+	return {
+		id: String(raw.id ?? ""),
+		author: String(account.display_name || handle),
+		handle,
+		avatar: typeof account.avatar_static === "string" ? account.avatar_static : "",
+		text: htmlToText(typeof raw.content === "string" ? raw.content : ""),
+		url: typeof raw.url === "string" ? raw.url : "",
+		at: String(raw.created_at ?? ""),
+		favouritesCount: Number(raw.favourites_count ?? 0),
+	};
 }
 
 function readStatus(raw: Record<string, unknown>): MastodonStatus {

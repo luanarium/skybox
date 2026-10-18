@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Notice, Platform, TFile } from "obsidian";
 import { useSkybox } from "../context";
+import { Conversation } from "./Conversation";
 import { coverClass } from "../cover";
 import { coverLink, sameCover } from "../preview";
 import { isImageExtension } from "../types";
@@ -149,8 +150,42 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 		}
 	};
 
+	/*
+	 * A shared card has a conversation somewhere else, which is too much to
+	 * put under the properties in a column this narrow. Two tabs: what the
+	 * note is, and what was said about it.
+	 */
+	const statusId = frontmatter.mastodon_id ? String(frontmatter.mastodon_id) : "";
+	const [tab, setTab] = useState<"note" | "thread">("note");
+	useEffect(() => {
+		if (!statusId) setTab("note");
+	}, [statusId]);
+
 	return (
 		<aside className="skybox-meta">
+			{statusId && note && (
+				<div className="skybox-meta-tabs">
+					<button
+						className={tab === "note" ? "is-on" : ""}
+						onClick={() => setTab("note")}
+					>
+						Properties
+					</button>
+					<button
+						className={tab === "thread" ? "is-on" : ""}
+						onClick={() => setTab("thread")}
+					>
+						Conversation
+					</button>
+				</div>
+			)}
+
+			{statusId && note && tab === "thread" && (
+				<Conversation note={note} statusId={statusId} />
+			)}
+
+			{tab === "note" && (
+				<>
 			<section className="skybox-meta-section">
 				<h4>Tags</h4>
 				<div className="skybox-meta-tags">
@@ -274,6 +309,8 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 					</div>
 				</dl>
 			</section>
+				</>
+			)}
 		</aside>
 	);
 }

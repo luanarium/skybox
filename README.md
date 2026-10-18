@@ -27,8 +27,8 @@ way of looking at them.
   note embeds belongs to that note, and stays out of the way.
 - **Notes show what they hold.** A note that embeds an image puts the first one on its card, and the
   right pane lets you pick another. A note with no picture draws one, a gradient of its own.
-- **Share a card by tagging it.** Connect a Mastodon account and a tag posts the card, with the
-  image attached where there is one. Take the tag away and the post goes with it. Both ask first.
+- **Share a card by tagging it.** Connect a Mastodon account and a tag posts the card, image and
+  all. The thread comes back beside the note, with a box to reply from. Untag it and the post goes.
 - **Immersive.** Standalone mode gives the whole window to the pane, and the window controls hide
   until the pointer reaches the top.
 
@@ -87,6 +87,7 @@ releases on startup, so a new version arrives on its own.
 | `src/preview.ts` | Which picture a card shows, and the `cover` property |
 | `src/mastodon.ts` | The Mastodon client, and what can be worked out without one |
 | `src/sharing.ts` | Posting a card when it is tagged, and deleting when it is not |
+| `src/components/Conversation.tsx` | The thread beside a shared card, and replying to it |
 | `src/autoname.ts` | Naming a new note after its first line |
 | `src/ignore.ts` | Folders the index leaves alone |
 | `src/bookmarks.ts` | Reading the browser's bookmarks file into notes |
@@ -292,8 +293,21 @@ reactions the post has collected, because a thread other people took part in is 
 post nobody saw.
 
 The post's id and address are written into the note's frontmatter as `mastodon_id` and
-`mastodon_url`, which is what ties the two together through a rename, and what the next slices will
-read to show a conversation beside the card.
+`mastodon_url`, which is what ties the two together through a rename.
+
+### The conversation, beside the note
+
+A shared card's right pane gains a second tab. **Properties** is everything a card has always shown;
+**Conversation** is the thread: who replied, what they said, how many favourites and boosts it has
+collected, a link to the post itself, and a box at the foot of the column to reply from. Replying
+posts as the connected account, in the same thread, at the visibility set in the settings, and the
+thread is read again straight afterwards so your reply appears where it will appear to everyone
+else.
+
+Nothing is written into the vault. A conversation belongs to the server it happened on, and a copy
+in the note would be stale the moment somebody else replied, so the tab reads the instance each time
+it is opened and there is a refresh beside the counts. Reply text arrives as the server's HTML and
+is turned into words before it reaches the page, never injected as markup.
 
 Two things are deliberately careful. A note that already carries the tag when Obsidian starts is
 remembered rather than posted, since turning this on should not publish a vault; only a tag added

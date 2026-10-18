@@ -1246,3 +1246,130 @@ body.skybox-standalone .titlebar-button-container:focus-within {
 .skybox-meta-cover.is-chosen {
 	box-shadow: 0 0 0 2px var(--interactive-accent);
 }
+
+/* ---- the conversation beside a shared card ----------------------- */
+
+.skybox-meta-tabs {
+	display: flex;
+	gap: 2px;
+	margin-bottom: 14px;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.skybox-meta-tabs button {
+	all: unset;
+	padding: 6px 10px;
+	border-bottom: 2px solid transparent;
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	cursor: pointer;
+}
+
+.skybox-meta-tabs button:hover {
+	color: var(--text-normal);
+}
+
+.skybox-meta-tabs button.is-on {
+	border-bottom-color: var(--interactive-accent);
+	color: var(--text-normal);
+}
+
+.skybox-thread {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.skybox-thread-counts {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}
+
+.skybox-thread-refresh {
+	all: unset;
+	margin-left: auto;
+	color: var(--text-faint);
+	cursor: pointer;
+}
+
+.skybox-thread-refresh:hover {
+	color: var(--text-normal);
+}
+
+.skybox-thread-link {
+	font-size: var(--font-ui-smaller);
+	overflow-wrap: anywhere;
+}
+
+.skybox-thread-list {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.skybox-thread-list li {
+	padding-bottom: 12px;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.skybox-thread-list li:last-child {
+	border-bottom: none;
+}
+
+.skybox-thread-who {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-bottom: 4px;
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}
+
+.skybox-thread-who img {
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.skybox-thread-who time {
+	margin-left: auto;
+	color: var(--text-faint);
+}
+
+.skybox-thread-list p {
+	margin: 0;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+/* The reply box sits at the foot of the column, always within reach. */
+.skybox-thread-reply {
+	position: sticky;
+	bottom: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding-top: 10px;
+	border-top: 1px solid var(--background-modifier-border);
+	background: var(--background-secondary);
+}
+
+.skybox-thread-reply textarea {
+	width: 100%;
+	min-height: 64px;
+	resize: vertical;
+	font-family: var(--font-interface);
+	font-size: var(--font-ui-small);
+}
+
+.skybox-thread-reply button {
+	align-self: flex-end;
+}
