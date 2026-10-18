@@ -181,7 +181,7 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 			{statusId && note && Platform.isMobile && (
 				<section className="skybox-meta-section">
 					<button className="skybox-thread-open" onClick={() => setSheeted(true)}>
-						Conversation{waiting > 0 ? ` (${waiting})` : ""}
+						{waiting > 0 ? `${waiting} ${waiting === 1 ? "comment" : "comments"}` : "Comments"}
 					</button>
 				</section>
 			)}

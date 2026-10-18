@@ -1493,3 +1493,22 @@ body.skybox-standalone .titlebar-button-container:focus-within {
 .is-mobile .skybox-thread-reply {
 	background: var(--background-primary);
 }
+
+/*
+ * A phone's keyboard shrinks the window rather than covering it, and a box
+ * pinned to the bottom of a sheet goes with it. Inside the thread sheet the
+ * reply box sits in the flow instead, so focusing it scrolls it into view the
+ * way the browser intends, and the sheet keeps room for the keyboard under
+ * whatever Obsidian says it is taking.
+ */
+.is-mobile .skybox-thread-sheet .skybox-thread-reply {
+	position: static;
+}
+
+.is-mobile .skybox-thread-sheet .skybox-thread {
+	padding-bottom: calc(14px + var(--keyboard-height, 0px));
+}
+
+.is-mobile .skybox-thread-sheet .skybox-thread-reply textarea {
+	min-height: 96px;
+}
