@@ -1542,3 +1542,146 @@ body.skybox-standalone .titlebar-button-container:focus-within {
 .skybox-back-catcher {
 	display: none !important;
 }
+
+/* ---- mail: the window it arrives in ------------------------------ *
+ *
+ * Window chrome borrowed from XP.css, and only here: every rule is
+ * scoped to `.skybox-mail`, so the rest of the pane keeps Obsidian's own
+ * variables and whatever theme is on. The gradients, the inset shadows
+ * and the title bar's colours are theirs, taken from `dist/XP.css`
+ * v0.2.6. The webfont is not: Tahoma and Trebuchet are what Windows
+ * had, and elsewhere the stack falls back to whatever is to hand.
+ *
+ * XP.css, MIT, Copyright 2020 Adam Hammad, Jordan Scales.
+ * https://botoxparty.github.io/XP.css/
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+ * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ * ------------------------------------------------------------------ */
+
+.skybox-mail {
+	--mail-face: #ece9d8;
+	--mail-ink: #000;
+	font-family: Tahoma, "Segoe UI", Verdana, sans-serif;
+	font-size: 11px;
+	color: var(--mail-ink);
+	-webkit-font-smoothing: antialiased;
+}
+
+.skybox-mail .mail-window {
+	padding: 0 0 3px;
+	border-top-left-radius: 8px;
+	border-top-right-radius: 8px;
+	background: var(--mail-face);
+	box-shadow:
+		inset -1px -1px #00138c,
+		inset 1px 1px #0831d9,
+		inset -2px -2px #001ea0,
+		inset 2px 2px #166aee,
+		inset -3px -3px #003bda,
+		inset 3px 3px #0855dd;
+}
+
+.skybox-mail .mail-title-bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	height: 21px;
+	padding: 3px 5px 3px 3px;
+	border-top: 1px solid #0831d9;
+	border-left: 1px solid #0831d9;
+	border-right: 1px solid #001ea0;
+	border-top-left-radius: 8px;
+	border-top-right-radius: 7px;
+	background: linear-gradient(
+		180deg,
+		#0997ff,
+		#0053ee 8%,
+		#0050ee 40%,
+		#06f 88%,
+		#06f 93%,
+		#005bff 95%,
+		#003dd7 96%,
+		#003dd7
+	);
+	color: #fff;
+	font-family: "Trebuchet MS", Tahoma, sans-serif;
+	font-size: 13px;
+	font-weight: 700;
+	text-shadow: 1px 1px #0f1089;
+}
+
+.skybox-mail .mail-title-bar-text {
+	padding-left: 3px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.skybox-mail .mail-body {
+	margin: 8px;
+}
+
+/* The beveled button, and the fields it sits beside. */
+.skybox-mail button {
+	min-width: 75px;
+	min-height: 23px;
+	margin-right: 2px;
+	padding: 0 12px 3px;
+	border: 1px solid #91a7b4;
+	border-top-left-radius: 3px;
+	border-top-right-radius: 3px;
+	background: linear-gradient(180deg, #fff, #fafaf9 26%, #f0f0ea 95%, #ecebe5);
+	color: var(--mail-ink);
+	font-family: inherit;
+	font-size: 11px;
+	box-shadow: none;
+}
+
+.skybox-mail button:hover {
+	border-color: #3c7fb1;
+}
+
+.skybox-mail button:active:not(:disabled) {
+	background: linear-gradient(180deg, #e4e3de, #eeeeea 26%, #f4f4f0 95%, #fff);
+}
+
+.skybox-mail input[type="text"],
+.skybox-mail textarea {
+	padding: 3px 4px;
+	border: 1px solid #7f9db9;
+	border-radius: 0;
+	background: #fff;
+	color: var(--mail-ink);
+	font-family: inherit;
+	font-size: 11px;
+	box-shadow: none;
+}
+
+.skybox-mail input[type="text"] {
+	height: 23px;
+}
+
+.skybox-mail input[type="text"]:focus,
+.skybox-mail textarea:focus {
+	border-color: #3c7fb1;
+	box-shadow: none;
+	outline: none;
+}

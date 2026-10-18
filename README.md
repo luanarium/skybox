@@ -549,6 +549,16 @@ Moving and maximizing go through Electron's window, the way Obsidian's own title
 desktop-only and feature-detected, the settings tab says whether this window handed a handle over,
 and without one the band falls back to a CSS `app-region: drag` region. Android never touches it.
 
+## Borrowed
+
+The mail card's window chrome is a slice of [XP.css](https://botoxparty.github.io/XP.css/) by Adam
+Hammad and Jordan Scales, MIT, copied into `styles.css` rather than taken as a dependency: Obsidian
+loads one stylesheet, so a dependency would have been inlined into that same file anyway, and the
+package carries a megabyte of themes and fonts this uses none of. The copied rules are the window,
+the title bar, the beveled button and the fields, with their notice kept beside them, and every one
+is scoped to `.skybox-mail` so the rest of the pane keeps Obsidian's own variables. The webfont is
+not copied: Tahoma and Trebuchet are what Windows had, and the stack falls back from there.
+
 ## Two notes on the implementation
 
 - **A known hash asks before it writes.** Drop or pick a file whose contents are already in the
