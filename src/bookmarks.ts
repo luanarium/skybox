@@ -286,25 +286,32 @@ export class BookmarkImport {
 
 		const bookmarks = parseBookmarks(json);
 		if (bookmarks.length === 0) {
-			await this.enrich();
+			await this.enrich([]);
 			return 0;
 		}
 
 		const already = this.importedUrls();
 		const folder = await ensureFolder(this.app, this.settings.bookmarksFolder);
+		const fresh: { file: TFile; source: string }[] = [];
 		let written = 0;
 		for (const bookmark of bookmarks) {
 			if (already.has(bookmark.url)) continue;
 			already.add(bookmark.url);
 			const target = await uniquePath(this.app, folder, `${noteTitle(bookmark.title)}.md`);
 			try {
-				await guarded(() => this.app.vault.create(target, bookmarkNote(bookmark)));
+				const file = await guarded(() =>
+					this.app.vault.create(target, bookmarkNote(bookmark))
+				);
+				// Carried rather than looked up: a note written a moment ago is
+				// not in the metadata cache yet, and the pass that asks pages
+				// about themselves finds its candidates through that cache.
+				fresh.push({ file, source: bookmark.url });
 				written++;
 			} catch (error) {
 				console.error("Skybox: could not write a bookmark note", error);
 			}
 		}
-		await this.enrich();
+		await this.enrich(fresh);
 		return written;
 	}
 
@@ -319,9 +326,15 @@ export class BookmarkImport {
 	 * picked up by later passes, and `fetched` marks the ones that have been
 	 * asked, so a page with nothing to say is not asked again.
 	 */
-	private async enrich(limit = 8): Promise<void> {
+	private async enrich(fresh: { file: TFile; source: string }[] = [], limit = 8): Promise<void> {
 		if (!this.settings.bookmarksFetch) return;
 		let budget = limit;
+		// The ones just written, which no cache knows about yet.
+		for (const note of fresh) {
+			if (budget <= 0) return;
+			budget--;
+			await this.describe(note.file, note.source);
+		}
 		for (const file of this.app.vault.getMarkdownFiles()) {
 			if (budget <= 0) return;
 			const front = this.app.metadataCache.getFileCache(file)?.frontmatter;
