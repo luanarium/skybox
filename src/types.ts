@@ -56,6 +56,12 @@ export interface SkyboxSettings {
 	bookmarkImages: boolean;
 	/** Keep the article itself in the note, not only what the page says of it. */
 	bookmarkArticle: boolean;
+	/** The Mastodon instance to post to; empty means sharing is off. */
+	mastodonInstance: string;
+	/** The tag that means "share this", without its hash. */
+	mastodonTag: string;
+	/** How a shared post is addressed. */
+	mastodonVisibility: string;
 }
 
 export const DEFAULT_SETTINGS: SkyboxSettings = {
@@ -75,6 +81,9 @@ export const DEFAULT_SETTINGS: SkyboxSettings = {
 	bookmarksFolder: "bookmarks",
 	bookmarkImages: true,
 	bookmarkArticle: true,
+	mastodonInstance: "",
+	mastodonTag: "share",
+	mastodonVisibility: "unlisted",
 };
 
 /** The tag an image gets for being embedded in a note; nothing writes it. */

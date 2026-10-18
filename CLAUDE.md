@@ -5,7 +5,8 @@ Skybox is an Obsidian plugin that opens onto a masonry search pane over the vaul
 ## Conventions
 
 - Obsidian plugin in TypeScript; built and tested on Linux Mint; runs on desktop and Android Obsidian
-- Self-contained: only Obsidian's APIs and the browser, with no server or external service
+- Self-contained: only Obsidian's APIs and the browser, with no server of its own
+- One external service, agreed on 2026-10-17: Mastodon, and only where the user has connected an account and tagged a note for it. The access token is kept in Obsidian's per-vault local storage, never in `data.json` and never in the vault, so it does not sync or sit among the notes. Posting and deleting always ask first. Nothing is sent anywhere until a note carries the sharing tag.
 - Obsidian launches straight into the plugin as a standalone app
 - Entry point is a masonry search pane over the vault
 - Search box is large, with an italic grayed placeholder "search my vault"

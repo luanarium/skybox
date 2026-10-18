@@ -3,6 +3,7 @@ import { isBorrowing } from "./borrowed";
 import { Autonamer } from "./autoname";
 import { BookmarkImport } from "./bookmarks";
 import { Bus } from "./bus";
+import { Sharing } from "./sharing";
 import { VaultIndex } from "./index";
 import { SkyboxSettingTab } from "./settings";
 import { applyScopedTheme, forgetScopedTheme } from "./theme";
@@ -21,6 +22,7 @@ export default class SkyboxPlugin extends Plugin {
 	private share!: ShareIntake;
 	private autoname!: Autonamer;
 	bookmarks!: BookmarkImport;
+	private sharing!: Sharing;
 	private backEl: HTMLElement | null = null;
 
 	async onload(): Promise<void> {
@@ -28,6 +30,7 @@ export default class SkyboxPlugin extends Plugin {
 		this.index = new VaultIndex(this.app, this.settings);
 		this.autoname = new Autonamer(this.app, this.settings);
 		this.bookmarks = new BookmarkImport(this.app, this.settings);
+		this.sharing = new Sharing(this.app, this.index, this.settings);
 		this.register(() => this.autoname.dispose());
 		this.bus = new Bus();
 		this.share = new ShareIntake(
@@ -53,6 +56,8 @@ export default class SkyboxPlugin extends Plugin {
 
 		this.app.workspace.onLayoutReady(() => {
 			this.index.build();
+			// What already carries the sharing tag is remembered, not posted.
+			this.sharing.prime();
 			// Registered here: the vault fires create for every file at load.
 			this.registerEvent(
 				this.app.vault.on("create", (file) => {
@@ -74,7 +79,12 @@ export default class SkyboxPlugin extends Plugin {
 				this.app.vault.on("rename", (file, oldPath) => this.index.onRename(file, oldPath))
 			);
 			this.registerEvent(
-				this.app.metadataCache.on("changed", (file) => this.index.onModify(file))
+				this.app.metadataCache.on("changed", (file) => {
+					this.index.onModify(file);
+					// Tags are read from the cache, so a tag added is seen here
+					// rather than on the write that preceded it.
+					void this.sharing.onChange(file);
+				})
 			);
 			// Tags and headings read as empty until the cache has resolved, so
 			// the index is taken again once it has.

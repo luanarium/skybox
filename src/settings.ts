@@ -1,5 +1,7 @@
-import { PluginSettingTab, Setting, type App } from "obsidian";
+import { Notice, PluginSettingTab, Setting, type App } from "obsidian";
 import { BookmarkImport, findBookmarkFiles } from "./bookmarks";
+import { normalizeInstance } from "./mastodon";
+import { clientFor, readToken, writeToken } from "./sharing";
 import type SkyboxPlugin from "./main";
 import { hasWindowHandle } from "./window";
 
@@ -144,6 +146,108 @@ export class SkyboxSettingTab extends PluginSettingTab {
 			);
 	}
 
+	/**
+	 * Sharing a card to Mastodon. The token is the one piece of this that is
+	 * not kept with the settings: it goes to the vault's local storage, which
+	 * does not sync and is not in the vault, so it travels no further than
+	 * this computer.
+	 */
+	private sharingSettings(containerEl: HTMLElement): void {
+		const connected = readToken(this.app) !== "";
+
+		new Setting(containerEl)
+			.setName("Share to Mastodon")
+			.setDesc(
+				"Tag a card and it is posted; take the tag away and the post goes with it. Both " +
+					"ask first, and nothing is sent until a note carries the tag. The account's " +
+					"token is kept on this computer, in storage that does not sync and is not " +
+					"part of the vault, so it stays off your phone and out of your notes."
+			);
+
+		new Setting(containerEl)
+			.setName("Instance")
+			.setDesc("The server your account is on. Empty turns sharing off.")
+			.addText((text) =>
+				text
+					.setPlaceholder("mastodon.social")
+					.setValue(this.plugin.settings.mastodonInstance)
+					.onChange(async (value) => {
+						this.plugin.settings.mastodonInstance = normalizeInstance(value);
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Access token")
+			.setDesc(
+				connected
+					? "A token is stored on this computer. Replacing it here replaces it there; " +
+						"emptying it disconnects. Revoking is done on your instance."
+					: "Make one on your instance under Preferences, Development, New application, " +
+						"with the scopes write:statuses, write:media and read:statuses."
+			)
+			.addText((text) => {
+				text.setPlaceholder(connected ? "stored on this computer" : "paste the token")
+					.setValue("")
+					.onChange((value) => {
+						writeToken(this.app, value);
+					});
+				text.inputEl.type = "password";
+			})
+			.addButton((button) =>
+				button.setButtonText("Check").onClick(async () => {
+					const client = clientFor(this.app, this.plugin.settings);
+					if (!client) {
+						new Notice("Skybox needs an instance and a token before it can check.");
+						return;
+					}
+					try {
+						const account = await client.verify();
+						new Notice(`Connected as @${account.username}.`);
+					} catch (error) {
+						new Notice(
+							`Skybox could not connect: ${error instanceof Error ? error.message : String(error)}`
+						);
+					}
+					this.display();
+				})
+			);
+
+		new Setting(containerEl)
+			.setName("Sharing tag")
+			.setDesc(
+				"The tag that means share this. Pick one you would not type by accident, since " +
+					"adding it to a note posts the card."
+			)
+			.addText((text) =>
+				text
+					.setPlaceholder("share")
+					.setValue(this.plugin.settings.mastodonTag)
+					.onChange(async (value) => {
+						this.plugin.settings.mastodonTag = value.replace(/^#/, "").trim();
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Who sees it")
+			.setDesc("How a shared post is addressed, the same four choices Mastodon offers.")
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOptions({
+						public: "Public",
+						unlisted: "Unlisted",
+						private: "Followers only",
+						direct: "Mentioned people only",
+					})
+					.setValue(this.plugin.settings.mastodonVisibility)
+					.onChange(async (value) => {
+						this.plugin.settings.mastodonVisibility = value;
+						await this.plugin.saveSettings();
+					})
+			);
+	}
+
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
@@ -199,6 +303,7 @@ export class SkyboxSettingTab extends PluginSettingTab {
 			);
 
 		this.bookmarkSettings(containerEl);
+		this.sharingSettings(containerEl);
 
 		new Setting(containerEl)
 			.setName("Images embedded in notes")

@@ -27,6 +27,8 @@ way of looking at them.
   note embeds belongs to that note, and stays out of the way.
 - **Notes show what they hold.** A note that embeds an image puts the first one on its card, and the
   right pane lets you pick another. A note with no picture draws one, a gradient of its own.
+- **Share a card by tagging it.** Connect a Mastodon account and a tag posts the card, with the
+  image attached where there is one. Take the tag away and the post goes with it. Both ask first.
 - **Immersive.** Standalone mode gives the whole window to the pane, and the window controls hide
   until the pointer reaches the top.
 
@@ -83,6 +85,8 @@ releases on startup, so a new version arrives on its own.
 | `src/compact.ts` | The shortest-column compactor and the card geometry |
 | `src/cover.ts` | Which cover a note gets drawn, from its path |
 | `src/preview.ts` | Which picture a card shows, and the `cover` property |
+| `src/mastodon.ts` | The Mastodon client, and what can be worked out without one |
+| `src/sharing.ts` | Posting a card when it is tagged, and deleting when it is not |
 | `src/autoname.ts` | Naming a new note after its first line |
 | `src/ignore.ts` | Folders the index leaves alone |
 | `src/bookmarks.ts` | Reading the browser's bookmarks file into notes |
@@ -278,6 +282,30 @@ Two rules keep it out of the way. Only a note still called `Untitled` (or `Untit
 so a note you named yourself keeps its name however its first line reads; and once it has a name,
 rewriting the first line is editing, not naming. **Name notes from their first line** in the
 settings turns it off.
+
+## Sharing to Mastodon
+
+Tag a card with the sharing tag and it is posted: the note's title and words, the page's link where
+it is a bookmark, and the picture attached where it is an image. Take the tag away and the post is
+deleted. Both ask first, and the delete says what is about to be lost, counting the replies and
+reactions the post has collected, because a thread other people took part in is not the same as a
+post nobody saw.
+
+The post's id and address are written into the note's frontmatter as `mastodon_id` and
+`mastodon_url`, which is what ties the two together through a rename, and what the next slices will
+read to show a conversation beside the card.
+
+Two things are deliberately careful. A note that already carries the tag when Obsidian starts is
+remembered rather than posted, since turning this on should not publish a vault; only a tag added
+while the plugin is running means anything. And the token is not kept with the settings. It goes to
+Obsidian's per-vault local storage, which does not sync and is not part of the vault, so it stays on
+the computer it was pasted into rather than travelling to your phone or sitting among your notes.
+Revoking is done on the instance, as it should be.
+
+This is the one external service the plugin talks to. `src/mastodon.ts` is the client, written
+against the API rather than a library: `requestUrl` is Obsidian's own fetch and sidesteps CORS, and
+the pieces that can be worked out without a server, composing a post inside the instance's character
+limit and building the multipart body an upload wants, are pure functions with tests.
 
 ## What a card shows
 

@@ -31,6 +31,10 @@ export async function requestUrl(): Promise<{ status: number; text: string; head
 	throw new Error("requestUrl is not available in the headless tests");
 }
 
+/** Enough of a class to link against; nothing under test opens one. */
+export class Modal {}
+export class Setting {}
+
 /** Headless is neither desktop nor phone; the pure parts do not ask. */
 export const Platform = { isDesktopApp: false, isMobile: false };
 
