@@ -313,6 +313,12 @@ beside the token, so none of it syncs or reaches the vault.
 
 Opening a card's conversation is what marks it read, and the tag falls away.
 
+The plus button does double duty rather than the grid growing a bell. While something is waiting it
+wears the accent colour instead of its usual orange, and a press puts the `#comments` chip in the
+search box, which is what the button is for in that moment; pressing it settles the colour until
+something new arrives. A right click, or a long press on a phone, opens the usual menu whatever the
+colour, so making a note never becomes unreachable.
+
 ### The conversation, beside the note
 
 A shared card's right pane gains a second tab, and a card that has been posted opens on it, because

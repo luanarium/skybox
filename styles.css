@@ -1409,3 +1409,17 @@ body.skybox-standalone .titlebar-button-container:focus-within {
 .skybox-thread-answering button:hover {
 	color: var(--text-normal);
 }
+
+/*
+ * The plus button while something is waiting on a shared card: the accent
+ * rather than the usual orange, and a press puts the #comments chip in the
+ * box instead of opening the menu.
+ */
+.skybox-plus.is-waiting {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.skybox-plus.is-waiting:hover {
+	background: var(--interactive-accent-hover);
+}

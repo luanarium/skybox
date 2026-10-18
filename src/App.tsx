@@ -8,7 +8,7 @@ import { createNote, ingest } from "./ingest";
 import { openPluginSettings } from "./preferences";
 import { type Chip, search } from "./search";
 import { withTransition } from "./transition";
-import type { Item } from "./types";
+import { UNREAD_TAG, type Item } from "./types";
 import { BottomBar } from "./components/BottomBar";
 import { Card } from "./components/Card";
 import { Icon } from "./components/Icon";
@@ -21,7 +21,7 @@ import { SearchBox } from "./components/SearchBox";
 const PAGE = 100;
 
 export function App() {
-	const { app, index, settings, bus, leaf, setStandalone } = useSkybox();
+	const { app, index, settings, bus, leaf, interactions, setStandalone } = useSkybox();
 	const [chips, setChips] = useState<Chip[]>([]);
 	const [draft, setDraft] = useState("");
 	const [version, setVersion] = useState(0);
@@ -39,6 +39,28 @@ export function App() {
 	const field = useRef<HTMLInputElement>(null);
 
 	useEffect(() => index.subscribe(() => setVersion((n) => n + 1)), [index]);
+
+	/*
+	 * The plus button does double duty. While something is waiting on a
+	 * shared card it changes colour, and a press puts the #comments chip in
+	 * the search box rather than opening the menu, which is what the button
+	 * is for in that moment. Pressing it settles the colour until something
+	 * new arrives, and a right click or a long press opens the menu either
+	 * way, so making a note never becomes unreachable.
+	 */
+	const [waiting, setWaiting] = useState(() => interactions.total());
+	const [settled, setSettled] = useState(() => interactions.total());
+	useEffect(() => interactions.subscribe(() => setWaiting(interactions.total())), [interactions]);
+	const glowing = waiting > settled;
+
+	const showWaiting = useCallback(() => {
+		setSettled(waiting);
+		setChips((current) =>
+			current.some((chip) => chip.tagOnly && chip.text === UNREAD_TAG)
+				? current
+				: [...current, { text: UNREAD_TAG, tagOnly: true }]
+		);
+	}, [waiting]);
 
 	useEffect(() => {
 		let current = true;
@@ -315,7 +337,15 @@ export function App() {
 						onDraftChange={setDraft}
 						onChipsChange={setChips}
 					/>
-					<button className="skybox-plus" aria-label="Add" onClick={plusMenu}>
+					<button
+						className={`skybox-plus${glowing ? " is-waiting" : ""}`}
+						aria-label={glowing ? `${waiting} waiting on shared cards` : "Add"}
+						onClick={(event) => (glowing ? showWaiting() : plusMenu(event))}
+						onContextMenu={(event) => {
+							event.preventDefault();
+							plusMenu(event);
+						}}
+					>
 						+
 					</button>
 				</div>
