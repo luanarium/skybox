@@ -342,6 +342,8 @@ colour, so making a note never becomes unreachable.
 
 A shared card's right pane gains a second tab, and a card that has been posted opens on it, because
 the properties are in the note and have not moved while the thread is somewhere else and may have.
+On a phone, where the pane stacks under the editor and a tab would sit a long way down a scroll, the
+thread opens as a sheet of its own instead, from a button that says how much is waiting.
 **Properties** is everything a card has always shown; **Conversation** is the thread: who replied,
 what they said, how many favourites and boosts it collected, a link to the post, and a box at the
 foot of the column to reply from.

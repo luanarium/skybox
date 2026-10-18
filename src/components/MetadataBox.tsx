@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Notice, Platform, TFile } from "obsidian";
 import { useSkybox } from "../context";
 import { Conversation } from "./Conversation";
+import { Sheet } from "./Sheet";
+import { unreadTotal } from "../mastodon";
 import { coverClass } from "../cover";
 import { coverLink, sameCover } from "../preview";
 import { isImageExtension } from "../types";
@@ -19,7 +21,7 @@ interface MetadataBoxProps {
 }
 
 export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: MetadataBoxProps) {
-	const { app, index } = useSkybox();
+	const { app, index, interactions } = useSkybox();
 	const [draft, setDraft] = useState("");
 	/**
 	 * Shown straight away, then reconciled with the index: a tag written to
@@ -158,6 +160,13 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 	const statusId = frontmatter.mastodon_id ? String(frontmatter.mastodon_id) : "";
 	const [tab, setTab] = useState<"note" | "thread">(statusId ? "thread" : "note");
 	/*
+	 * A phone stacks the pane under the editor, which puts a thread a long
+	 * way down a scroll. There it opens as a sheet of its own instead, from a
+	 * button that says how much is waiting.
+	 */
+	const [sheeted, setSheeted] = useState(false);
+	const waiting = statusId ? unreadTotal(interactions.unreadFor(statusId)) : 0;
+	/*
 	 * A shared card opens on its conversation, because that is the part that
 	 * is somewhere else and may have moved since you last looked. An empty
 	 * thread is still the right place to be: the reply box is there, and a
@@ -169,7 +178,21 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 
 	return (
 		<aside className="skybox-meta">
-			{statusId && note && (
+			{statusId && note && Platform.isMobile && (
+				<section className="skybox-meta-section">
+					<button className="skybox-thread-open" onClick={() => setSheeted(true)}>
+						Conversation{waiting > 0 ? ` (${waiting})` : ""}
+					</button>
+				</section>
+			)}
+
+			{statusId && note && sheeted && (
+				<Sheet onClose={() => setSheeted(false)} cls="skybox-thread-sheet">
+					<Conversation note={note} statusId={statusId} />
+				</Sheet>
+			)}
+
+			{statusId && note && !Platform.isMobile && (
 				<div className="skybox-meta-tabs">
 					<button
 						className={tab === "note" ? "is-on" : ""}
@@ -186,11 +209,11 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 				</div>
 			)}
 
-			{statusId && note && tab === "thread" && (
+			{statusId && note && !Platform.isMobile && tab === "thread" && (
 				<Conversation note={note} statusId={statusId} />
 			)}
 
-			{tab === "note" && (
+			{(Platform.isMobile || tab === "note") && (
 				<>
 			<section className="skybox-meta-section">
 				<h4>Tags</h4>

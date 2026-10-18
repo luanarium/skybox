@@ -1477,3 +1477,19 @@ body.skybox-standalone .titlebar-button-container:focus-within {
 .skybox-composer-foot button {
 	margin-left: auto;
 }
+
+/* The thread as a sheet of its own, where a column would push it off-screen. */
+.skybox-thread-open {
+	width: 100%;
+}
+
+.skybox-thread-sheet .skybox-thread {
+	height: 100%;
+	padding: 14px;
+	overflow-y: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+.is-mobile .skybox-thread-reply {
+	background: var(--background-primary);
+}
