@@ -502,8 +502,11 @@ input[type="text"].skybox-search-input:active {
  * beside it. Two of the same thing, so the editor's copy stands down and the
  * one on the right is the one you read and edit.
  */
+.skybox-expanded .metadata-container,
+.skybox-expanded .metadata-properties,
+.skybox-expanded .metadata-add-button,
 .skybox-editor .metadata-container {
-	display: none;
+	display: none !important;
 }
 
 /* The leaf whose view is borrowed is left empty: keep it out of sight. */
