@@ -1,6 +1,7 @@
 import * as assert from "node:assert";
 import {
 	MAIL_TAG,
+	lastId,
 	parseThreadNote,
 	sameParty,
 	sortThreads,
@@ -119,3 +120,18 @@ assert.strictEqual(cleanHtml('<p class="x">a</p>'), "<p>a</p>");
 assert.strictEqual(cleanHtml("<script>bad()</script>a"), "bad()a");
 assert.strictEqual(cleanHtml('<img src=x onerror="bad()">a'), "a");
 assert.strictEqual(cleanHtml("<div>a</div>"), "<p>a</p>");
+
+// A reply needs the id of what it answers, which the note carries because
+// the messages in its body do not.
+assert.strictEqual(lastId(thread), "mine@example.net");
+assert.strictEqual(lastId({ ...thread, messages: [] }), "");
+assert.ok(threadNote(thread).includes("thread_last: mine@example.net"), "the note says what to answer");
+
+// Outgoing mail carries an id of its own, so an answer to it threads too.
+const mine = replyHeaders(thread, "neo@example.net", "mine@example.net");
+assert.ok(/^<\d+\.[a-z0-9]+@example\.net>$/.test(mine["Message-ID"]), mine["Message-ID"]);
+assert.notStrictEqual(
+	replyHeaders(thread, "neo@example.net", "x")["Message-ID"],
+	mine["Message-ID"],
+	"each message gets its own"
+);

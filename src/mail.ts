@@ -114,11 +114,16 @@ export function replyHeaders(
 	const subject = thread.subject.toLowerCase().startsWith("re:")
 		? thread.subject
 		: `Re: ${thread.subject}`;
+	const domain = /@([^>\s]+)/.exec(from)?.[1] ?? "skybox.local";
 	const headers: Record<string, string> = {
 		From: from,
 		To: thread.with,
 		Subject: subject,
 		Date: new Date().toUTCString(),
+		// Ours, so that an answer to this answers something that exists. A
+		// submission server will add one if it is missing, but it will not be
+		// an id this vault ever sees.
+		"Message-ID": `<${Date.now()}.${Math.random().toString(36).slice(2, 10)}@${domain}>`,
 		"MIME-Version": "1.0",
 	};
 	if (lastMessageId) {
@@ -237,15 +242,19 @@ export class MailImport {
 	}
 
 	/** Leaves a reply where the mail transfer agent will find it. */
-	async send(thread: Thread, text: string, html: string): Promise<boolean> {
+	async send(
+		thread: Thread,
+		text: string,
+		html: string,
+		lastMessageId: string
+	): Promise<boolean> {
 		const outbox = this.settings.mailOutbox.trim();
 		const from = this.settings.mailAddress.trim();
 		if (!outbox || !from) {
 			new Notice("Skybox: set your address and an outbox in the settings first.");
 			return false;
 		}
-		const last = [...thread.messages].reverse().find((message) => message.id);
-		const raw = composeMail(replyHeaders(thread, from, last?.id ?? ""), text, html);
+		const raw = composeMail(replyHeaders(thread, from, lastMessageId), text, html);
 		const host = window as unknown as { require?: (id: string) => unknown };
 		try {
 			const node = host.require?.("fs") as

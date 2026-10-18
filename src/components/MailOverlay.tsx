@@ -36,6 +36,9 @@ export function MailOverlay({ item, onClose }: MailOverlayProps) {
 	const box = useRef<HTMLDivElement>(null);
 
 	const front = app.metadataCache.getFileCache(item.file)?.frontmatter ?? {};
+	// The id a reply answers, which the note carries because the messages in
+	// its body do not.
+	const lastId = String(front.thread_last ?? "");
 	const thread = useMemo<Thread>(
 		() => ({
 			id: String(front.thread_id ?? ""),
@@ -87,8 +90,8 @@ export function MailOverlay({ item, onClose }: MailOverlayProps) {
 		try {
 			const sent =
 				thread.source === "mastodon"
-					? await new DirectMessages(app, settings).send(thread, text)
-					: await new MailImport(app, settings).send(thread, text, html);
+					? await new DirectMessages(app, settings).send(thread, text, lastId)
+					: await new MailImport(app, settings).send(thread, text, html, lastId);
 			if (!sent) return;
 			node.innerHTML = "";
 			// Said, and shown as said, until the backend brings it back.

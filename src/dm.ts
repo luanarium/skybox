@@ -141,17 +141,16 @@ export class DirectMessages {
 	}
 
 	/** Replies in the conversation, to the people already in it. */
-	async send(thread: Thread, text: string): Promise<boolean> {
+	async send(thread: Thread, text: string, lastStatusId: string): Promise<boolean> {
 		const client = clientFor(this.app, this.settings);
 		if (!client) {
 			new Notice("Skybox: connect a Mastodon account in the settings first.");
 			return false;
 		}
-		const last = [...thread.messages].reverse().find((message) => message.id);
 		const handle = /<@([^>]+)>/.exec(thread.with)?.[1] ?? thread.with.replace(/^@/, "");
 		const said = text.trim().startsWith(`@${handle}`) ? text.trim() : `@${handle} ${text.trim()}`;
 		try {
-			await client.post(said, "direct", [], last?.id);
+			await client.post(said, "direct", [], lastStatusId || undefined);
 			return true;
 		} catch (error) {
 			console.error("Skybox: could not send that message", error);

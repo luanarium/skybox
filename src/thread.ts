@@ -56,6 +56,9 @@ export function threadNote(thread: Thread): string {
 		`thread_with: ${yamlValue(thread.with)}`,
 		`subject: ${yamlValue(thread.subject || "(no subject)")}`,
 		`updated: ${stamp(lastAt(thread))}`,
+		// What a reply answers. Without it a reply starts its own thread at
+		// the other end, which is how a conversation comes apart.
+		`thread_last: ${yamlValue(lastId(thread))}`,
 		`unread: ${thread.unread ? "true" : "false"}`,
 		"tags:",
 		`  - ${MAIL_TAG}`,
@@ -113,6 +116,15 @@ export function sameParty(a: string, b: string): boolean {
 	};
 	if (!a || !b) return false;
 	return address(a) === address(b);
+}
+
+/** The id of the newest message that has one, which a reply answers. */
+export function lastId(thread: Thread): string {
+	for (let index = thread.messages.length - 1; index >= 0; index--) {
+		const id = thread.messages[index].id;
+		if (id) return id;
+	}
+	return "";
 }
 
 export function lastAt(thread: Thread): number {
