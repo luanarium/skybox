@@ -1478,19 +1478,48 @@ body.skybox-standalone .titlebar-button-container:focus-within {
 	margin-left: auto;
 }
 
-/* The thread as a sheet of its own, where a column would push it off-screen. */
+/*
+ * The thread over the card, where a column would push it off-screen. Not a
+ * modal: the card is already one on a phone, and a keyboard inside a stack of
+ * modals ends with an empty sheet and nothing to type into.
+ */
 .skybox-thread-open {
 	width: 100%;
 }
 
-.skybox-thread-sheet .skybox-thread {
-	height: 100%;
+.skybox-thread-panel {
+	position: fixed;
+	inset: 0;
+	z-index: 20;
+	display: flex;
+	flex-direction: column;
+	padding-top: var(--safe-area-inset-top, 0px);
+	background: var(--background-primary);
+}
+
+.skybox-thread-panel-head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.skybox-thread-panel-head h2 {
+	margin: 0;
+	font-size: 1.05em;
+}
+
+.skybox-thread-panel .skybox-thread {
+	flex: 1 1 auto;
+	min-height: 0;
 	padding: 14px;
 	overflow-y: auto;
 	-webkit-overflow-scrolling: touch;
 }
 
 .is-mobile .skybox-thread-reply {
+	position: static;
 	background: var(--background-primary);
 }
 
@@ -1501,14 +1530,10 @@ body.skybox-standalone .titlebar-button-container:focus-within {
  * way the browser intends, and the sheet keeps room for the keyboard under
  * whatever Obsidian says it is taking.
  */
-.is-mobile .skybox-thread-sheet .skybox-thread-reply {
-	position: static;
-}
-
-.is-mobile .skybox-thread-sheet .skybox-thread {
+.is-mobile .skybox-thread-panel .skybox-thread {
 	padding-bottom: calc(14px + var(--keyboard-height, 0px));
 }
 
-.is-mobile .skybox-thread-sheet .skybox-thread-reply textarea {
+.is-mobile .skybox-thread-panel .skybox-thread-reply textarea {
 	min-height: 96px;
 }

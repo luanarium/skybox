@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Notice, Platform, TFile } from "obsidian";
 import { useSkybox } from "../context";
 import { Conversation } from "./Conversation";
-import { Sheet } from "./Sheet";
+import { Icon } from "./Icon";
 import { unreadTotal } from "../mastodon";
 import { coverClass } from "../cover";
 import { coverLink, sameCover } from "../preview";
@@ -187,9 +187,25 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 			)}
 
 			{statusId && note && sheeted && (
-				<Sheet onClose={() => setSheeted(false)} cls="skybox-thread-sheet">
+				/*
+				 * A panel over the card rather than a second modal. The card
+				 * is already one on a phone, and opening another on top of it
+				 * puts a keyboard into a stack of modals, which ends with an
+				 * empty sheet and nothing to type into.
+				 */
+				<div className="skybox-thread-panel">
+					<div className="skybox-thread-panel-head">
+						<button
+							className="skybox-back-arrow"
+							aria-label="Back to the card"
+							onClick={() => setSheeted(false)}
+						>
+							<Icon name="arrow-left" />
+						</button>
+						<h2>{waiting > 0 ? `${waiting} ${waiting === 1 ? "comment" : "comments"}` : "Comments"}</h2>
+					</div>
 					<Conversation note={note} statusId={statusId} />
-				</Sheet>
+				</div>
 			)}
 
 			{statusId && note && !Platform.isMobile && (
