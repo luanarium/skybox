@@ -19,7 +19,9 @@ way of looking at them.
   vault asks before it writes a second copy.
 - **Bookmarks arrive on their own,** with no browser extension: point it at your browser's bookmarks
   file and keep bookmarking as you do. Each page is read once for its description, its picture and
-  the article itself, so a bookmark is searchable by what the page said.
+  the article itself, so a bookmark is searchable by what the page said. Importing happens on
+  desktop, where the browser's file is; on a phone the notes simply arrive with the rest of the
+  vault.
 - **Images are notes too,** each with a sidecar beside it holding its tags and thoughts. An image a
   note embeds belongs to that note, and stays out of the way.
 - **Notes get cover art,** a gradient of their own drawn from the path, so the grid is not a wall of
