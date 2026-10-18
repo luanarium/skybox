@@ -258,7 +258,8 @@ export class SkyboxSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Mail")
 			.setDesc(
-				"Conversations as cards. Something else fetches your mail into a Maildir, " +
+				"Parked, and left in: it works against a Maildir but has never met a real " +
+					"mailbox. Conversations as cards. Something else fetches your mail into a Maildir, " +
 					"usually mbsync, and something else sends what is left in the outbox, usually " +
 					"msmtp; Skybox reads the one and writes the other, so no password and no mail " +
 					"protocol come anywhere near the vault. Threads are written into the vault as " +

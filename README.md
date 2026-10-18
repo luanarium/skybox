@@ -315,6 +315,14 @@ settings turns it off.
 
 ## Mail
 
+**Parked.** This works against a Maildir and is tested against a seeded one, messages, threads,
+replies and all, but it has never met a real mailbox: every provider tried refused a new account
+for its own reasons. So it is finished enough to use and unproven enough to say so. Two things are
+known rather than suspected: a reply you send only reappears in the thread if your fetcher also
+syncs a Sent folder, and a thread note is rewritten from the Maildir on every pass, so your own
+writing belongs in a note beside it rather than in it. Direct messages, below, are the same surface
+on a path that is tested.
+
 Skybox does not speak IMAP or SMTP, and holds no password. Something else fetches, usually `mbsync`,
 and something else sends, usually `msmtp` over whatever is left in the outbox. In between, Skybox
 reads a Maildir, groups the messages into conversations by what answers what, and writes each
