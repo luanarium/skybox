@@ -6,37 +6,25 @@
 An Obsidian plugin that opens the vault as a wall of cards you can search, on desktop and Android.
 
 It takes its shape from [mymind](https://mymind.com): everything you keep in one visual place, found
-by typing rather than filed by hand. Obsidian already holds the notes and the images; Skybox is the
-other way of looking at them, and it writes nothing of its own to make that work.
+by typing rather than filed by hand. Obsidian holds the notes and the images; Skybox is the other
+way of looking at them.
 
-- **One pane over the whole vault.** Notes and images sit shoulder to shoulder in a masonry grid,
-  most recently modified first. Typing turns words into chips; chips narrow the search and removing
-  one widens it again, and `#word` matches tags alone.
-- **Make, change and throw away without leaving the grid.** The plus button writes a new note, which
-  opens straight into Obsidian's own editor (live preview, links, embeds) with tags, properties
-  and backlinks beside it. Right-click a card on desktop, or long-press on a phone, to copy or
-  delete it; deleting takes the image's notes with it and goes through the trash, not around it.
-- **A note names itself.** New notes start as Untitled and take their name from their first line
-  once the typing settles, heading marks and all stripped. Rename one yourself and it is yours;
-  Skybox never touches it again.
-- **Drop things in, including from a browser.** Drag files onto the pane, or an image straight out
-  of a browser window, and they are taken into the vault, hashed, and shown as cards. A file whose
-  contents are already in the vault asks before it writes a second copy. On a phone, anything shared
-  to Obsidian arrives the same way.
-- **Bookmarks arrive on their own, with no browser extension.** Switch it on, point it at a
-  supported browser's bookmarks file, and bookmark pages the way you always have. Each new page is
-  asked once for what it says about itself, so the card carries the page's own description and
-  picture rather than a bare link. There is nothing to install in the browser, no server, and
-  nothing to paste, and it only ever adds, so curating happens in the vault, where searching beats
-  any browser's bookmark manager. Desktop only, and inactive until you set it up.
-- **Images are things you kept, not attachments.** Every image gets a card with a sidecar note for
-  its tags and thoughts, so Obsidian's own tag pane sees them. An image a *note* embeds belongs to
-  that note, so it stays out of the everything view until you search for it.
-- **Notes get cover art.** A grid of text is a wall of words, so each note draws a gradient of its
-  own, decided by its path. Nothing is stored for it, and a setting turns it off.
-- **Out of the way.** Standalone mode hands the whole window to the pane, with no ribbon and no tab
-  bar, and the window controls hide until the pointer reaches the top edge, where the band also
-  drags the window and maximizes on a double click.
+- **One pane over the whole vault.** Notes and images, most recently modified first. Typing makes
+  chips, chips narrow the search, `#word` matches tags alone.
+- **Make, change and throw away from the grid.** New notes open into Obsidian's own editor, live
+  preview and all. Right-click a card, or long-press on a phone, to copy or delete it.
+- **A note names itself** from its first line, once the typing settles. Rename it yourself and it is
+  yours.
+- **Drop things in,** from the desktop or straight out of a browser window. Anything already in the
+  vault asks before it writes a second copy.
+- **Bookmarks arrive on their own,** with no browser extension: point it at your browser's bookmarks
+  file and keep bookmarking as you do. Each page is asked once for its own description and picture.
+- **Images are things you kept,** each with a note beside it for tags and thoughts. An image a note
+  embeds belongs to that note, and stays out of the way.
+- **Notes get cover art,** a gradient of their own drawn from the path, so the grid is not a wall of
+  words.
+- **Out of the way.** Standalone mode gives the whole window to the pane, and the window controls
+  hide until the pointer reaches the top.
 
 ## Installing
 
