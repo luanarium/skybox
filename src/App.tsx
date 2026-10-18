@@ -18,7 +18,7 @@ import { MailOverlay } from "./components/MailOverlay";
 import { Masonry } from "./components/Masonry";
 import { WallOverlay } from "./components/WallOverlay";
 import { clientFor } from "./sharing";
-import { narrowWall, wallItem, wallSourceOf } from "./wall";
+import { isKeptPost, narrowWall, wallItem, wallSourceOf } from "./wall";
 import { NoteOverlay } from "./components/NoteOverlay";
 import { Sheet } from "./components/Sheet";
 import { SearchBox } from "./components/SearchBox";
@@ -379,6 +379,11 @@ export function App() {
 		}
 		if (item.kind === "image") {
 			return <Lightbox item={item} onClose={close} onOpenPath={openPath} />;
+		}
+		// A post kept from the wall is still somebody else's words, so it is
+		// read as the post it was and not opened as markdown to edit.
+		if (isKeptPost(app.metadataCache.getFileCache(item.file)?.frontmatter)) {
+			return <WallOverlay item={item} onClose={close} />;
 		}
 		// A conversation is read as a conversation, not edited as a note.
 		if (app.metadataCache.getFileCache(item.file)?.frontmatter?.thread_id) {

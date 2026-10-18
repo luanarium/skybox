@@ -5,6 +5,7 @@ import {
 	wallItem,
 	wallSourceOf,
 	wallTag,
+	isKeptPost,
 	WALL_FOLLOWS,
 	WALL_PREFIX,
 } from "../src/wall";
@@ -104,3 +105,16 @@ assert.ok(!back.text.includes("https://example.social/@someone/9"), "nor is the 
 
 // A note that was never a post reads back as nothing rather than as a blank one.
 assert.strictEqual(postFromNote({ title: "an ordinary note" }, "words"), null);
+
+// A kept post is told from a note you shared yourself by the `wall` tag, since
+// both carry a status id.
+assert.strictEqual(isKeptPost({ mastodon_id: "12", tags: ["wall", "tea"] }), true);
+assert.strictEqual(isKeptPost({ mastodon_id: "12", tags: "#wall #tea" }), true, "tags may be a line");
+assert.strictEqual(
+	isKeptPost({ mastodon_id: "12", tags: ["bookmark"] }),
+	false,
+	"a note you shared is yours to edit"
+);
+assert.strictEqual(isKeptPost({ tags: ["wall"] }), false, "no status, no post");
+assert.strictEqual(isKeptPost(undefined), false);
+assert.strictEqual(isKeptPost({}), false);

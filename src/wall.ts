@@ -42,6 +42,25 @@ export function wallSourceOf(chips: Chip[]): WallSource | null {
 	return null;
 }
 
+/**
+ * The tag a kept post carries. A note you shared yourself also ends up with a
+ * `mastodon_id`, so the tag is what tells somebody else's post from your own:
+ * yours is a note to edit, theirs is a post to read.
+ */
+export const WALL_TAG = "wall";
+
+/** Whether this note is a post somebody else wrote, kept from a wall. */
+export function isKeptPost(front: Record<string, unknown> | undefined): boolean {
+	if (!front?.mastodon_id) return false;
+	const raw = front.tags;
+	const tags = Array.isArray(raw)
+		? raw.map(String)
+		: typeof raw === "string"
+			? raw.split(/[\s,]+/)
+			: [];
+	return tags.some((tag) => tag.replace(/^#/, "").toLowerCase() === WALL_TAG);
+}
+
 /** A kept post, read back from the note that kept it. */
 export function postFromNote(
 	front: Record<string, unknown>,

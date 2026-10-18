@@ -4,7 +4,7 @@ import { useSkybox } from "../context";
 import { ensureFolder, noteTitle, uniquePath } from "../ingest";
 import type { WallPost } from "../mastodon";
 import type { Item } from "../types";
-import { postFromNote } from "../wall";
+import { postFromNote, WALL_TAG } from "../wall";
 import { guarded } from "../writes";
 import { Post } from "./Post";
 
@@ -113,7 +113,7 @@ export function keptNote(post: WallPost): string {
 	];
 	if (post.accountId) lines.push(`mastodon_account: ${post.accountId}`);
 	if (post.media[0]) lines.push(`image: ${post.media[0]}`);
-	lines.push("tags:", "  - wall");
+	lines.push("tags:", `  - ${WALL_TAG}`);
 	for (const tag of post.tags) lines.push(`  - ${tag}`);
 	lines.push("---", "", post.text.trim(), "", `<${post.url}>`, "");
 	return lines.join("\n");
