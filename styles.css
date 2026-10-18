@@ -497,6 +497,15 @@ input[type="text"].skybox-search-input:active {
 	display: none;
 }
 
+/*
+ * Obsidian draws a note's properties above the text, and the pane draws them
+ * beside it. Two of the same thing, so the editor's copy stands down and the
+ * one on the right is the one you read and edit.
+ */
+.skybox-editor .metadata-container {
+	display: none;
+}
+
 /* The leaf whose view is borrowed is left empty: keep it out of sight. */
 .workspace-split.mod-right-split .workspace-tabs:not(:has(.workspace-leaf-content)) {
 	display: none;
@@ -676,6 +685,57 @@ body.skybox-standalone .skybox-settings:focus-visible {
 	font-size: var(--font-ui-smaller);
 	text-transform: uppercase;
 	letter-spacing: 0.08em;
+}
+
+/*
+ * Properties are drawn the way Obsidian draws them, on the variables its own
+ * panel uses: a muted label of fixed width, the value beside it, a row that
+ * lights up under the pointer. A theme that restyles properties restyles
+ * these with them.
+ */
+.skybox-meta-properties {
+	display: flex;
+	flex-direction: column;
+	gap: var(--metadata-gap, 3px);
+	margin: 0;
+}
+
+.skybox-meta-properties > div {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--size-4-1, 4px);
+	padding: var(--metadata-property-padding, 0);
+	border-radius: var(--metadata-property-radius, 6px);
+	background: var(--metadata-property-background, transparent);
+}
+
+.skybox-meta-properties > div:hover {
+	background: var(--metadata-property-background-active, var(--background-modifier-hover));
+}
+
+.skybox-meta-properties dt {
+	flex: 0 0 auto;
+	width: 7em;
+	min-width: 7em;
+	padding: var(--metadata-input-padding, 4px 8px);
+	color: var(--metadata-label-text-color, var(--text-muted));
+	font-family: var(--metadata-label-font, var(--font-interface));
+	font-size: var(--metadata-label-font-size, var(--font-smaller));
+	font-weight: var(--metadata-label-font-weight, inherit);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.skybox-meta-properties dd {
+	flex: 1 1 auto;
+	min-width: 0;
+	margin: 0;
+	padding: var(--metadata-input-padding, 4px 8px);
+	color: var(--metadata-input-text-color, var(--text-normal));
+	font-family: var(--metadata-input-font, var(--font-interface));
+	font-size: var(--metadata-input-font-size, var(--font-smaller));
+	overflow-wrap: anywhere;
 }
 
 .skybox-meta-none {
