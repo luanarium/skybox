@@ -1,6 +1,6 @@
 {
   "name": "skybox",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "A masonry search pane over your Obsidian vault.",
   "main": "main.js",
   "scripts": {
