@@ -31,3 +31,35 @@ assert.strictEqual(withArticle(filled, { markdown: "Something else", words: 2 })
 const annotated = `${note}\nMy own thoughts on this.\n`;
 const both = withArticle(annotated, article);
 assert.ok(both.indexOf("My own thoughts") < both.indexOf(ARTICLE_HEADING), both);
+
+// A card's excerpt stops at the article and never shows markup: the page's
+// own description is what should be read at a glance.
+import { plainExcerpt } from "../src/search";
+
+const bookmark = `---
+title: A page
+source: https://example.com/a
+---
+
+# A page
+
+<https://example.com/a>
+
+The description the page gave for itself.
+
+${ARTICLE_HEADING}
+
+## A heading in the article
+
+The article itself, which is for searching rather than for the card.
+`;
+
+const excerpt = plainExcerpt(bookmark);
+assert.strictEqual(excerpt, "A page The description the page gave for itself.", excerpt);
+assert.ok(!excerpt.includes("https://"), excerpt);
+assert.ok(!excerpt.includes("article itself"), excerpt);
+
+// And an article that came in as HTML before this was fixed still reads as
+// words rather than as tags.
+const htmlish = plainExcerpt("Before.\n\n<div class=\"x\"><img src=\"a.png\"><p>After.</p></div>");
+assert.strictEqual(htmlish, "Before. After.", htmlish);

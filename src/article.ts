@@ -32,7 +32,11 @@ export async function extractArticle(html: string, url: string): Promise<Article
 	try {
 		// Loaded on the first article rather than at startup: a vault that
 		// never imports a bookmark never runs any of it.
-		const { default: Defuddle } = await import("defuddle");
+		// The slim entry point carries no Markdown converter, so `markdown`
+		// there is quietly a no-op and the article arrives as HTML. The full
+		// build is the one that can write Markdown, which is the whole point
+		// of keeping the page in a note.
+		const { default: Defuddle } = await import("defuddle/full");
 		const doc = new DOMParser().parseFromString(html, "text/html");
 		const result = new Defuddle(doc, { url, markdown: true }).parse() as DefuddleResponse;
 		const markdown = (result.contentMarkdown ?? result.content ?? "").trim();

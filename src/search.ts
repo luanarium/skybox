@@ -1,5 +1,6 @@
 import { prepareSimpleSearch } from "obsidian";
 import type { VaultIndex } from "./index";
+import { ARTICLE_HEADING } from "./article";
 import type { Item } from "./types";
 
 export interface Chip {
@@ -95,7 +96,17 @@ export function plainExcerpt(content: string, limit = 240): string {
 		const end = text.indexOf("\n---", 3);
 		if (end !== -1) text = text.slice(end + 4);
 	}
+	// A bookmark keeps the whole page under a heading of its own. That is for
+	// searching, not for reading at a glance: a card shows what the note says
+	// above it, which is the page's own description.
+	const article = text.indexOf(ARTICLE_HEADING);
+	if (article !== -1) text = text.slice(0, article);
 	text = text
+		// A bare link on its own line is the bookmark's own URL, which the
+		// title already says.
+		.replace(/^\s*<https?:\/\/[^>]*>\s*$/gm, " ")
+		// Anything that came in as HTML rather than markdown.
+		.replace(/<[^>]+>/g, " ")
 		.replace(/```[\s\S]*?```/g, " ")
 		.replace(/!\[\[[^\]]*\]\]/g, " ")
 		.replace(/\[\[([^\]|]*\|)?([^\]]*)\]\]/g, "$2")

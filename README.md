@@ -212,10 +212,14 @@ Web Clipper uses, so a bookmark gets the same reading a clip would have had. Ext
 part of saving a web page, telling the article from the newsletter box and the cookie notice, and
 doing it badly is worse than not doing it at all.
 
-That is the one dependency this project has taken on beyond React. It doubles the plugin to about
-0.6 MB, which is still less than Kanban asks of the same phone. It is pinned to an exact version,
-reached from `src/article.ts` alone, loaded on first use rather than at startup, and never reached
-on a phone, where the fetch that feeds it does not run.
+That is the one dependency this project has taken on beyond React, and it is the full build of it,
+because the slim entry point carries no Markdown converter and quietly returns HTML instead. The
+plugin is about 1 MB because of that, the same ballpark as Tasks and well under Dataview. It is
+pinned to an exact version, reached from `src/article.ts` alone, loaded on first use rather than at
+startup, and never reached on a phone, where the fetch that feeds it does not run.
+
+A card never shows the article. The excerpt stops at the `## Page text` heading and reads what the
+note says above it, which is the page's own description; the text below is for searching.
 
 ### Where this is going
 
