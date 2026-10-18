@@ -166,9 +166,16 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 	 * button that says how much is waiting.
 	 */
 	const [sheeted, setSheeted] = useState(false);
-	// Back closes the thread rather than the card it is drawn over.
+	const [typingHere, setTypingHere] = useState(false);
+	/*
+	 * Back closes the thread rather than the card it is drawn over, which
+	 * takes a modal standing in Obsidian's stack of closeable things. A modal
+	 * keeps focus to itself, though, so while the reply box has the cursor
+	 * the stand-in steps aside: Android's own first back closes the keyboard,
+	 * and the one after that closes the thread.
+	 */
 	const closeSheet = useCallback(() => setSheeted(false), []);
-	useBack(app, sheeted, closeSheet);
+	useBack(app, sheeted && !typingHere, closeSheet);
 	const waiting = statusId ? unreadTotal(interactions.unreadFor(statusId)) : 0;
 	/*
 	 * A shared card opens on its conversation, because that is the part that
@@ -197,7 +204,11 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 				 * puts a keyboard into a stack of modals, which ends with an
 				 * empty sheet and nothing to type into.
 				 */
-				<div className="skybox-thread-panel">
+				<div
+					className="skybox-thread-panel"
+					onFocusCapture={() => setTypingHere(true)}
+					onBlurCapture={() => setTypingHere(false)}
+				>
 					<div className="skybox-thread-panel-head">
 						<button
 							className="skybox-back-arrow"
