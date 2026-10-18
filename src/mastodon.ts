@@ -75,6 +75,12 @@ export function threadTree(replies: MastodonReply[], rootId: string): ThreadNode
 		if (parent && parent !== node) parent.children.push(node);
 		else roots.push(node);
 	}
+	/*
+	 * Newest first at the top, where the question is what has been said
+	 * lately. Inside a branch the order stays as it happened, because an
+	 * exchange only makes sense read forwards.
+	 */
+	roots.sort((a, b) => Date.parse(b.reply.at) - Date.parse(a.reply.at));
 	return roots;
 }
 

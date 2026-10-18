@@ -62,7 +62,7 @@ assert.ok(!hasShareTag(["share"], ""));
 
 // A thread is a tree: each reply says what it answers, and the client puts
 // them back together.
-const reply = (id: string, inReplyTo: string | null): MastodonReply => ({
+const reply = (id: string, inReplyTo: string | null, at = ""): MastodonReply => ({
 	id,
 	accountId: "me",
 	author: id,
@@ -70,7 +70,7 @@ const reply = (id: string, inReplyTo: string | null): MastodonReply => ({
 	avatar: "",
 	text: id,
 	url: "",
-	at: "",
+	at,
 	favouritesCount: 0,
 	inReplyTo,
 });
@@ -98,3 +98,24 @@ assert.deepStrictEqual(looped.map((node) => node.reply.id), ["y"]);
 assert.strictEqual(looped[0].children.length, 0);
 
 assert.deepStrictEqual(threadTree([], "root"), []);
+
+// The top of a thread reads newest first; a branch reads forwards.
+const ordered = threadTree(
+	[
+		reply("old", "root", "2026-10-01T10:00:00Z"),
+		reply("new", "root", "2026-10-05T10:00:00Z"),
+		reply("answer", "old", "2026-10-02T10:00:00Z"),
+		reply("later", "old", "2026-10-03T10:00:00Z"),
+	],
+	"root"
+);
+assert.deepStrictEqual(
+	ordered.map((node) => node.reply.id),
+	["new", "old"],
+	"the newest reply to the post is at the top"
+);
+assert.deepStrictEqual(
+	ordered[1].children.map((node) => node.reply.id),
+	["answer", "later"],
+	"inside a branch the order is as it happened"
+);
