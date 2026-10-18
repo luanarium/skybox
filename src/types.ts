@@ -89,6 +89,9 @@ export const DEFAULT_SETTINGS: SkyboxSettings = {
 /** The tag an image gets for being embedded in a note; nothing writes it. */
 export const EMBEDDED_TAG = "embedded";
 
+/** The tag a shared card wears while something is waiting; nothing writes it. */
+export const UNREAD_TAG = "comments";
+
 export const VIEW_TYPE_SKYBOX = "skybox-search-view";
 
 /**

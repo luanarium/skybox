@@ -3,6 +3,7 @@ import { isBorrowing } from "./borrowed";
 import { Autonamer } from "./autoname";
 import { BookmarkImport } from "./bookmarks";
 import { Bus } from "./bus";
+import { Interactions } from "./interactions";
 import { Sharing } from "./sharing";
 import { VaultIndex } from "./index";
 import { SkyboxSettingTab } from "./settings";
@@ -15,6 +16,9 @@ import { hasWindowHandle, startWindowDrag, toggleMaximize } from "./window";
 /** How often a window left open looks at the bookmarks file. */
 const BOOKMARK_INTERVAL = 5 * 60 * 1000;
 
+/** How often a window left open asks what has happened to a shared card. */
+const UNREAD_INTERVAL = 4 * 60 * 1000;
+
 export default class SkyboxPlugin extends Plugin {
 	settings: SkyboxSettings = { ...DEFAULT_SETTINGS };
 	index!: VaultIndex;
@@ -23,11 +27,13 @@ export default class SkyboxPlugin extends Plugin {
 	private autoname!: Autonamer;
 	bookmarks!: BookmarkImport;
 	private sharing!: Sharing;
+	interactions!: Interactions;
 	private backEl: HTMLElement | null = null;
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
-		this.index = new VaultIndex(this.app, this.settings);
+		this.interactions = new Interactions(this.app, this.settings);
+		this.index = new VaultIndex(this.app, this.settings, this.interactions);
 		this.autoname = new Autonamer(this.app, this.settings);
 		this.bookmarks = new BookmarkImport(this.app, this.settings);
 		this.sharing = new Sharing(this.app, this.index, this.settings);
@@ -58,6 +64,20 @@ export default class SkyboxPlugin extends Plugin {
 			this.index.build();
 			// What already carries the sharing tag is remembered, not posted.
 			this.sharing.prime();
+
+			/*
+			 * What has happened to the cards that were shared. One request
+			 * covers every one of them, so this looks when the plugin loads,
+			 * when the window comes forward, and on a slow timer; a card with
+			 * something waiting wears the unread tag until it is read.
+			 */
+			const look = () => void this.interactions.look(this.sharedStatusIds());
+			look();
+			this.registerDomEvent(window, "focus", look);
+			this.registerInterval(window.setInterval(look, UNREAD_INTERVAL));
+			this.register(
+				this.interactions.subscribe((changed) => this.reindexShared(new Set(changed)))
+			);
 			// Registered here: the vault fires create for every file at load.
 			this.registerEvent(
 				this.app.vault.on("create", (file) => {
@@ -280,6 +300,24 @@ export default class SkyboxPlugin extends Plugin {
 	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
 		this.redraw();
+	}
+
+	/** The posts this vault's cards stand for, for one look to cover them all. */
+	private sharedStatusIds(): Set<string> {
+		const ids = new Set<string>();
+		for (const file of this.app.vault.getMarkdownFiles()) {
+			const id = this.app.metadataCache.getFileCache(file)?.frontmatter?.mastodon_id;
+			if (id) ids.add(String(id));
+		}
+		return ids;
+	}
+
+	/** Only the cards whose unread count moved are built again. */
+	private reindexShared(statusIds: Set<string>): void {
+		for (const file of this.app.vault.getMarkdownFiles()) {
+			const id = this.app.metadataCache.getFileCache(file)?.frontmatter?.mastodon_id;
+			if (id && statusIds.has(String(id))) this.index.ensure(file);
+		}
 	}
 
 	private redraw(): void {

@@ -51,6 +51,7 @@ export class SkyboxView extends ItemView {
 						settings: this.plugin.settings,
 						leaf: this.leaf,
 						bus: this.plugin.bus,
+						interactions: this.plugin.interactions,
 						saveSettings: () => this.plugin.saveSettings(),
 						setStandalone: async (on: boolean) => {
 							this.plugin.settings.standalone = on;

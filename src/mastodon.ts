@@ -154,6 +154,34 @@ export function htmlToText(html: string): string {
 		.trim();
 }
 
+/** One thing that happened to a post: a reply, a favourite, a boost. */
+export interface MastodonNotice {
+	id: string;
+	kind: "mention" | "favourite" | "reblog";
+	statusId: string;
+	inReplyTo: string | null;
+}
+
+/** What a card has waiting, counted by kind. */
+export interface Unread {
+	replies: number;
+	favourites: number;
+	boosts: number;
+}
+
+export const NOTHING_UNREAD: Unread = { replies: 0, favourites: 0, boosts: 0 };
+
+export function unreadTotal(unread: Unread): number {
+	return unread.replies + unread.favourites + unread.boosts;
+}
+
+/** Adds what has just come in to what a card was already holding. */
+export function foldNotice(unread: Unread, kind: MastodonNotice["kind"]): Unread {
+	if (kind === "mention") return { ...unread, replies: unread.replies + 1 };
+	if (kind === "favourite") return { ...unread, favourites: unread.favourites + 1 };
+	return { ...unread, boosts: unread.boosts + 1 };
+}
+
 export class MastodonError extends Error {}
 
 export class Mastodon {
@@ -229,6 +257,39 @@ export class Mastodon {
 			},
 		})) as Record<string, unknown>;
 		return readStatus(status);
+	}
+
+	/**
+	 * What has come in since last time: replies, favourites and boosts in one
+	 * call. Each carries the status it concerns, which is how a card is found
+	 * again at the other end.
+	 */
+	async notifications(since: string): Promise<MastodonNotice[]> {
+		const query = new URLSearchParams({ limit: "40" });
+		if (since) query.set("since_id", since);
+		for (const type of ["mention", "favourite", "reblog"]) query.append("types[]", type);
+		const raw = (await this.call(`/api/v1/notifications?${query.toString()}`)) as Record<
+			string,
+			unknown
+		>[];
+		return raw.map((notice) => {
+			const status = (notice.status ?? {}) as Record<string, unknown>;
+			return {
+				id: String(notice.id ?? ""),
+				kind: String(notice.type ?? "") as MastodonNotice["kind"],
+				statusId: status.id ? String(status.id) : "",
+				/** For a reply, what it answers: the way back to the card. */
+				inReplyTo: status.in_reply_to_id ? String(status.in_reply_to_id) : null,
+			};
+		});
+	}
+
+	/** The posts above one, oldest first, for finding which card it belongs to. */
+	async ancestors(id: string): Promise<string[]> {
+		const context = (await this.call(`/api/v1/statuses/${id}/context`)) as {
+			ancestors?: Record<string, unknown>[];
+		};
+		return (context.ancestors ?? []).map((status) => String(status.id ?? ""));
 	}
 
 	/** What has been said under a post, oldest first. */

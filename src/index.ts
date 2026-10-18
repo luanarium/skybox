@@ -1,8 +1,9 @@
 import { isIgnored, parseIgnored } from "./ignore";
 import { coverTarget, webImage } from "./preview";
-import { type App, type TAbstractFile, TFile, getAllTags } from "obsidian";
+import { type App, type CachedMetadata, type TAbstractFile, TFile, getAllTags } from "obsidian";
 import {
 	EMBEDDED_TAG,
+	UNREAD_TAG,
 	type Item,
 	type SkyboxSettings,
 	isImageExtension,
@@ -27,7 +28,9 @@ export class VaultIndex {
 
 	constructor(
 		private app: App,
-		private settings: SkyboxSettings
+		private settings: SkyboxSettings,
+		/** What has happened to the cards that were shared, and what is unread. */
+		private interactions?: { hasUnread(statusId: string): boolean }
 	) {}
 
 	build(): void {
@@ -217,7 +220,7 @@ export class VaultIndex {
 			sidecar: null,
 			title: this.titleOf(file, cache?.frontmatter?.title),
 			mtime: file.stat.mtime,
-			tags: tagNames(cache ? getAllTags(cache) : null),
+			tags: this.noteTags(cache),
 			headings: (cache?.headings ?? []).map((h) => h.heading),
 			excerpt: "",
 			embedded: false,
@@ -266,6 +269,20 @@ export class VaultIndex {
 		if (!first) return null;
 		const embedded = this.app.vault.getAbstractFileByPath(first);
 		return embedded instanceof TFile ? this.app.vault.getResourcePath(embedded) : null;
+	}
+
+	/**
+	 * A note's own tags, plus the one a shared card wears while something is
+	 * waiting on it. Nothing writes that tag: reading is per device, and a
+	 * note is not the place to keep it.
+	 */
+	private noteTags(cache: CachedMetadata | null): string[] {
+		const tags = tagNames(cache ? getAllTags(cache) : null);
+		const statusId = cache?.frontmatter?.mastodon_id;
+		if (statusId && this.interactions?.hasUnread(String(statusId)) && !tags.includes(UNREAD_TAG)) {
+			tags.push(UNREAD_TAG);
+		}
+		return tags;
 	}
 
 	private titleOf(file: TFile, fromFrontmatter: unknown): string {

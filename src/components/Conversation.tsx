@@ -29,7 +29,7 @@ interface Answering {
 }
 
 export function Conversation({ note, statusId }: { note: TFile; statusId: string }) {
-	const { app, settings } = useSkybox();
+	const { app, settings, interactions } = useSkybox();
 	const [status, setStatus] = useState<MastodonStatus | null>(null);
 	const [replies, setReplies] = useState<MastodonReply[]>([]);
 	const [state, setState] = useState<"loading" | "ready" | "failed">("loading");
@@ -55,6 +55,8 @@ export function Conversation({ note, statusId }: { note: TFile; statusId: string
 			setStatus(found);
 			setReplies(thread);
 			setState("ready");
+			// Looking at it is reading it: the tag falls away from the card.
+			interactions?.markSeen(statusId);
 		} catch (error) {
 			setState("failed");
 			setTrouble(error instanceof Error ? error.message : String(error));

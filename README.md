@@ -87,6 +87,7 @@ releases on startup, so a new version arrives on its own.
 | `src/preview.ts` | Which picture a card shows, and the `cover` property |
 | `src/mastodon.ts` | The Mastodon client, and what can be worked out without one |
 | `src/sharing.ts` | Posting a card when it is tagged, and deleting when it is not |
+| `src/interactions.ts` | What has happened to a shared card, and what is unread |
 | `src/components/Conversation.tsx` | The thread beside a shared card, and replying to it |
 | `src/autoname.ts` | Naming a new note after its first line |
 | `src/ignore.ts` | Folders the index leaves alone |
@@ -294,6 +295,23 @@ post nobody saw.
 
 The post's id and address are written into the note's frontmatter as `mastodon_id` and
 `mastodon_url`, which is what ties the two together through a rename.
+
+### What is waiting: `#comments`
+
+A card with replies, favourites or boosts you have not seen wears a `#comments` tag, so typing that
+in the search box brings up everything waiting on you, the way any other chip does. Nothing writes
+the tag. It is derived, the same way `#embedded` is, and for a better reason: reading is something a
+person does on a device, and a tag written into a note would churn the file and tell your other
+devices you had read something they never showed you.
+
+One request covers every shared card, since `/api/v1/notifications` returns replies, favourites and
+boosts together. It is made when the plugin loads, when the window comes forward, and every four
+minutes a window is left open. A favourite or a boost names the card's own post; a reply names
+itself, so an unfamiliar one costs a second request to find which card it sits under, and the answer
+is remembered. What is unread, and how far the last look got, live in the vault's local storage
+beside the token, so none of it syncs or reaches the vault.
+
+Opening a card's conversation is what marks it read, and the tag falls away.
 
 ### The conversation, beside the note
 
