@@ -19,12 +19,12 @@ way of looking at them.
   vault asks before it writes a second copy.
 - **Bookmarks arrive on their own,** with no browser extension: point it at your browser's bookmarks
   file and keep bookmarking as you do. Each page is asked once for its own description and picture.
-- **Images are things you kept,** each with a note beside it for tags and thoughts. An image a note
-  embeds belongs to that note, and stays out of the way.
+- **Images are notes too,** each with a sidecar beside it holding its tags and thoughts. An image a
+  note embeds belongs to that note, and stays out of the way.
 - **Notes get cover art,** a gradient of their own drawn from the path, so the grid is not a wall of
   words.
-- **Out of the way.** Standalone mode gives the whole window to the pane, and the window controls
-  hide until the pointer reaches the top.
+- **Immersive.** Standalone mode gives the whole window to the pane, and the window controls hide
+  until the pointer reaches the top.
 
 ## Installing
 
