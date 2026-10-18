@@ -19,9 +19,21 @@ export function useBack(app: App, active: boolean, onBack: () => void): void {
 		if (!active || !Platform.isMobile) return;
 		let ours = false;
 		const catcher = new Modal(app);
-		// Nothing to see, nothing to type in, nothing to take the keyboard.
-		(catcher as Modal & { hasInitialInputFocus: boolean }).hasInitialInputFocus = false;
-		(catcher as Modal & { shouldAnimate: boolean }).shouldAnimate = false;
+		/*
+		 * Nothing to see, nothing to type in, nothing to take the keyboard.
+		 * A modal takes focus when it opens and gives it back to wherever it
+		 * was when it closes, and this one is standing in a stack rather than
+		 * being looked at: both would pull the cursor out of the box the
+		 * person is typing into, which is the whole thing this must not do.
+		 */
+		const flags = catcher as Modal & {
+			hasInitialInputFocus: boolean;
+			shouldRestoreSelection: boolean;
+			shouldAnimate: boolean;
+		};
+		flags.hasInitialInputFocus = false;
+		flags.shouldRestoreSelection = false;
+		flags.shouldAnimate = false;
 		catcher.containerEl.addClass("skybox-back-catcher");
 		catcher.onClose = () => {
 			if (!ours) onBack();
