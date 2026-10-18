@@ -3,7 +3,7 @@
 	"name": "Skybox",
 	"version": "0.1.2",
 	"minAppVersion": "1.6.6",
-	"description": "A masonry search pane over your vault: chips, cards, and a lightbox.",
+	"description": "Your vault as a searchable wall of cards, browser bookmarks included.",
 	"author": "luanarium",
 	"authorUrl": "https://github.com/luanarium",
 	"isDesktopOnly": false
