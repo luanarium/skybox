@@ -754,27 +754,44 @@ A file deleted on one side and edited on the other is not a deletion to carry. T
 the place it was made, and it is reported in the same breath as a file changed on both sides.
 Deleting something again is easy; recovering writing nobody kept is not.
 
+### Two edits to one note
+
+Two devices editing the same note are usually editing different parts of it, and those go back
+together. The baseline is a copy of what both sides last agreed on, not just its hash, so an edit at
+the top and an edit at the bottom are plainly independent and the merge is a fact rather than a
+guess. A tag added on the phone and a paragraph written on the computer end up in the same note, on
+both devices.
+
+It is a line merge, which is the granularity Markdown is written in. Two people writing in different
+paragraphs merge. Two people typing into the same line do not, and nothing pretends otherwise.
+
+When there is no merging the two, nothing is lost and nothing is chosen for you. Your version stays
+where it is, the hub's version is written beside it as `<name> (from <vault>).md`, and that copy
+carries `collision_of` pointing at the original and the tag `collision`. Searching **#collision** is
+then the whole of finding every one of them. Reconciling is reading two cards and deleting one, or
+keeping both and renaming them, which is work for a person and not for software.
+
+Both devices end up holding both versions, so neither of them has quietly lost an argument.
+
+Merging is only attempted on Markdown that decodes as UTF-8 and is under a megabyte, with a ceiling
+on how much text it will diff unasked. Anything else is left alone and counted.
+
 ### What it will and will not do, for now
 
 It takes a file this device does not have. It sends a file the hub does not have. It replaces either
-side's copy when only the other side changed it. It asks before it deletes anything. It does nothing
-at all to a file that has changed on both sides, and says how many of those there were.
+side's copy when only the other side changed it. It merges two edits that do not overlap, and splits
+two that do into two files you can find with one chip. It asks before it deletes anything.
 
-That last line is why the agreed hashes exist. After each sync, every file the two sides hold
+Baselines are why any of that is safe. After each sync, every file the two sides hold
 identically is recorded as a baseline, kept beside the plugin in `.obsidian/plugins/skybox/` rather
 than in the vault, because it describes this device's own state and must never arrive from somewhere
 else. A local file equal to its baseline is one nobody here has edited, so the hub's newer copy can
 replace it safely. A local file that differs from its baseline is somebody's work, and it is left
-alone.
+alone. The copy of its text is what the merge reads, and a baseline nothing refers to any more is
+thrown away.
 
-Deletions are not carried in either direction yet, deliberately. A file deleted here that the hub
-still has is not fetched again, and a file the hub has dropped is not deleted here. Propagating a
-deletion wrongly is the only thing in this design that can lose a note nothing else can bring back,
-so it comes last.
-
-What comes next, in order: baselines kept as content rather than hashes, so edits on both sides can
-be merged line by line the way git does; divergent copies written side by side with a `#collision`
-chip to find them by; address discovery on the local network behind a toggle; and then deletions.
+What is left: finding the hub's address on the local network instead of typing it, behind a toggle
+and signed with the same phrase.
 
 ### Reaching it by hand
 

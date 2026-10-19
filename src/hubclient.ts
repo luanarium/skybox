@@ -1,6 +1,7 @@
 import { Notice, TFile, normalizePath, requestUrl, type App, type Plugin } from "obsidian";
 import type { VaultIndex } from "./index";
 import { readPhrase } from "./hub";
+import { merge3 } from "./merge";
 import { review } from "./review";
 import {
 	HUB_BASE_HEADER,
@@ -18,7 +19,7 @@ import {
 	type PullPlan,
 	type SyncTally,
 } from "./sync";
-import type { SkyboxSettings } from "./types";
+import { COLLISION_TAG, type SkyboxSettings } from "./types";
 import { guarded } from "./writes";
 
 /**
@@ -42,6 +43,11 @@ export class HubPull {
 	private loaded = false;
 	private running = false;
 	private reviewing = false;
+	/**
+	 * The text of the notes read while hashing, kept for the length of one
+	 * sync so a merge does not read the whole vault again.
+	 */
+	private text = new Map<string, string>();
 
 	constructor(
 		private app: App,
@@ -79,10 +85,11 @@ export class HubPull {
 			const local = await this.localHashes(folders, offered.map((entry) => entry.path));
 			const plan = pullPlan(local, offered, agreed);
 
-			const tally: SyncTally = { taken: 0, sent: 0, asked: 0, trouble: 0 };
+			const tally: SyncTally = { taken: 0, sent: 0, asked: 0, merged: 0, split: 0, trouble: 0 };
 			await this.take(address, key, plan, agreed, tally);
 			await this.send(address, key, plan, agreed, tally);
 			await this.sendGone(address, key, plan, agreed, tally);
+			await this.reconcile(address, key, manifest.vault, plan, agreed, tally);
 
 			// Everything the two sides now hold identically is a baseline for
 			// next time, which is what tells somebody's edit from a stale copy.
@@ -94,11 +101,19 @@ export class HubPull {
 			for (const path of plan.forget) agreed.delete(path);
 			this.agreed[manifest.vault] = Object.fromEntries(agreed);
 			await this.save();
+			await this.keepBases(agreed);
 
 			// Asking is a window, which outlives the sync that opened it.
 			if (plan.gone.length > 0) void this.reviewGone(manifest.vault, plan.gone);
 
-			if (aloud || tally.taken > 0 || tally.sent > 0 || tally.trouble > 0) {
+			if (
+				aloud ||
+				tally.taken > 0 ||
+				tally.sent > 0 ||
+				tally.merged > 0 ||
+				tally.split > 0 ||
+				tally.trouble > 0
+			) {
 				new Notice(`Skybox: ${syncSentence(plan, tally)}`);
 			}
 		} catch (error) {
@@ -111,6 +126,7 @@ export class HubPull {
 				);
 			}
 		} finally {
+			this.text.clear();
 			this.running = false;
 		}
 	}
@@ -392,11 +408,266 @@ export class HubPull {
 			if (!wanted.has(file.path) && !withinServed(file.path, folders)) continue;
 			const bytes = await this.app.vault.readBinary(file);
 			hashes.set(file.path, hex(await crypto.subtle.digest("SHA-256", bytes)));
+			// Kept in passing: a merge needs the text, and reading it here
+			// costs nothing because the bytes are already in hand.
+			const said = mergeable(file.path, bytes);
+			if (said !== null) this.text.set(file.path, said);
 		}
 		return hashes;
 	}
 
+	/**
+	 * Files both sides have moved on from, which is the one case a sync has
+	 * to think about.
+	 *
+	 * Two edits to the same note are usually two edits to different parts of
+	 * it, and those go back together: the baseline says what both sides
+	 * started from, so an edit at the top and an edit at the bottom are
+	 * plainly independent. Where the same lines were typed into twice there
+	 * is no answer, and inventing one would be the one mistake this cannot
+	 * take back, so both versions are kept as two files and the finding of
+	 * them is made easy instead.
+	 */
+	private async reconcile(
+		address: string,
+		key: string,
+		vault: string,
+		plan: PullPlan,
+		agreed: Map<string, string>,
+		tally: SyncTally
+	): Promise<void> {
+		for (const clash of plan.collided) {
+			// A deletion against an edit is not a merge: the edit survives
+			// where it was made, which the plan has already decided.
+			if (!clash.base || !clash.mine || !clash.theirs) continue;
+			const file = this.app.vault.getAbstractFileByPath(clash.path);
+			if (!(file instanceof TFile)) continue;
+
+			const mine = this.text.get(clash.path);
+			const base = await this.baseText(clash.base);
+			if (mine === undefined || base === null) continue;
+
+			const bytes = await this.fetch(address, key, clash.path, clash.theirs);
+			if (!bytes) {
+				tally.trouble++;
+				continue;
+			}
+			const theirs = mergeable(clash.path, bytes);
+			if (theirs === null) continue;
+
+			const merged = merge3(base, mine, theirs);
+			if (merged.ok) {
+				// Both devices end up with the same text, and the hub is
+				// handed it under the hash it still holds, so it can refuse
+				// if something arrived there in the meantime.
+				const text = merged.text;
+				const kept = await this.push(address, key, clash.path, bytes2(text), clash.theirs);
+				if (!kept) {
+					tally.trouble++;
+					continue;
+				}
+				// Typed into since it was read? Then that is newer than the
+				// merge, it stands, and the next sync carries it up.
+				await guarded(() =>
+					this.app.vault.process(file, (current) => (current === mine ? text : current))
+				);
+				this.index.ensure(file);
+				agreed.set(clash.path, await hashOf(text));
+				tally.merged++;
+				continue;
+			}
+
+			// No merge, so nothing is lost instead: their copy is written
+			// beside ours, tagged so that one chip finds every one of them.
+			const copy = await this.diverge(clash.path, vault, theirs);
+			if (!copy) {
+				tally.trouble++;
+				continue;
+			}
+			// Ours stays where it is, and the hub is given it, so both
+			// devices hold both versions and neither has lost an argument.
+			const ours = await this.push(
+				address,
+				key,
+				clash.path,
+				await this.app.vault.readBinary(file),
+				clash.theirs
+			);
+			if (!ours) {
+				/*
+				 * The hub's copy moved on between reading the manifest and
+				 * now, so this was not the collision it looked like. The copy
+				 * just written goes again rather than being left to pile up
+				 * another one on the next attempt: it is seconds old, nobody
+				 * has seen it, and the version it holds is still on the hub.
+				 */
+				await guarded(() => this.app.vault.delete(copy));
+				tally.trouble++;
+				continue;
+			}
+			agreed.set(clash.path, clash.mine);
+			tally.split++;
+			new Notice(
+				`Skybox: ${name(clash.path)} was edited on both devices. Both versions are ` +
+					`here, and #${COLLISION_TAG} finds the other one.`,
+				15000
+			);
+		}
+	}
+
+	/**
+	 * Their version, written beside ours rather than over it.
+	 *
+	 * It carries the path it came from and the collision tag, so the chip
+	 * finds it and the card says what it belongs to. Reconciling is then
+	 * reading two cards and deleting one, which is a thing a person can do
+	 * and a thing software should not do on its own.
+	 */
+	private async diverge(path: string, vault: string, theirs: string): Promise<TFile | null> {
+		const dot = path.lastIndexOf(".");
+		const stem = dot > path.lastIndexOf("/") ? path.slice(0, dot) : path;
+		const extension = dot > path.lastIndexOf("/") ? path.slice(dot) : "";
+		let taken = `${stem} (from ${vault})${extension}`;
+		for (let at = 2; this.app.vault.getAbstractFileByPath(taken); at++) {
+			taken = `${stem} (from ${vault} ${at})${extension}`;
+		}
+		try {
+			let made: TFile | null = null;
+			await guarded(async () => {
+				made = await this.app.vault.create(taken, theirs);
+				this.index.ensure(made);
+			});
+			if (!made) return null;
+			await guarded(() =>
+				this.app.fileManager.processFrontMatter(made as TFile, (front) => {
+					front.collision_of = path;
+					const tags = Array.isArray(front.tags)
+						? front.tags.map(String)
+						: typeof front.tags === "string"
+							? front.tags.split(/\s+/).filter(Boolean)
+							: [];
+					if (!tags.includes(COLLISION_TAG)) tags.push(COLLISION_TAG);
+					front.tags = tags;
+				})
+			);
+			this.index.ensure(made);
+			return made;
+		} catch (error) {
+			console.error("Skybox: could not keep the other version of", path, error);
+			return null;
+		}
+	}
+
+	/** One file from the hub, checked against the hash it was offered under. */
+	private async fetch(
+		address: string,
+		key: string,
+		path: string,
+		hash: string
+	): Promise<ArrayBuffer | null> {
+		try {
+			const url = `${hubUrl(address, this.settings.hubPort, "/file")}?path=${encodeURIComponent(path)}`;
+			const answer = await requestUrl({
+				url,
+				method: "GET",
+				headers: { [HUB_KEY_HEADER]: key },
+				throw: false,
+			});
+			if (answer.status !== 200) return null;
+			const bytes = answer.arrayBuffer;
+			if (hex(await crypto.subtle.digest("SHA-256", bytes)) !== hash) return null;
+			return bytes;
+		} catch (error) {
+			console.error("Skybox: could not read", path, "from the hub", error);
+			return null;
+		}
+	}
+
+	/** One file to the hub, under the hash it is expected to be holding. */
+	private async push(
+		address: string,
+		key: string,
+		path: string,
+		bytes: ArrayBuffer,
+		base: string
+	): Promise<boolean> {
+		try {
+			const url = `${hubUrl(address, this.settings.hubPort, "/file")}?path=${encodeURIComponent(path)}`;
+			const answer = await requestUrl({
+				url,
+				method: "PUT",
+				headers: {
+					[HUB_KEY_HEADER]: key,
+					[HUB_BASE_HEADER]: base,
+					"content-type": "application/octet-stream",
+				},
+				body: bytes,
+				throw: false,
+			});
+			return answer.status === 200;
+		} catch (error) {
+			console.error("Skybox: could not hand", path, "to the hub", error);
+			return false;
+		}
+	}
+
 	/*
+	 * The content baselines: a copy of what both sides last agreed on, which
+	 * is what a merge needs and a hash cannot give. They are kept beside the
+	 * plugin, named by their own hash, so the hashes already in `agreed` say
+	 * which file to read and two notes that happen to match cost one copy.
+	 */
+	private baseDir(): string {
+		const dir = this.plugin.manifest.dir ?? `${this.app.vault.configDir}/plugins/skybox`;
+		return normalizePath(`${dir}/hub-base`);
+	}
+
+	private async baseText(hash: string): Promise<string | null> {
+		try {
+			const path = `${this.baseDir()}/${hash}`;
+			if (!(await this.app.vault.adapter.exists(path))) return null;
+			return await this.app.vault.adapter.read(path);
+		} catch (error) {
+			console.error("Skybox: could not read what both sides started from", error);
+			return null;
+		}
+	}
+
+	/**
+	 * Keeping a copy of every agreed note, and throwing away the copies
+	 * nothing agrees on any more. Only text, and only what the merge could
+	 * use: a baseline for an image would be bytes nobody will ever diff.
+	 */
+	private async keepBases(agreed: Map<string, string>): Promise<void> {
+		try {
+			const dir = this.baseDir();
+			if (!(await this.app.vault.adapter.exists(dir))) await this.app.vault.adapter.mkdir(dir);
+
+			const wanted = new Set<string>();
+			for (const [path, hash] of agreed) {
+				const said = this.text.get(path);
+				if (said === undefined) continue;
+				wanted.add(hash);
+				const at = `${dir}/${hash}`;
+				if (await this.app.vault.adapter.exists(at)) continue;
+				await this.app.vault.adapter.write(at, said);
+			}
+			// Every other baseline this device still holds is wanted too, even
+			// where the text was not read this time round.
+			for (const hashes of Object.values(this.agreed)) {
+				for (const hash of Object.values(hashes)) wanted.add(hash);
+			}
+			const held = await this.app.vault.adapter.list(dir);
+			for (const path of held.files) {
+				const hash = path.slice(path.lastIndexOf("/") + 1);
+				if (!wanted.has(hash)) await this.app.vault.adapter.remove(path);
+			}
+		} catch (error) {
+			console.error("Skybox: could not keep the content baselines", error);
+		}
+	}
+
+		/*
 	 * The agreed hashes are this device's own memory of the last sync, so
 	 * they live beside the plugin rather than in the vault: a file in the
 	 * vault would sync, and a device's memory of what it had agreed is
@@ -434,4 +705,28 @@ export class HubPull {
 
 function name(path: string): string {
 	return path.slice(path.lastIndexOf("/") + 1);
+}
+
+/**
+ * The text of a file, where merging it makes sense at all: Markdown, and
+ * decodable as UTF-8. Anything else is bytes, and bytes have no lines.
+ */
+function mergeable(path: string, bytes: ArrayBuffer): string | null {
+	if (!path.toLowerCase().endsWith(".md")) return null;
+	// A megabyte of one note is far past anything worth merging quietly.
+	if (bytes.byteLength > 1024 * 1024) return null;
+	try {
+		return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+	} catch {
+		return null;
+	}
+}
+
+function bytes2(text: string): ArrayBuffer {
+	const encoded = new TextEncoder().encode(text);
+	return encoded.buffer.slice(encoded.byteOffset, encoded.byteOffset + encoded.byteLength);
+}
+
+async function hashOf(text: string): Promise<string> {
+	return hex(await crypto.subtle.digest("SHA-256", bytes2(text)));
 }

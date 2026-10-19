@@ -130,6 +130,13 @@ export const DEFAULT_SETTINGS: SkyboxSettings = {
 /** The tag an image gets for being embedded in a note; nothing writes it. */
 export const EMBEDDED_TAG = "embedded";
 
+/**
+ * What a sync tags the second copy of a note with, when the same note was
+ * edited on two devices in the same lines and there was no merging the two.
+ * Searching `#collision` is then the whole of finding them.
+ */
+export const COLLISION_TAG = "collision";
+
 /** The tag a shared card wears while something is waiting; nothing writes it. */
 export const UNREAD_TAG = "comments";
 

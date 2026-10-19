@@ -13,6 +13,7 @@ import {
 	withinServed,
 	type HubEntry,
 	type PullPlan,
+	type SyncTally,
 	type PushStep,
 } from "../src/sync";
 
@@ -122,7 +123,11 @@ assert.deepStrictEqual(
 	],
 	"a file nobody here has touched is safe to replace; a file nobody here has is new"
 );
-assert.deepStrictEqual(plan.collided, ["Skybox/both.md"], "changed on both sides, left alone");
+assert.deepStrictEqual(
+	plan.collided,
+	[{ path: "Skybox/both.md", base: "agreed", mine: "mine too", theirs: "theirs" }],
+	"both hashes and the one they started from, which is what a merge needs"
+);
 assert.deepStrictEqual(
 	plan.ours.map((step) => [step.path, step.why, step.base ?? null]).sort(),
 	[
@@ -153,7 +158,7 @@ const goneEdited = pullPlan(
 	new Map([["Skybox/old.md", "aaa"]])
 );
 assert.deepStrictEqual(goneEdited.gone, [], "nothing is offered for deletion");
-assert.deepStrictEqual(goneEdited.collided, ["Skybox/old.md"]);
+assert.deepStrictEqual(goneEdited.collided, [{ path: "Skybox/old.md", base: "aaa", mine: "mine" }]);
 
 // Deleted here and untouched on the hub: the hub is asked, not told.
 const deletedHere = pullPlan(new Map(), [entry("Skybox/old.md", "aaa")], new Map([["Skybox/old.md", "aaa"]]));
@@ -169,7 +174,9 @@ const deletedHereEdited = pullPlan(
 );
 assert.deepStrictEqual(deletedHereEdited.sendGone, []);
 assert.deepStrictEqual(deletedHereEdited.fetch, [], "it is not fetched back either");
-assert.deepStrictEqual(deletedHereEdited.collided, ["Skybox/old.md"]);
+assert.deepStrictEqual(deletedHereEdited.collided, [
+	{ path: "Skybox/old.md", base: "aaa", theirs: "theirs" },
+]);
 
 // Gone from both sides: the baseline has nothing left to describe, and
 // keeping it would make the file new all over again if it ever returned.
@@ -181,14 +188,15 @@ assert.deepStrictEqual(bothGone.sendGone, []);
 // What it says afterwards, in both directions.
 const nothing: PushStep[] = [];
 const empty: PullPlan = { fetch: [], collided: [], ours: [], gone: [], sendGone: [], forget: [] };
+const nil: SyncTally = { taken: 0, sent: 0, asked: 0, merged: 0, split: 0, trouble: 0 };
 assert.strictEqual(
-	syncSentence({ ...empty, ours: nothing }, { taken: 0, sent: 0, asked: 0, trouble: 0 }),
+	syncSentence({ ...empty, ours: nothing }, { ...nil }),
 	"Already synced."
 );
 assert.strictEqual(
 	syncSentence(
 		{ ...empty, ours: [{ path: "a", hash: "x", why: "new" }] },
-		{ taken: 0, sent: 1, asked: 0, trouble: 0 }
+		{ ...nil, sent: 1 }
 	),
 	"Sent one file."
 );
@@ -197,17 +205,26 @@ assert.strictEqual(
 		{
 			...empty,
 			fetch: [{ path: "a", hash: "x", why: "new" }],
-			collided: ["b"],
+			collided: [{ path: "b", base: "z", mine: "y", theirs: "x" }],
 			ours: [{ path: "c", hash: "y", why: "changed", base: "z" }],
 		},
-		{ taken: 1, sent: 0, asked: 0, trouble: 0 }
+		{ ...nil, taken: 1 }
 	),
 	"Took one file, 1 changed on both sides, left alone, 1 the hub would not take.",
 	"a refused push is said out loud rather than swallowed"
 );
 assert.strictEqual(
-	syncSentence({ ...empty, ours: nothing }, { taken: 2, sent: 3, asked: 0, trouble: 1 }),
+	syncSentence({ ...empty, ours: nothing }, { ...nil, taken: 2, sent: 3, trouble: 1 }),
 	"Took 2 files, sent 3 files, 1 would not come across."
+);
+
+assert.strictEqual(
+	syncSentence(
+		{ ...empty, collided: [{ path: "a" }, { path: "b" }, { path: "c" }] },
+		{ ...nil, merged: 1, split: 1 }
+	),
+	"Merged one file, split one file in two, 1 changed on both sides, left alone.",
+	"what it managed and what is still somebody's to decide"
 );
 
 // And what a review says once somebody has read it.

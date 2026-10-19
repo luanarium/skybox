@@ -191,6 +191,22 @@ export interface GoneStep {
 	base: string;
 }
 
+/**
+ * A file both sides have moved on from, which is the only case a sync cannot
+ * decide by itself. What is carried here is enough to try: the hash both
+ * sides started from, and the two hashes they have now. A missing hash on
+ * either side means that side deleted it.
+ */
+export interface CollisionStep {
+	path: string;
+	/** What the two sides last agreed on, if they ever agreed on anything. */
+	base?: string;
+	/** The hash here, or nothing where the file was deleted here. */
+	mine?: string;
+	/** The hash on the hub, or nothing where it was deleted there. */
+	theirs?: string;
+}
+
 export interface PullPlan {
 	/** Files to ask the hub for. */
 	fetch: PullStep[];
@@ -199,7 +215,7 @@ export interface PullPlan {
 	 * with these yet: merging them is the next slice, and overwriting one
 	 * would be the one mistake this cannot take back.
 	 */
-	collided: string[];
+	collided: CollisionStep[];
 	/** Changes here the hub has not got, which are pushed to it. */
 	ours: PushStep[];
 	/**
@@ -253,7 +269,7 @@ export function pullPlan(
 			// in which case somebody edited what somebody else deleted and the
 			// edit is the thing that survives.
 			if (entry.hash === base) plan.sendGone.push({ path: entry.path, base });
-			else plan.collided.push(entry.path);
+			else plan.collided.push({ path: entry.path, base, theirs: entry.hash });
 			continue;
 		}
 		if (here === entry.hash) continue;
@@ -265,7 +281,7 @@ export function pullPlan(
 			plan.ours.push({ path: entry.path, hash: here, base, why: "changed" });
 			continue;
 		}
-		plan.collided.push(entry.path);
+		plan.collided.push({ path: entry.path, base, mine: here, theirs: entry.hash });
 	}
 
 	for (const [path, hash] of local) {
@@ -280,7 +296,7 @@ export function pullPlan(
 		// Untouched here, that is a deletion to review; edited here, the
 		// edit survives and the disagreement is reported as one.
 		if (hash === base) plan.gone.push({ path, base });
-		else plan.collided.push(path);
+		else plan.collided.push({ path, base, mine: hash });
 	}
 
 	// A baseline for a file neither side has any more has nothing left to
@@ -303,6 +319,10 @@ export interface SyncTally {
 	sent: number;
 	/** Deletions the hub was asked to carry out, once somebody has looked. */
 	asked: number;
+	/** Files that changed on both sides and went back together. */
+	merged: number;
+	/** Files that could not, and now exist twice. */
+	split: number;
 	/** Files the hub was asked for that did not arrive, or arrived wrong. */
 	trouble: number;
 }
@@ -322,9 +342,10 @@ export function syncSentence(plan: PullPlan, tally: SyncTally): string {
 	if (tally.sent > 0) parts.push(`sent ${files(tally.sent)}`);
 	if (tally.asked > 0) parts.push(`asked the hub about ${files(tally.asked)} deleted here`);
 	if (plan.gone.length > 0) parts.push(`${plan.gone.length} deleted on the hub, waiting on you`);
-	if (plan.collided.length > 0) {
-		parts.push(`${plan.collided.length} changed on both sides, left alone`);
-	}
+	if (tally.merged > 0) parts.push(`merged ${files(tally.merged)}`);
+	if (tally.split > 0) parts.push(`split ${files(tally.split)} in two`);
+	const stuck = plan.collided.length - tally.merged - tally.split;
+	if (stuck > 0) parts.push(`${stuck} changed on both sides, left alone`);
 	const waiting = plan.ours.length - tally.sent;
 	if (waiting > 0) parts.push(`${waiting} the hub would not take`);
 	if (tally.trouble > 0) parts.push(`${tally.trouble} would not come across`);
