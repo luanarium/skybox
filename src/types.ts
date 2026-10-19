@@ -69,8 +69,16 @@ export interface SkyboxSettings {
 	mastodonTag: string;
 	/** How a shared post is addressed. */
 	mastodonVisibility: string;
-	/** An address on the local network to try, while the hub is only an idea. */
-	hubProbe: string;
+	/** Serve this vault's Skybox folders to your other devices. Desktop only. */
+	hubServe: boolean;
+	/** The port the hub listens on, and the one a puller assumes. */
+	hubPort: number;
+	/** The hub this device pulls from, as an address, with or without a port. */
+	hubAddress: string;
+	/** Pull when the pane opens, when the app comes forward, and on a timer. */
+	hubAuto: boolean;
+	/** Folders the hub serves, one per line. Empty means Skybox's own. */
+	hubFolders: string;
 	/** The Maildir to read mail from; empty means mail is off. */
 	mailMaildir: string;
 	/** Where a reply is left for the mail transfer agent to send. */
@@ -109,7 +117,11 @@ export const DEFAULT_SETTINGS: SkyboxSettings = {
 	mailFolder: "mail",
 	mailAddress: "",
 	dmEnabled: false,
-	hubProbe: "",
+	hubServe: false,
+	hubPort: 8777,
+	hubAddress: "",
+	hubAuto: true,
+	hubFolders: "",
 };
 
 /** The tag an image gets for being embedded in a note; nothing writes it. */

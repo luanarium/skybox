@@ -4,6 +4,7 @@ import { expandHome, homeDir } from "./bookmarks";
 import { normalizeInstance } from "./mastodon";
 import { clientFor, readToken, writeToken } from "./sharing";
 import type SkyboxPlugin from "./main";
+import { canServe, ownAddresses, readPhrase, writePhrase } from "./hub";
 import { normalizeAddress, reachable, reachSentence } from "./probe";
 import { hasWindowHandle } from "./window";
 
@@ -345,47 +346,148 @@ export class SkyboxSettingTab extends PluginSettingTab {
 	}
 
 	/**
-	 * Not a feature: a question. A hub inside the plugin, with the phone
-	 * pulling from the desktop across the network they share, rests on
-	 * whether a phone can reach a plain HTTP address from inside Obsidian at
-	 * all, and Android has refused cleartext by default since Android 9. This
-	 * asks, from whichever device you press it on, and goes away once the
-	 * answer is known.
+	 * The hub: this vault's Skybox folders, served to your other devices over
+	 * whatever network they share.
+	 *
+	 * One computer serves, because only a computer can: a phone cannot open a
+	 * socket from a plugin. Every other device asks. The phrase is the lock
+	 * and the pairing both, typed on each device and never sent anywhere, so
+	 * two Skyboxes that were not given the same phrase cannot reach each
+	 * other even on the same network.
 	 */
-	private hubProbe(containerEl: HTMLElement): void {
+	private hubSettings(containerEl: HTMLElement): void {
+		const serving = this.plugin.hub.listening;
+
 		new Setting(containerEl)
 			.setName("Local hub")
 			.setDesc(
-				"Nothing is listening yet. Run node tools/probe-server.mjs on the computer, " +
-					"put the address it prints in here, and press Check on both devices. " +
-					"Skybox tries it two ways, its own request and the web view's, and says " +
-					"what each one answered."
+				"Keep your devices in step without a cloud. One computer serves the folders " +
+					"below, your phone and your other computers pull from it, and nothing " +
+					"leaves the network they share. This first pass takes files it does not " +
+					"have and files it has not touched, and leaves anything changed on both " +
+					"sides alone."
+			);
+
+		new Setting(containerEl)
+			.setName("Phrase")
+			.setDesc(
+				"The same phrase on every device, which is what pairs them and what locks " +
+					"the hub. Case and spacing do not matter. It is kept on this device, in " +
+					"storage that does not sync and is not part of the vault, and it is never " +
+					"sent: each side hashes it and the hub compares the hashes."
+			)
+			.addText((text) => {
+				text.setPlaceholder(readPhrase(this.app) ? "set on this device" : "a phrase you can retype")
+					.setValue("")
+					.onChange((value) => {
+						writePhrase(this.app, value);
+					});
+				text.inputEl.type = "password";
+			});
+
+		new Setting(containerEl)
+			.setName("Serve from this device")
+			.setDesc(
+				canServe()
+					? serving
+						? `Listening. Addresses to use elsewhere: ${
+								ownAddresses(this.plugin.settings.hubPort).join(", ") || "none found"
+							}.`
+						: "Off. Switch this on, on the computer that stays awake."
+					: "A phone cannot serve, only ask. Switch this on, on a computer."
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.hubServe)
+					.setDisabled(!canServe())
+					.onChange(async (value) => {
+						this.plugin.settings.hubServe = value;
+						await this.plugin.saveSettings();
+						new Notice(`Skybox: ${await this.plugin.hub.start()}`);
+						this.display();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Port")
+			.setDesc("The port the hub listens on, and the one an address without a port means.")
+			.addText((text) =>
+				text
+					.setPlaceholder("8777")
+					.setValue(String(this.plugin.settings.hubPort))
+					.onChange(async (value) => {
+						const port = Number(value.trim());
+						if (!Number.isInteger(port) || port < 1024 || port > 65535) return;
+						this.plugin.settings.hubPort = port;
+						await this.plugin.saveSettings();
+						await this.plugin.hub.start();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Folders")
+			.setDesc(
+				"What the hub serves, one folder per line. Empty means the folders Skybox " +
+					"writes to itself: intake, bookmarks and conversations. Nothing outside " +
+					"these leaves the vault, and a request for anything else is refused."
+			)
+			.addTextArea((area) =>
+				area
+					.setPlaceholder("Skybox\nbookmarks")
+					.setValue(this.plugin.settings.hubFolders)
+					.onChange(async (value) => {
+						this.plugin.settings.hubFolders = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Pull from")
+			.setDesc(
+				"The hub this device asks, as an address with or without a port. Check says " +
+					"who answers; Sync now takes what it is safe to take."
 			)
 			.addText((text) =>
 				text
-					.setPlaceholder("192.168.1.20:8777")
-					.setValue(this.plugin.settings.hubProbe)
+					.setPlaceholder("10.0.0.71:8777")
+					.setValue(this.plugin.settings.hubAddress)
 					.onChange(async (value) => {
-						this.plugin.settings.hubProbe = value.trim();
+						this.plugin.settings.hubAddress = value.trim();
 						await this.plugin.saveSettings();
 					})
 			)
 			.addButton((button) =>
 				button.setButtonText("Check").onClick(async () => {
-					const address = normalizeAddress(this.plugin.settings.hubProbe);
-					if (!address) {
-						new Notice("Skybox needs an address to try, like 192.168.1.20:8777.");
-						return;
-					}
-					button.setButtonText("Trying");
+					button.setButtonText("Asking");
 					button.setDisabled(true);
-					const tries = await reachable(address);
-					// The console keeps the detail; the notice has to be read
-					// on a phone, where there is no console to open.
-					console.log("Skybox: local hub probe", address, tries);
-					new Notice(reachSentence(tries), 15000);
+					const said = await this.plugin.pull.greet();
+					// If the hub itself said nothing, ask whether the address
+					// can be reached at all, which is a different problem.
+					const address = normalizeAddress(this.plugin.settings.hubAddress);
+					const extra =
+						said.startsWith("Answering") || !address
+							? ""
+							: ` ${reachSentence(await reachable(address))}`;
+					new Notice(`Skybox: ${said}${extra}`, 15000);
 					button.setButtonText("Check");
 					button.setDisabled(false);
+				})
+			)
+			.addButton((button) =>
+				button.setButtonText("Sync now").onClick(() => void this.plugin.pull.sync(true))
+			);
+
+		new Setting(containerEl)
+			.setName("Keep in step")
+			.setDesc(
+				"Pull when Skybox opens, when the app comes back to the front, and now and " +
+					"then while it is open. A phone only runs while you are looking at it, so " +
+					"this is what makes it current the moment you do."
+			)
+			.addToggle((toggle) =>
+				toggle.setValue(this.plugin.settings.hubAuto).onChange(async (value) => {
+					this.plugin.settings.hubAuto = value;
+					await this.plugin.saveSettings();
 				})
 			);
 	}
@@ -447,7 +549,7 @@ export class SkyboxSettingTab extends PluginSettingTab {
 		this.bookmarkSettings(containerEl);
 		this.sharingSettings(containerEl);
 		this.mailSettings(containerEl);
-		this.hubProbe(containerEl);
+		this.hubSettings(containerEl);
 
 		new Setting(containerEl)
 			.setName("Images embedded in notes")

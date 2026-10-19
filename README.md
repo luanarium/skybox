@@ -41,6 +41,9 @@ way of looking at them.
   bottom of a wall fetches more.
 - **Share a card by tagging it.** Connect a Mastodon account and a tag posts the card, image and
   all. The thread comes back beside the note, with a box to reply from. Untag it and the post goes.
+- **Your devices keep in step, with no cloud.** One computer serves the folders you name over
+  whatever network your devices share, locked to a phrase typed on each of them, and the others pull
+  what they are missing. Files changed on both sides are left alone rather than guessed about.
 - **Immersive.** Standalone mode gives the whole window to the pane, and the window controls hide
   until the pointer reaches the top.
 
@@ -102,6 +105,9 @@ releases on startup, so a new version arrives on its own.
 | `src/maildir.ts` | Mail as files, and flags as filenames |
 | `src/mail.ts` | Maildir into conversations, and replies into the outbox |
 | `src/dm.ts` | Mastodon direct messages as the same conversations |
+| `src/sync.ts` | The hub's wire shapes, the phrase key, and what to take without a network |
+| `src/hub.ts` | The listening half, on a computer: manifest, files, the phrase as the lock |
+| `src/hubclient.ts` | The asking half, on any device: plan, pull, and what the two last agreed |
 | `src/wall.ts` | A hashtag or home timeline as cards, the chip that asks for it, and a kept post read back |
 | `src/components/Post.tsx` | A post, drawn the same way on the wall and once kept |
 | `src/thread.ts` | What a conversation is in the vault, whoever carried it |
@@ -652,6 +658,70 @@ is why the shared-element view transition sits out on mobile. The header carries
 an Android reader looks for one, and the × steps aside. Down the sheet it is plain block flow (the
 editor or the image, then the side pane below it), so nothing is asked to shrink and the whole sheet
 scrolls.
+
+## The hub
+
+Two devices, no cloud. One computer serves the folders you name, and every other device asks it for
+what it is missing. Nothing goes through anybody else's server, and the files never leave the
+network the two devices share.
+
+Only a computer can serve, because a plugin on a phone cannot open a socket. So the computer
+listens, on Node's `http` reached the same guarded way the Maildir and the bookmarks file are
+reached, and the phone always does the asking. That shapes what "automatic" can mean: Obsidian on
+Android does not run in the background, so a phone pulls when Skybox opens, when the app comes back
+to the front, and on a slow timer while it is open. It is current the moment you look at it, which
+is the honest version of the thing, and not a daemon.
+
+### The phrase
+
+One phrase, typed on each device, does the pairing and the locking at once. Case and spacing are
+ignored, so it can be words you can retype. It never crosses the network: each side hashes it with
+`crypto.subtle` and the hub compares the hashes, in a comparison that does not leak which prefix
+matched. A request without the right hash gets a closed door and nothing else, not a hint about
+what the phrase might have been.
+
+It lives in per-vault local storage, like the Mastodon token, so it does not sync and is not part of
+the vault. That is also why it has to be typed on each device rather than set once.
+
+### What travels
+
+The folders in the settings, one per line. Empty means the three folders Skybox writes to itself:
+intake, bookmarks and conversations. Nothing outside them is listed, and a request for anything
+outside them is refused on the way out as well as on the way in, so `..`, an absolute path, a drive
+letter, an address, and `.obsidian` are all simply not files this hub has.
+
+A manifest is a path, a size, a time and the SHA-256 of the bytes. Hashes are kept by mtime, so a
+quiet vault costs nothing to describe and an unchanged file is never read twice. The puller compares
+hashes rather than clocks, which matters more than it sounds: a phone and a laptop do not agree
+about what time it is, and nothing here has to care.
+
+### What it will and will not do, for now
+
+It takes a file this device does not have. It replaces a file this device has not touched since the
+two last agreed. It does nothing at all to a file that has changed on both sides, and says how many
+of those there were.
+
+That last line is why the agreed hashes exist. After each sync, every file the two sides hold
+identically is recorded as a baseline, kept beside the plugin in `.obsidian/plugins/skybox/` rather
+than in the vault, because it describes this device's own state and must never arrive from somewhere
+else. A local file equal to its baseline is one nobody here has edited, so the hub's newer copy can
+replace it safely. A local file that differs from its baseline is somebody's work, and it is left
+alone.
+
+Deletions are not carried in either direction yet, deliberately. A file deleted here that the hub
+still has is not fetched again, and a file the hub has dropped is not deleted here. Propagating a
+deletion wrongly is the only thing in this design that can lose a note nothing else can bring back,
+so it comes last.
+
+What comes next, in order: baselines kept as content rather than hashes, so edits on both sides can
+be merged line by line the way git does; divergent copies written side by side with a `#collision`
+chip to find them by; address discovery on the local network behind a toggle; and then deletions.
+
+### Reaching it by hand
+
+`node tools/hub-key.mjs "your phrase" 10.0.0.71:8777` prints the key for that phrase and the two
+requests worth making with it, which is the quickest way to tell a plugin problem from a network
+one.
 
 ## Getting a build onto a phone
 

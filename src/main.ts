@@ -4,6 +4,8 @@ import { Autonamer } from "./autoname";
 import { BookmarkImport } from "./bookmarks";
 import { Bus } from "./bus";
 import { DirectMessages } from "./dm";
+import { Hub } from "./hub";
+import { HubPull } from "./hubclient";
 import { Interactions } from "./interactions";
 import { MailImport } from "./mail";
 import { Sharing } from "./sharing";
@@ -24,6 +26,9 @@ const UNREAD_INTERVAL = 4 * 60 * 1000;
 /** How often the Maildir and the conversations are looked at. */
 const MAIL_INTERVAL = 3 * 60 * 1000;
 
+/** How often a device asks the hub what it holds. */
+const HUB_INTERVAL = 2 * 60 * 1000;
+
 export default class SkyboxPlugin extends Plugin {
 	settings: SkyboxSettings = { ...DEFAULT_SETTINGS };
 	index!: VaultIndex;
@@ -35,6 +40,8 @@ export default class SkyboxPlugin extends Plugin {
 	mail!: MailImport;
 	dms!: DirectMessages;
 	interactions!: Interactions;
+	hub!: Hub;
+	pull!: HubPull;
 	private backEl: HTMLElement | null = null;
 
 	async onload(): Promise<void> {
@@ -46,6 +53,10 @@ export default class SkyboxPlugin extends Plugin {
 		this.sharing = new Sharing(this.app, this.index, this.settings);
 		this.mail = new MailImport(this.app, this.settings);
 		this.dms = new DirectMessages(this.app, this.settings);
+		this.hub = new Hub(this.app, this.settings);
+		this.pull = new HubPull(this.app, this.settings, this.index, this);
+		// A listening socket outlives a reload unless something closes it.
+		this.register(() => this.hub.stop());
 		this.register(() => this.autoname.dispose());
 		this.bus = new Bus();
 		this.share = new ShareIntake(
@@ -65,6 +76,12 @@ export default class SkyboxPlugin extends Plugin {
 			id: "open-skybox",
 			name: "Open",
 			callback: () => void this.open(),
+		});
+
+		this.addCommand({
+			id: "skybox-hub-sync",
+			name: "Sync with the hub",
+			callback: () => void this.pull.sync(true),
 		});
 
 		this.addSettingTab(new SkyboxSettingTab(this.app, this));
@@ -92,6 +109,21 @@ export default class SkyboxPlugin extends Plugin {
 			gather();
 			this.registerDomEvent(window, "focus", gather);
 			this.registerInterval(window.setInterval(gather, MAIL_INTERVAL));
+
+			/*
+			 * The hub. One device serves and the rest ask, and asking is
+			 * cheap: a manifest of hashes, and files only where they differ.
+			 * A phone runs only while it is open, so it asks when it opens,
+			 * when it comes back to the front, and on a slow timer, which is
+			 * what makes it current the moment you look at it.
+			 */
+			void this.hub.start();
+			const step = () => {
+				if (this.settings.hubAuto) void this.pull.sync();
+			};
+			step();
+			this.registerDomEvent(window, "focus", step);
+			this.registerInterval(window.setInterval(step, HUB_INTERVAL));
 
 			const look = () => void this.interactions.look(this.sharedStatusIds());
 			look();
