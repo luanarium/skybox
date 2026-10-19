@@ -169,6 +169,14 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 	const [sheeted, setSheeted] = useState(false);
 	const [typingHere, setTypingHere] = useState(false);
 	/*
+	 * On a phone the pane sits above the note, so everything in it is screen
+	 * the note does not get. A clipped page carries eight or ten properties,
+	 * which fills the view on its own and leaves the article below the fold,
+	 * so all of it but the tags folds away and opens on a tap. On a computer
+	 * the pane is a column beside the note and has the room for the lot.
+	 */
+	const [details, setDetails] = useState(!Platform.isMobile);
+	/*
 	 * How many comments there are, which is what the button should say: the
 	 * thread is read once when the card opens and again when the panel
 	 * closes, since replying is the usual reason for the number to change.
@@ -353,6 +361,21 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 				</section>
 			)}
 
+			{Platform.isMobile && (
+				<section className="skybox-meta-section skybox-meta-fold">
+					<button
+						className="skybox-meta-more"
+						aria-expanded={details}
+						onClick={() => setDetails(!details)}
+					>
+						<Icon name={details ? "chevron-up" : "chevron-down"} />
+						{foldLabel(properties.length, links.length + backlinks.length)}
+					</button>
+				</section>
+			)}
+
+			{details && (
+				<>
 			{properties.length > 0 && (
 				<section className="skybox-meta-section">
 					<h4>Properties</h4>
@@ -408,11 +431,24 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 			</section>
 				</>
 			)}
+				</>
+			)}
 		</aside>
 	);
 }
 
 const TAG_SUGGESTIONS = "skybox-tag-suggestions";
+
+/** What the fold is holding, so a tap is an informed one. */
+function foldLabel(properties: number, links: number): string {
+	const parts: string[] = [];
+	if (properties > 0) {
+		parts.push(properties === 1 ? "1 property" : `${properties} properties`);
+	}
+	if (links > 0) parts.push(links === 1 ? "1 link" : `${links} links`);
+	parts.push("dates");
+	return parts.join(", ");
+}
 
 /** Frontmatter holds tags as a list, a single string, or not at all. */
 function frontmatterTags(frontmatter: Record<string, unknown> | undefined): string[] {

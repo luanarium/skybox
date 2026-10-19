@@ -1068,6 +1068,40 @@ body.skybox-standalone .titlebar-button-container:focus-within {
 	border-top: 1px solid var(--background-modifier-border);
 }
 
+/*
+ * The fold. On a phone the pane is above the note, so a clipped page's ten
+ * properties would be the whole screen; the tags stay out where they are
+ * edited and the rest opens on a tap. The button is a row rather than a
+ * chip so there is something thumb-sized to hit.
+ */
+.skybox-meta-fold {
+	padding: 0;
+}
+
+.skybox-meta-more {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	width: 100%;
+	padding: 10px 0;
+	background: none;
+	border: none;
+	box-shadow: none;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	text-align: left;
+	cursor: pointer;
+}
+
+.skybox-meta-more:hover {
+	color: var(--text-normal);
+}
+
+.skybox-meta-more .skybox-icon {
+	display: inline-flex;
+	flex: 0 0 auto;
+}
+
 /* ---- cover art --------------------------------------------------- */
 
 /*
