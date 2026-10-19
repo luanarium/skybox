@@ -731,11 +731,34 @@ Writes are the one thing the hub does that cannot be undone by closing a socket,
 in the same way as reads and then some: inside the named folders only, with the phrase, with the
 expected hash, and under a cap on how much one request can carry.
 
+### Deletions are reviewed, never carried quietly
+
+A deletion is the one thing a sync does that cannot be undone by changing your mind, so neither end
+applies one by itself. The device about to lose the file shows a window listing what is about to go.
+Switch on anything you want to keep, press Apply, and everything still switched off goes to
+Obsidian's trash, which means `.trash` or the system bin according to your own setting. Nothing is
+erased.
+
+It works the same in both directions, which is why the phone cannot simply tell the hub to delete
+something. It asks. The request goes on a list, the window opens on the computer, and the answer
+comes back on a later sync.
+
+Keeping means keeping, everywhere. A file you keep is one this device has and the hub does not, so it
+goes back on the next sync, and the device that deleted it gets it again with a notice saying so.
+That is the only end state that two devices can agree on without one of them quietly losing an
+argument. Closing the window without answering keeps everything, because a window nobody read is not
+consent, and that is also what makes a mass deletion safe: if a folder momentarily reads as empty,
+the default is to keep every file in the list.
+
+A file deleted on one side and edited on the other is not a deletion to carry. The edit survives, in
+the place it was made, and it is reported in the same breath as a file changed on both sides.
+Deleting something again is easy; recovering writing nobody kept is not.
+
 ### What it will and will not do, for now
 
 It takes a file this device does not have. It sends a file the hub does not have. It replaces either
-side's copy when only the other side changed it. It does nothing at all to a file that has changed
-on both sides, and says how many of those there were.
+side's copy when only the other side changed it. It asks before it deletes anything. It does nothing
+at all to a file that has changed on both sides, and says how many of those there were.
 
 That last line is why the agreed hashes exist. After each sync, every file the two sides hold
 identically is recorded as a baseline, kept beside the plugin in `.obsidian/plugins/skybox/` rather

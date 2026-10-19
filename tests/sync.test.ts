@@ -6,11 +6,13 @@ import {
 	normalizePhrase,
 	phraseKey,
 	pullPlan,
+	reviewSentence,
 	syncSentence,
 	sameKey,
 	servedFolders,
 	withinServed,
 	type HubEntry,
+	type PullPlan,
 	type PushStep,
 } from "../src/sync";
 
@@ -131,7 +133,8 @@ assert.deepStrictEqual(
 );
 
 // A file the two sides agreed on and the hub no longer lists was deleted
-// there, and a deletion is not something this slice carries either way.
+// there. Untouched here, it is offered for review rather than removed, and
+// nothing in the plan removes anything on its own.
 const gone = pullPlan(
 	new Map([["Skybox/old.md", "aaa"]]),
 	[],
@@ -139,41 +142,79 @@ const gone = pullPlan(
 );
 assert.deepStrictEqual(gone.fetch, []);
 assert.deepStrictEqual(gone.ours, [], "an untouched file the hub dropped is not ours to offer");
+assert.deepStrictEqual(gone.gone, [{ path: "Skybox/old.md", base: "aaa" }]);
+assert.deepStrictEqual(gone.forget, [], "the baseline is needed until somebody answers");
 
-// A file deleted here that the hub still has is not fetched again, since
-// deleting it was somebody's decision.
+// Deleted on the hub and edited here: the edit is what survives, and the
+// disagreement is reported rather than resolved.
+const goneEdited = pullPlan(
+	new Map([["Skybox/old.md", "mine"]]),
+	[],
+	new Map([["Skybox/old.md", "aaa"]])
+);
+assert.deepStrictEqual(goneEdited.gone, [], "nothing is offered for deletion");
+assert.deepStrictEqual(goneEdited.collided, ["Skybox/old.md"]);
+
+// Deleted here and untouched on the hub: the hub is asked, not told.
 const deletedHere = pullPlan(new Map(), [entry("Skybox/old.md", "aaa")], new Map([["Skybox/old.md", "aaa"]]));
-assert.deepStrictEqual(deletedHere.fetch, [], "what was deleted here stays deleted");
+assert.deepStrictEqual(deletedHere.fetch, [], "what was deleted here does not come back");
+assert.deepStrictEqual(deletedHere.sendGone, [{ path: "Skybox/old.md", base: "aaa" }]);
+
+// Deleted here and edited on the hub: the edit survives there, and this is a
+// disagreement rather than a deletion to carry.
+const deletedHereEdited = pullPlan(
+	new Map(),
+	[entry("Skybox/old.md", "theirs")],
+	new Map([["Skybox/old.md", "aaa"]])
+);
+assert.deepStrictEqual(deletedHereEdited.sendGone, []);
+assert.deepStrictEqual(deletedHereEdited.fetch, [], "it is not fetched back either");
+assert.deepStrictEqual(deletedHereEdited.collided, ["Skybox/old.md"]);
+
+// Gone from both sides: the baseline has nothing left to describe, and
+// keeping it would make the file new all over again if it ever returned.
+const bothGone = pullPlan(new Map(), [], new Map([["Skybox/old.md", "aaa"]]));
+assert.deepStrictEqual(bothGone.forget, ["Skybox/old.md"]);
+assert.deepStrictEqual(bothGone.gone, []);
+assert.deepStrictEqual(bothGone.sendGone, []);
 
 // What it says afterwards, in both directions.
 const nothing: PushStep[] = [];
+const empty: PullPlan = { fetch: [], collided: [], ours: [], gone: [], sendGone: [], forget: [] };
 assert.strictEqual(
-	syncSentence({ fetch: [], collided: [], ours: nothing }, { taken: 0, sent: 0, trouble: 0 }),
+	syncSentence({ ...empty, ours: nothing }, { taken: 0, sent: 0, asked: 0, trouble: 0 }),
 	"Already in step."
 );
 assert.strictEqual(
 	syncSentence(
-		{ fetch: [], collided: [], ours: [{ path: "a", hash: "x", why: "new" }] },
-		{ taken: 0, sent: 1, trouble: 0 }
+		{ ...empty, ours: [{ path: "a", hash: "x", why: "new" }] },
+		{ taken: 0, sent: 1, asked: 0, trouble: 0 }
 	),
 	"Sent one file."
 );
 assert.strictEqual(
 	syncSentence(
 		{
+			...empty,
 			fetch: [{ path: "a", hash: "x", why: "new" }],
 			collided: ["b"],
 			ours: [{ path: "c", hash: "y", why: "changed", base: "z" }],
 		},
-		{ taken: 1, sent: 0, trouble: 0 }
+		{ taken: 1, sent: 0, asked: 0, trouble: 0 }
 	),
 	"Took one file, 1 changed on both sides, left alone, 1 the hub would not take.",
 	"a refused push is said out loud rather than swallowed"
 );
 assert.strictEqual(
-	syncSentence({ fetch: [], collided: [], ours: nothing }, { taken: 2, sent: 3, trouble: 1 }),
+	syncSentence({ ...empty, ours: nothing }, { taken: 2, sent: 3, asked: 0, trouble: 1 }),
 	"Took 2 files, sent 3 files, 1 would not come across."
 );
+
+// And what a review says once somebody has read it.
+assert.strictEqual(reviewSentence(0, 0), "Nothing to remove.");
+assert.strictEqual(reviewSentence(1, 0), "One file to the trash.");
+assert.strictEqual(reviewSentence(2, 1), "2 files to the trash, kept 1.");
+assert.strictEqual(reviewSentence(0, 3), "Kept 3.");
 
 // An address, however it was typed.
 assert.strictEqual(hubUrl("10.0.0.71", 8777, "/manifest"), "http://10.0.0.71:8777/manifest");

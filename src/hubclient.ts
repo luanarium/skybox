@@ -1,6 +1,7 @@
 import { Notice, TFile, normalizePath, requestUrl, type App, type Plugin } from "obsidian";
 import type { VaultIndex } from "./index";
 import { readPhrase } from "./hub";
+import { review } from "./review";
 import {
 	HUB_BASE_HEADER,
 	HUB_KEY_HEADER,
@@ -9,9 +10,11 @@ import {
 	hubUrl,
 	phraseKey,
 	pullPlan,
+	reviewSentence,
 	syncSentence,
 	withinServed,
 	type HubManifest,
+	type GoneStep,
 	type PullPlan,
 	type SyncTally,
 } from "./sync";
@@ -38,6 +41,7 @@ export class HubPull {
 	private agreed: Agreed = {};
 	private loaded = false;
 	private running = false;
+	private reviewing = false;
 
 	constructor(
 		private app: App,
@@ -75,9 +79,10 @@ export class HubPull {
 			const local = await this.localHashes(folders, offered.map((entry) => entry.path));
 			const plan = pullPlan(local, offered, agreed);
 
-			const tally: SyncTally = { taken: 0, sent: 0, trouble: 0 };
+			const tally: SyncTally = { taken: 0, sent: 0, asked: 0, trouble: 0 };
 			await this.take(address, key, plan, agreed, tally);
 			await this.send(address, key, plan, agreed, tally);
+			await this.sendGone(address, key, plan, agreed, tally);
 
 			// Everything the two sides now hold identically is a baseline for
 			// next time, which is what tells somebody's edit from a stale copy.
@@ -86,8 +91,12 @@ export class HubPull {
 					agreed.set(entry.path, entry.hash);
 				}
 			}
+			for (const path of plan.forget) agreed.delete(path);
 			this.agreed[manifest.vault] = Object.fromEntries(agreed);
 			await this.save();
+
+			// Asking is a window, which outlives the sync that opened it.
+			if (plan.gone.length > 0) void this.reviewGone(manifest.vault, plan.gone);
 
 			if (aloud || tally.taken > 0 || tally.sent > 0 || tally.trouble > 0) {
 				new Notice(`Skybox: ${syncSentence(plan, tally)}`);
@@ -251,6 +260,101 @@ export class HubPull {
 	}
 
 	/**
+	 * Telling the hub about a file deleted here.
+	 *
+	 * The hub does not act on it. It puts the request in front of whoever is
+	 * at that computer, and the answer comes back on a later sync: the file
+	 * stops being offered, or the hub says it kept it. Keeping is final, and
+	 * the right response to it here is to let the file come back, so the
+	 * baseline is dropped and the next sync treats it as new.
+	 */
+	private async sendGone(
+		address: string,
+		key: string,
+		plan: PullPlan,
+		agreed: Map<string, string>,
+		tally: SyncTally
+	): Promise<void> {
+		for (const step of plan.sendGone) {
+			const url = `${hubUrl(address, this.settings.hubPort, "/file")}?path=${encodeURIComponent(step.path)}`;
+			try {
+				const answer = await requestUrl({
+					url,
+					method: "DELETE",
+					headers: { [HUB_KEY_HEADER]: key, [HUB_BASE_HEADER]: step.base },
+					throw: false,
+				});
+				if (answer.status === 200) {
+					// Gone there already, so there is nothing left to agree on.
+					agreed.delete(step.path);
+					continue;
+				}
+				if (answer.status === 202) {
+					tally.asked++;
+					continue;
+				}
+				const said = (answer.json as { error?: string } | undefined)?.error;
+				if (answer.status === 409 && said === "kept") {
+					agreed.delete(step.path);
+					new Notice(
+						`Skybox: the hub is keeping ${name(step.path)}, so it comes back here.`,
+						15000
+					);
+					continue;
+				}
+				console.error("Skybox: the hub would not drop", step.path, answer.status, said);
+			} catch (error) {
+				console.error("Skybox: could not ask the hub to drop", step.path, error);
+			}
+		}
+	}
+
+	/**
+	 * Reading what the hub deleted, in front of somebody.
+	 *
+	 * This outlives the sync that opened it, so the baselines it touches are
+	 * saved on its own. Keeping a file drops its baseline too: the file is
+	 * then something this device has and the hub does not, which is exactly
+	 * what it is, and the next sync offers it back.
+	 */
+	private async reviewGone(vault: string, gone: GoneStep[]): Promise<void> {
+		if (this.reviewing) return;
+		this.reviewing = true;
+		try {
+			const keeping = await review(this.app, {
+				title: "Deleted on the hub",
+				message:
+					`${gone.length === 1 ? "This was" : `These ${gone.length} were`} deleted ` +
+					"on the computer that serves the hub. Switch on anything you want to " +
+					"keep here, and it goes back to the hub instead. The rest go to the " +
+					"trash. Closing this window keeps the lot.",
+				items: gone.map((step) => step.path),
+				confirm: "Apply",
+			});
+
+			await this.load();
+			const agreed = new Map(Object.entries(this.agreed[vault] ?? {}));
+			let removed = 0;
+			for (const step of gone) {
+				// Either way this baseline has nothing left to describe: the
+				// file is on its way to the trash, or it is ours to offer.
+				agreed.delete(step.path);
+				if (keeping.has(step.path)) continue;
+				const file = this.app.vault.getAbstractFileByPath(step.path);
+				if (file) await this.app.fileManager.trashFile(file);
+				removed++;
+			}
+			this.agreed[vault] = Object.fromEntries(agreed);
+			await this.save();
+			new Notice(`Skybox: ${reviewSentence(removed, keeping.size)}`);
+		} catch (error) {
+			console.error("Skybox: the review went wrong", error);
+		} finally {
+			this.reviewing = false;
+		}
+	}
+
+	/**
 	 * Writing the file, under the plugin's own write flag so share intake
 	 * does not mistake an arriving file for something the user just shared.
 	 */
@@ -326,4 +430,8 @@ export class HubPull {
 			console.error("Skybox: could not keep what the hub and this device agreed", error);
 		}
 	}
+}
+
+function name(path: string): string {
+	return path.slice(path.lastIndexOf("/") + 1);
 }

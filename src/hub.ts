@@ -1,5 +1,6 @@
 import { Notice, Platform, TFile, TFolder, normalizePath, type App } from "obsidian";
 import type { VaultIndex } from "./index";
+import { review } from "./review";
 import { guarded } from "./writes";
 import type { SkyboxSettings } from "./types";
 import {
@@ -9,6 +10,7 @@ import {
 	phraseKey,
 	sameKey,
 	hubComplaint,
+	reviewSentence,
 	hubFolders,
 	withinServed,
 	type HubEntry,
@@ -113,6 +115,20 @@ export function ownAddresses(port: number): string[] {
 export class Hub {
 	private server: NodeServer | null = null;
 	private key = "";
+	/**
+	 * Deletions another device has asked for, waiting to be read. Nothing
+	 * here has happened yet: a device can ask, and only the person sitting
+	 * in front of this vault can agree.
+	 */
+	private queued = new Map<string, string>();
+	/**
+	 * Paths somebody chose to keep, by the hash they were kept at, so the
+	 * asking device can be told no rather than asked again every two
+	 * minutes. Held in memory only: once a device has heard no it stops
+	 * asking, so there is nothing left for this to remember.
+	 */
+	private kept = new Map<string, string>();
+	private reviewing = false;
 	/** Hashes, kept by path and mtime, so a quiet vault costs nothing. */
 	private hashes = new Map<string, { mtime: number; size: number; hash: string }>();
 
@@ -188,7 +204,7 @@ export class Hub {
 		const head = {
 			"access-control-allow-origin": "*",
 			"access-control-allow-headers": `${HUB_KEY_HEADER}, ${HUB_BASE_HEADER}, content-type`,
-			"access-control-allow-methods": "GET, PUT, OPTIONS",
+			"access-control-allow-methods": "GET, PUT, DELETE, OPTIONS",
 			"cache-control": "no-store",
 		};
 		try {
@@ -216,6 +232,10 @@ export class Hub {
 			}
 			if (url.pathname === "/file") {
 				const asked = url.searchParams.get("path") ?? "";
+				if (request.method === "DELETE") {
+					await this.dropFile(asked, request, head, response);
+					return;
+				}
 				if (request.method === "PUT") {
 					await this.takeFile(asked, request, head, response);
 					return;
@@ -354,6 +374,105 @@ export class Hub {
 
 		response.writeHead(200, { ...head, "content-type": "application/json" });
 		response.end(JSON.stringify({ hash }));
+	}
+
+	/**
+	 * A request to delete a file, which is a request and nothing more.
+	 *
+	 * The asking device cannot know whether this vault still wants the file,
+	 * so it does not get to decide. The path is checked and the hash it
+	 * expected is compared with what is here, and then it goes on a list for
+	 * somebody to read. "Kept" is a real answer, sent back the next time the
+	 * device asks, so it stops asking and takes its copy back instead.
+	 */
+	private async dropFile(
+		asked: string,
+		request: NodeRequest,
+		head: Record<string, string>,
+		response: NodeResponse
+	): Promise<void> {
+		const say = (status: number, said: Record<string, unknown>) => {
+			response.writeHead(status, { ...head, "content-type": "application/json" });
+			response.end(JSON.stringify(said));
+		};
+
+		if (!this.settings.hubAccept) {
+			say(403, { error: "this hub is not taking changes" });
+			return;
+		}
+		const path = normalizePath(asked);
+		if (!withinServed(path, this.folders())) {
+			say(403, { error: "not a file this hub serves" });
+			return;
+		}
+
+		const existing = this.app.vault.getAbstractFileByPath(path);
+		if (!(existing instanceof TFile)) {
+			// Already gone, which is the thing being asked for.
+			say(200, { gone: true });
+			return;
+		}
+		const holding = await this.hashOf(existing);
+		const sent = request.headers[HUB_BASE_HEADER];
+		const base = (Array.isArray(sent) ? (sent[0] ?? "") : (sent ?? "")).trim();
+		if (holding !== base) {
+			say(409, { error: "the hub's copy has changed since" });
+			return;
+		}
+		if (this.kept.get(path) === holding) {
+			say(409, { error: "kept" });
+			return;
+		}
+
+		this.queued.set(path, holding);
+		say(202, { queued: true });
+		void this.review();
+	}
+
+	/**
+	 * Reading the list, which only happens in front of somebody. A window
+	 * rather than a notice, because the choice is per file and a notice has
+	 * nowhere to put that.
+	 */
+	private async review(): Promise<void> {
+		if (this.reviewing || this.queued.size === 0) return;
+		this.reviewing = true;
+		try {
+			const asked = [...this.queued.keys()];
+			const keeping = await review(this.app, {
+				title: "Deleted on another device",
+				message:
+					`Another device has deleted ${asked.length === 1 ? "this" : `these ${asked.length}`}, ` +
+					"and is asking this vault to do the same. Switch on anything you want " +
+					"to keep here, and it goes back to that device instead. The rest go to " +
+					"the trash. Closing this window keeps the lot.",
+				items: asked,
+				confirm: "Apply",
+			});
+
+			let removed = 0;
+			for (const path of asked) {
+				const hash = this.queued.get(path) ?? "";
+				this.queued.delete(path);
+				if (keeping.has(path)) {
+					this.kept.set(path, hash);
+					continue;
+				}
+				const file = this.app.vault.getAbstractFileByPath(path);
+				// Obsidian's own trash, so the user's setting decides whether
+				// that means .trash or the system bin. Nothing is erased here.
+				if (file) await this.app.fileManager.trashFile(file);
+				this.hashes.delete(path);
+				removed++;
+			}
+			new Notice(`Skybox: ${reviewSentence(removed, keeping.size)}`);
+		} catch (error) {
+			console.error("Skybox: the review went wrong", error);
+		} finally {
+			this.reviewing = false;
+			// Something may have arrived while the window was open.
+			if (this.queued.size > 0) void this.review();
+		}
 	}
 
 	private async mkdirs(path: string): Promise<void> {

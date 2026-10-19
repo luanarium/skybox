@@ -177,6 +177,20 @@ export interface PushStep {
 	base?: string;
 }
 
+/**
+ * A file one side no longer has, named by the hash both sides last agreed to.
+ *
+ * The baseline is what makes a deletion knowable at all. A file in the
+ * baseline that one side no longer has was deleted there; a file in nobody's
+ * baseline was simply never shared. Without that, a deletion and a file that
+ * never arrived look identical, and a sync that cannot tell them apart will
+ * eventually delete something nobody asked it to.
+ */
+export interface GoneStep {
+	path: string;
+	base: string;
+}
+
 export interface PullPlan {
 	/** Files to ask the hub for. */
 	fetch: PullStep[];
@@ -188,6 +202,15 @@ export interface PullPlan {
 	collided: string[];
 	/** Changes here the hub has not got, which are pushed to it. */
 	ours: PushStep[];
+	/**
+	 * Deleted on the hub and untouched here. Nothing is removed on the
+	 * strength of this: it is what the review window asks about.
+	 */
+	gone: GoneStep[];
+	/** Deleted here and untouched on the hub, which is asked to remove them. */
+	sendGone: GoneStep[];
+	/** Paths gone from both sides, whose baseline is finished with. */
+	forget: string[];
 }
 
 /**
@@ -204,7 +227,14 @@ export function pullPlan(
 	remote: HubEntry[],
 	agreed: Map<string, string>
 ): PullPlan {
-	const plan: PullPlan = { fetch: [], collided: [], ours: [] };
+	const plan: PullPlan = {
+		fetch: [],
+		collided: [],
+		ours: [],
+		gone: [],
+		sendGone: [],
+		forget: [],
+	};
 	const seen = new Set<string>();
 
 	for (const entry of remote) {
@@ -213,9 +243,17 @@ export function pullPlan(
 		const base = agreed.get(entry.path);
 
 		if (here === undefined) {
-			// Never seen here. If we agreed on it once it was deleted since,
-			// and a deletion is not something this slice propagates either way.
-			if (base === undefined) plan.fetch.push(step(entry, "new"));
+			// Never agreed on means never shared, so this is simply new here.
+			if (base === undefined) {
+				plan.fetch.push(step(entry, "new"));
+				continue;
+			}
+			// Agreed on once and missing now means it was deleted here. The
+			// hub is asked to do the same, unless its copy has moved on since,
+			// in which case somebody edited what somebody else deleted and the
+			// edit is the thing that survives.
+			if (entry.hash === base) plan.sendGone.push({ path: entry.path, base });
+			else plan.collided.push(entry.path);
 			continue;
 		}
 		if (here === entry.hash) continue;
@@ -230,14 +268,26 @@ export function pullPlan(
 		plan.collided.push(entry.path);
 	}
 
-	// Files here that the hub has never heard of are ours to offer, later.
 	for (const [path, hash] of local) {
 		if (seen.has(path)) continue;
-		// Agreed and unchanged means the hub dropped it, and a deletion is
-		// nothing this slice carries in either direction.
-		if (agreed.get(path) === hash) continue;
 		const base = agreed.get(path);
-		plan.ours.push({ path, hash, base, why: base === undefined ? "new" : "changed" });
+		// Never agreed on means the hub has never had it, so it goes up.
+		if (base === undefined) {
+			plan.ours.push({ path, hash, why: "new" });
+			continue;
+		}
+		// Agreed on once and no longer offered means the hub deleted it.
+		// Untouched here, that is a deletion to review; edited here, the
+		// edit survives and the disagreement is reported as one.
+		if (hash === base) plan.gone.push({ path, base });
+		else plan.collided.push(path);
+	}
+
+	// A baseline for a file neither side has any more has nothing left to
+	// describe, and keeping it would make the file new all over again if it
+	// ever came back.
+	for (const path of agreed.keys()) {
+		if (!seen.has(path) && !local.has(path)) plan.forget.push(path);
 	}
 
 	return plan;
@@ -251,6 +301,8 @@ function step(entry: HubEntry, why: PullWhy): PullStep {
 export interface SyncTally {
 	taken: number;
 	sent: number;
+	/** Deletions the hub was asked to carry out, once somebody has looked. */
+	asked: number;
 	/** Files the hub was asked for that did not arrive, or arrived wrong. */
 	trouble: number;
 }
@@ -260,12 +312,16 @@ export interface SyncTally {
  *
  * It names both directions, and it names what did not happen as well as what
  * did. A sync that quietly carries half of what you expected is worse than
- * one that says it refused the other half.
+ * one that says it refused the other half. Deletions are counted as waiting
+ * rather than done, because nothing is deleted until somebody has read the
+ * list and said so.
  */
 export function syncSentence(plan: PullPlan, tally: SyncTally): string {
 	const parts: string[] = [];
 	if (tally.taken > 0) parts.push(`took ${files(tally.taken)}`);
 	if (tally.sent > 0) parts.push(`sent ${files(tally.sent)}`);
+	if (tally.asked > 0) parts.push(`asked the hub about ${files(tally.asked)} deleted here`);
+	if (plan.gone.length > 0) parts.push(`${plan.gone.length} deleted on the hub, waiting on you`);
 	if (plan.collided.length > 0) {
 		parts.push(`${plan.collided.length} changed on both sides, left alone`);
 	}
@@ -275,6 +331,15 @@ export function syncSentence(plan: PullPlan, tally: SyncTally): string {
 	if (parts.length === 0) return "Already in step.";
 	const said = parts.join(", ");
 	return `${said.charAt(0).toUpperCase()}${said.slice(1)}.`;
+}
+
+/** What a review did, once somebody has read it. */
+export function reviewSentence(removed: number, kept: number): string {
+	if (removed === 0 && kept === 0) return "Nothing to remove.";
+	const parts: string[] = [];
+	if (removed > 0) parts.push(`${files(removed)} to the trash`);
+	if (kept > 0) parts.push(`kept ${kept}`);
+	return `${parts.join(", ").replace(/^./, (first) => first.toUpperCase())}.`;
 }
 
 function files(count: number): string {
