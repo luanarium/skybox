@@ -1,4 +1,4 @@
-import { Platform, Plugin, setIcon, TFile, type WorkspaceLeaf } from "obsidian";
+import { Notice, Platform, Plugin, setIcon, TFile, type WorkspaceLeaf } from "obsidian";
 import { isBorrowing } from "./borrowed";
 import { Autonamer } from "./autoname";
 import { BookmarkImport } from "./bookmarks";
@@ -76,6 +76,19 @@ export default class SkyboxPlugin extends Plugin {
 			id: "open-skybox",
 			name: "Open",
 			callback: () => void this.open(),
+		});
+
+		/*
+		 * Standalone mode is the whole app, which means Obsidian's own file
+		 * explorer is not reachable, and sooner or later something wants it:
+		 * renaming a folder, say. This steps out of the way until it is
+		 * pressed again, without touching the setting, so the next launch is
+		 * standalone as before.
+		 */
+		this.addCommand({
+			id: "skybox-show-obsidian",
+			name: "Show Obsidian's own panes, until this is pressed again",
+			callback: () => this.peek(),
 		});
 
 		this.addCommand({
@@ -262,8 +275,25 @@ export default class SkyboxPlugin extends Plugin {
 		this.app.workspace.setActiveLeaf(keep, { focus: true });
 	}
 
+	/** Set while Obsidian's own panes have been asked for. */
+	private peeking = false;
+
+	/** Step out of standalone for now, or back into it. */
+	private peek(): void {
+		this.peeking = !this.peeking;
+		this.applyStandalone();
+		const left = this.app.workspace.leftSplit;
+		if (this.peeking) {
+			left.expand();
+			new Notice("Obsidian's panes are back. The same command puts them away.");
+		} else {
+			left.collapse();
+			new Notice("Standalone again.");
+		}
+	}
+
 	applyStandalone(): void {
-		document.body.toggleClass("skybox-standalone", this.settings.standalone);
+		document.body.toggleClass("skybox-standalone", this.settings.standalone && !this.peeking);
 		// With a window handle the drag band moves the window itself, so it
 		// must keep its clicks rather than becoming a CSS drag region.
 		document.body.toggleClass("skybox-window", hasWindowHandle());
