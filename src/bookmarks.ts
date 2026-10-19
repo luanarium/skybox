@@ -122,6 +122,13 @@ export function folderTag(name: string): string | null {
  * The `bookmark` tag plays the part `clippings` plays for the clipper: one
  * handle for every note that came in this way.
  */
+/**
+ * The least time between two passes that ask pages about themselves. The
+ * workspace can change panes several times a second; a page fetch should not
+ * follow each one.
+ */
+const ASK_GAP = 60 * 1000;
+
 export const BOOKMARK_TAG = "bookmark";
 
 export function bookmarkNote(bookmark: Bookmark): string {
@@ -280,6 +287,15 @@ export class BookmarkImport {
 	private seenAt = 0;
 	/** Why the last look failed, for the notice to say something useful. */
 	private trouble: string | null = null;
+	/**
+	 * Whether every bookmark note has been asked about already, so the
+	 * scan that looks for ones that have not is skipped until there is a
+	 * reason for it: a changed file, a new import, or a button.
+	 */
+	private described = false;
+	/** When the last describing pass ran, so a busy workspace cannot drive
+	 * one on every pane it opens. */
+	private askedAt = 0;
 
 	constructor(
 		private app: App,
@@ -315,8 +331,22 @@ export class BookmarkImport {
 		try {
 			const stat = node.statSync(path);
 			// Chromium rewrites the file on every change; its mtime is the cue.
-			if (!force && stat.mtimeMs <= this.seenAt) return 0;
+			if (!force && stat.mtimeMs <= this.seenAt) {
+				/*
+				 * Nothing new to import, which is not the same as nothing left to
+				 * do. Asking pages about themselves is rationed to a handful a
+				 * pass, so a long bookmarks file needs many passes, and returning
+				 * here used to end them after the first: the rest of the notes
+				 * stayed a title and a link for good.
+				 */
+				if (!this.described && Date.now() - this.askedAt > ASK_GAP) {
+					this.askedAt = Date.now();
+					await this.enrich([]);
+				}
+				return 0;
+			}
 			this.seenAt = stat.mtimeMs;
+			this.described = false;
 			json = node.readFileSync(path, "utf8");
 		} catch (error) {
 			// The path it actually tried, which is the thing worth knowing when
@@ -372,6 +402,7 @@ export class BookmarkImport {
 	 */
 	private async enrich(fresh: { file: TFile; source: string }[] = [], limit = 8): Promise<void> {
 		let budget = limit;
+		if (fresh.length > 0) this.described = false;
 		// The ones just written, which no cache knows about yet.
 		for (const note of fresh) {
 			if (budget <= 0) return;
@@ -387,6 +418,9 @@ export class BookmarkImport {
 			budget--;
 			await this.describe(file, source);
 		}
+		// The whole vault, and nothing left unasked: later passes can skip
+		// this scan until something changes.
+		this.described = true;
 	}
 
 	/**
@@ -510,5 +544,13 @@ export class BookmarkImport {
 				? "No new bookmarks."
 				: `${written} bookmark${written === 1 ? "" : "s"} added.`
 		);
+		/*
+		 * Then a proper handful of pages asked about themselves, because
+		 * somebody is waiting on this one rather than a timer. It carries on
+		 * after the notice: the count is about importing, and describing is
+		 * slower than anybody wants to watch.
+		 */
+		this.described = false;
+		void this.enrich([], 25);
 	}
 }

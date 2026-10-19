@@ -232,7 +232,10 @@ decoded, and a date is kept only when one can actually be read out of what the p
 This is the only part of Skybox that goes out to the network, and it only runs for a vault that has
 set the import up. Eight pages per look, each asked once: a `fetched` date goes into the note
 whether or not the page answered, so nothing is asked twice, and a long-kept bookmarks file fills in
-over several passes rather than fetching hundreds of pages at once. Notes that came from somewhere
+over several passes rather than fetching hundreds of pages at once. Those passes keep going while
+anything is still unasked, at most one a minute, and stop costing anything once nothing is: a vault
+with every page asked skips even the looking until a bookmark arrives or the file changes. **Sync
+now** asks about twenty-five, since somebody is waiting on that one. Notes that came from somewhere
 else are left alone, since the pass only touches notes carrying the `bookmark` tag or sitting in the
 bookmarks folder.
 
