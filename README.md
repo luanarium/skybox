@@ -240,7 +240,8 @@ else are left alone, since the pass only touches notes carrying the `bookmark` t
 bookmarks folder.
 
 Worth knowing: a preview image is shown from wherever the page keeps it, so displaying those cards
-reaches those hosts. **Preview images** off stops that, and the cards draw cover art instead.
+reaches those hosts. The same goes for an address written into a note by hand. **Preview images** off
+stops both, and the cards draw cover art instead.
 
 Why the file rather than something tidier: Brave's own sync is end-to-end encrypted between Brave
 installs with nothing for a third party to hook, and `chrome.bookmarks` belongs to extensions, which
@@ -580,9 +581,18 @@ different one says so in a `cover` property, which the right pane writes when yo
 images the note holds: it offers every embedded image and the drawn cover as the last choice, so
 going back to the gradient is the same gesture as picking a picture.
 
-The order a card follows is the cover you chose, then a picture fetched for a bookmark, then the
-first thing the note embeds, then the drawn one. `src/preview.ts` holds the reading of a `cover`
-value, which may be `[[a.png]]`, `![[a.png]]`, `[[a.png|alias]]` or a bare path.
+A picture can also just be written into the note: `![](a.png)`, `![[a.png]]` or an address pasted
+from somewhere else, which is what a page's own picture usually is. That counts as a picture the note
+holds, so the card shows it, and it comes above a picture fetched for a bookmark because somebody put
+it there while the fetched one was read off the page and might be a logo. Only the text above the
+extracted article counts: the pictures inside an article arrived with it and nobody chose them. The
+card already reads the note for its excerpt, so finding this costs no extra read.
+
+The order a card follows is the cover you chose, then a picture written into the note, then a picture
+fetched for a bookmark, then the first thing the note embeds, then the drawn one. `src/preview.ts`
+holds the reading of a `cover` value, which may be `[[a.png]]`, `![[a.png]]`, `[[a.png|alias]]`, a
+bare path or an address, and `bodyImage`, which finds the picture in the text. `tests/preview.test.ts`
+covers both.
 
 ## Cover art
 

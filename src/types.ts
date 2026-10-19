@@ -23,6 +23,12 @@ export interface Item {
 	embedded: boolean;
 	/** A picture the card can show instead of cover art, from `image`. */
 	preview: string | null;
+	/**
+	 * The preview is the picture the page offered for its own social cards,
+	 * rather than one this note holds, so a picture written into the note
+	 * itself is the better one to draw.
+	 */
+	previewOffered?: boolean;
 	/** A conversation with something in it nobody has read. */
 	unread: boolean;
 	/**

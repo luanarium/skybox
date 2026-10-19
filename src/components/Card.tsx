@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import { type App, TFile } from "obsidian";
 import { useSkybox } from "../context";
 import { coverClass, coverVars } from "../cover";
+import { bodyImage, webImage } from "../preview";
 import { plainExcerpt } from "../search";
-import type { Item } from "../types";
+import type { Item, SkyboxSettings } from "../types";
 
 interface CardProps {
 	item: Item;
@@ -22,15 +24,22 @@ interface CardProps {
 export function Card({ item, index, named, fresh, dropped, onOpen, onMenu }: CardProps) {
 	const { app, index: vaultIndex, settings } = useSkybox();
 	const [excerpt, setExcerpt] = useState("");
+	/** A picture found in the note's own text, as the note wrote it. */
+	const [written, setWritten] = useState<string | null>(null);
 
 	useEffect(() => {
 		let current = true;
 		if (item.kind === "note" || item.sidecar) {
 			vaultIndex.content(item).then((content) => {
-				if (current) setExcerpt(plainExcerpt(content));
+				if (!current) return;
+				setExcerpt(plainExcerpt(content));
+				// The text is here for the excerpt either way, so a picture in it
+				// costs nothing more to find.
+				setWritten(item.kind === "note" && !item.remote ? bodyImage(content) : null);
 			});
 		} else {
 			setExcerpt("");
+			setWritten(null);
 		}
 		return () => {
 			current = false;
@@ -54,6 +63,12 @@ export function Card({ item, index, named, fresh, dropped, onOpen, onMenu }: Car
 		window.clearTimeout(held.current);
 		held.current = null;
 	};
+
+	// What the card draws: a picture the note holds beats one the page merely
+	// offered, and resolving it here rather than in the effect means the
+	// preview-images setting takes hold the moment it is switched.
+	const own = textPicture(app, settings, item, written);
+	const picture = own && (!item.preview || item.previewOffered) ? own : item.preview;
 
 	const style = {
 		animationDelay: `${Math.min(index, 20) * 24}ms`,
@@ -94,15 +109,15 @@ export function Card({ item, index, named, fresh, dropped, onOpen, onMenu }: Car
 				}
 			}}
 		>
-			{item.kind === "note" && item.preview && (
+			{item.kind === "note" && picture && (
 				<img
 					className="skybox-card-image skybox-card-preview"
-					src={item.preview}
+					src={picture}
 					alt=""
 					loading="lazy"
 				/>
 			)}
-			{item.kind === "note" && !item.preview && settings.coverArt && (
+			{item.kind === "note" && !picture && settings.coverArt && (
 				// Decoration, not content: the title below says what this is.
 				<div
 					className={coverClass(item.id)}
@@ -134,4 +149,25 @@ export function Card({ item, index, named, fresh, dropped, onOpen, onMenu }: Car
 			</div>
 		</div>
 	);
+}
+
+/**
+ * A picture the note's text pointed at, ready for an `img`. An address is
+ * loaded from wherever it lives, so it waits on the same setting as a picture
+ * fetched for a bookmark: with that off, nothing in a card reaches a host
+ * nobody asked it to. A path is resolved the way Obsidian would resolve it,
+ * which also covers the moment before the cache has caught up with a new
+ * embed.
+ */
+function textPicture(
+	app: App,
+	settings: SkyboxSettings,
+	item: Item,
+	reference: string | null
+): string | null {
+	if (!reference) return null;
+	const address = webImage(reference);
+	if (address) return settings.bookmarkImages ? address : null;
+	const target = app.metadataCache.getFirstLinkpathDest(reference, item.file.path);
+	return target instanceof TFile ? app.vault.getResourcePath(target) : null;
 }

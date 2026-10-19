@@ -213,6 +213,7 @@ export class VaultIndex {
 	private noteItem(file: TFile): Item {
 		// A note is never embedded in the sense that matters here: it is read.
 		const cache = this.app.metadataCache.getFileCache(file);
+		const shown = this.previewOf(file, cache?.frontmatter);
 		return {
 			id: file.path,
 			kind: "note",
@@ -224,7 +225,8 @@ export class VaultIndex {
 			headings: (cache?.headings ?? []).map((h) => h.heading),
 			excerpt: "",
 			embedded: false,
-			preview: this.previewOf(file, cache?.frontmatter),
+			preview: shown.picture,
+			previewOffered: shown.offered,
 			// A conversation says in its own frontmatter what is waiting.
 			unread: cache?.frontmatter?.unread === true,
 		};
@@ -256,22 +258,36 @@ export class VaultIndex {
 	}
 
 	/**
-	 * The picture a note's card shows: the cover it chose, then a picture
-	 * fetched for a bookmark, then the first image it embeds. A note that
-	 * holds a picture should show it rather than a drawn one.
+	 * The picture a note's card shows, and whether it is the page's own
+	 * offering: the cover it chose, then a picture fetched for a bookmark,
+	 * then the first image it embeds. A note that holds a picture should show
+	 * it rather than a drawn one. A picture written into the note's text is
+	 * found by the card, which has already read the text for its excerpt, and
+	 * it comes above an offered one.
 	 */
-	private previewOf(file: TFile, front: Record<string, unknown> | undefined): string | null {
+	private previewOf(
+		file: TFile,
+		front: Record<string, unknown> | undefined
+	): { picture: string | null; offered: boolean } {
 		const chosen = coverTarget(front?.cover);
 		if (chosen) {
 			const target = this.app.metadataCache.getFirstLinkpathDest(chosen, file.path);
-			if (target instanceof TFile) return this.app.vault.getResourcePath(target);
+			if (target instanceof TFile) {
+				return { picture: this.app.vault.getResourcePath(target), offered: false };
+			}
 		}
+		// A cover can be an address as easily as a file, and picking one is a
+		// choice, so it stands above anything read off a page.
+		const pinned = this.settings.bookmarkImages ? webImage(front?.cover) : null;
+		if (pinned) return { picture: pinned, offered: false };
 		const remote = this.settings.bookmarkImages ? webImage(front?.image) : null;
-		if (remote) return remote;
+		if (remote) return { picture: remote, offered: true };
 		const first = this.embedsBy.get(file.path)?.[0];
-		if (!first) return null;
+		if (!first) return { picture: null, offered: false };
 		const embedded = this.app.vault.getAbstractFileByPath(first);
-		return embedded instanceof TFile ? this.app.vault.getResourcePath(embedded) : null;
+		const picture =
+			embedded instanceof TFile ? this.app.vault.getResourcePath(embedded) : null;
+		return { picture, offered: false };
 	}
 
 	/**

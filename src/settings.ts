@@ -142,10 +142,10 @@ export class SkyboxSettingTab extends PluginSettingTab {
 			.setName("Preview images")
 			.setDesc(
 				"Show the picture a page offers for its own social cards, where it offers one, " +
-					"in place of cover art. The picture is loaded from wherever the page keeps " +
-					"it, so showing these cards reaches those hosts; off, cards draw cover art " +
-					"and nothing is loaded. What the page said about itself is kept in the " +
-					"note's properties either way."
+					"in place of cover art, and likewise a picture written into a note as an " +
+					"address. The picture is loaded from wherever it is kept, so showing these " +
+					"cards reaches those hosts; off, cards draw cover art and nothing is loaded. " +
+					"What the page said about itself is kept in the note's properties either way."
 			)
 			.addToggle((toggle) =>
 				toggle.setValue(this.plugin.settings.bookmarkImages).onChange(async (value) => {
