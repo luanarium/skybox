@@ -4,6 +4,7 @@ import {
 	bookmarkNote,
 	chromiumTime,
 	expandHome,
+	flatpakGrant,
 	folderTag,
 	hostOf,
 	parseBookmarks,
@@ -130,3 +131,19 @@ assert.strictEqual(expandHome("~/x/Bookmarks", "/home/neo"), "/home/neo/x/Bookma
 assert.strictEqual(expandHome("~", "/home/neo"), "/home/neo");
 assert.strictEqual(expandHome("/tmp/Bookmarks", "/home/neo"), "/tmp/Bookmarks");
 assert.strictEqual(expandHome("~notuser/x", "/home/neo"), "~notuser/x");
+
+// The grant a Flatpak Obsidian needs to read a Flatpak browser, worked out
+// from the path itself, so the line offered is the line to run.
+assert.strictEqual(
+	flatpakGrant(
+		"/home/neo/.var/app/com.brave.Browser/config/BraveSoftware/Brave-Browser/Default/Bookmarks"
+	),
+	"flatpak override --user --filesystem=~/.var/app/com.brave.Browser/config/BraveSoftware/Brave-Browser:ro md.obsidian.Obsidian"
+);
+assert.strictEqual(
+	flatpakGrant("~/.var/app/com.google.Chrome/config/google-chrome/Profile 1/Bookmarks"),
+	"flatpak override --user --filesystem=~/.var/app/com.google.Chrome/config/google-chrome:ro md.obsidian.Obsidian"
+);
+// Nothing typed yet: Brave stands as the example, since that is the common one.
+assert.ok(flatpakGrant("").includes("com.brave.Browser"));
+assert.ok(flatpakGrant("/home/neo/somewhere/else/Bookmarks").includes("com.brave.Browser"));

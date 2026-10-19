@@ -215,6 +215,47 @@ const BROWSER_DIRS = [
 
 const PROFILES = ["Default", "Profile 1", "Profile 2", "Profile 3"];
 
+/**
+ * Whether Obsidian is itself inside a Flatpak.
+ *
+ * It matters because Flatpak hides one app's `~/.var/app` folder from
+ * another, home permission or not, so a browser installed the same way is
+ * invisible from in here however carefully its path is typed. Saying "no
+ * bookmarks file turned up" in that situation is a lie by omission: the file
+ * is there, and the sandbox is in the way.
+ */
+export function inFlatpak(): boolean {
+	const node = fs();
+	if (!node) return false;
+	try {
+		return node.existsSync("/.flatpak-info");
+	} catch {
+		return false;
+	}
+}
+
+/** Whether a path can be seen from in here at all. */
+export function pathVisible(path: string): boolean {
+	const node = fs();
+	if (!node || !path.trim()) return false;
+	try {
+		return node.existsSync(expandHome(path.trim(), homeDir()));
+	} catch {
+		return false;
+	}
+}
+
+/** The one command that lets Obsidian read a browser kept in a Flatpak. */
+export function flatpakGrant(path: string): string {
+	const match = /\.var\/app\/([^/]+)\/config\/(.+?)\/[^/]+\/Bookmarks$/.exec(path.trim());
+	const app = match?.[1] ?? "com.brave.Browser";
+	const inside = match?.[2] ?? "BraveSoftware/Brave-Browser";
+	return (
+		`flatpak override --user --filesystem=~/.var/app/${app}/config/${inside}:ro ` +
+		"md.obsidian.Obsidian"
+	);
+}
+
 /** Bookmarks files this machine actually has, for the settings to offer. */
 export function findBookmarkFiles(): string[] {
 	const node = fs();

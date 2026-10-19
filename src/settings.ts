@@ -1,5 +1,5 @@
 import { Notice, PluginSettingTab, Setting, type App } from "obsidian";
-import { BookmarkImport, findBookmarkFiles } from "./bookmarks";
+import { BookmarkImport, findBookmarkFiles, flatpakGrant, inFlatpak, pathVisible } from "./bookmarks";
 import { expandHome, homeDir } from "./bookmarks";
 import { normalizeInstance } from "./mastodon";
 import { clientFor, readToken, writeToken } from "./sharing";
@@ -70,12 +70,32 @@ export class SkyboxSettingTab extends PluginSettingTab {
 		 * came first alphabetically, which is nobody's intention.
 		 */
 		const found = findBookmarkFiles();
+		const typed = this.plugin.settings.bookmarksPath;
+		const hidden = typed !== "" && !pathVisible(typed);
+		/*
+		 * Flatpak hides one app's folder from another, so a browser installed
+		 * that way is invisible from in here whatever is typed. Nothing in
+		 * the plugin can reach past that, and saying nothing turned up would
+		 * send somebody looking for a file that is sitting right there, so
+		 * the one command that opens the door is offered instead.
+		 */
+		const sandboxed =
+			inFlatpak() && (found.length === 0 || hidden)
+				? "Obsidian is running in a Flatpak, which hides other Flatpak apps' folders " +
+					"from it, so a browser installed the same way cannot be read however its " +
+					"path is typed. Grant it read access once and restart Obsidian, not " +
+					`reload: ${flatpakGrant(typed)} . Swap the app id if your browser is not ` +
+					"Brave. "
+				: "";
+
 		new Setting(containerEl)
 			.setName("Bookmarks file")
 			.setDesc(
 				(found.length > 0
 					? `Found on this computer: ${found.join(", ")}. `
 					: "No Chromium bookmarks file turned up in the usual places. Paste the path to one. ") +
+					(hidden ? `Nothing is readable at ${typed}. ` : "") +
+					sandboxed +
 					"Sync now reads it once, whether or not the switch above is on."
 			)
 			.addText((text) =>

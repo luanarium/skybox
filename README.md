@@ -194,6 +194,19 @@ as a Snap. The settings look in the usual places for all of those and offer what
 path can be typed in by hand. Firefox keeps its bookmarks in `places.sqlite` rather than JSON, so it
 is not supported yet and is on the list below.
 
+**Two Flatpaks cannot see each other.** If Obsidian is a Flatpak and so is your browser, the
+browser's folder is hidden from Obsidian whatever its path says, because Flatpak keeps one app out
+of another's `~/.var/app` even when the app has access to your home directory. The settings line
+says so when it applies, and offers the one command that opens that door, read only and for that
+browser alone:
+
+```
+flatpak override --user --filesystem=~/.var/app/com.brave.Browser/config/BraveSoftware/Brave-Browser:ro md.obsidian.Obsidian
+```
+
+Obsidian has to be quit and started again afterwards, not reloaded, since the sandbox is decided at
+launch. Then the path turns up on its own, because it was always in the list of places to look.
+
 **What arrives** is a title, a link, a date, the folders it came from, what the page says about
 itself, and the page's own text. Which is to say: the thing you would otherwise have opened a
 clipper for, without having opened anything.
