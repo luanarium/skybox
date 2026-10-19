@@ -69,6 +69,8 @@ export interface SkyboxSettings {
 	mastodonTag: string;
 	/** How a shared post is addressed. */
 	mastodonVisibility: string;
+	/** An address on the local network to try, while the hub is only an idea. */
+	hubProbe: string;
 	/** The Maildir to read mail from; empty means mail is off. */
 	mailMaildir: string;
 	/** Where a reply is left for the mail transfer agent to send. */
@@ -107,6 +109,7 @@ export const DEFAULT_SETTINGS: SkyboxSettings = {
 	mailFolder: "mail",
 	mailAddress: "",
 	dmEnabled: false,
+	hubProbe: "",
 };
 
 /** The tag an image gets for being embedded in a note; nothing writes it. */

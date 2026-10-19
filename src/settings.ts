@@ -4,6 +4,7 @@ import { expandHome, homeDir } from "./bookmarks";
 import { normalizeInstance } from "./mastodon";
 import { clientFor, readToken, writeToken } from "./sharing";
 import type SkyboxPlugin from "./main";
+import { normalizeAddress, reachable, reachSentence } from "./probe";
 import { hasWindowHandle } from "./window";
 
 export class SkyboxSettingTab extends PluginSettingTab {
@@ -343,6 +344,52 @@ export class SkyboxSettingTab extends PluginSettingTab {
 			);
 	}
 
+	/**
+	 * Not a feature: a question. A hub inside the plugin, with the phone
+	 * pulling from the desktop across the network they share, rests on
+	 * whether a phone can reach a plain HTTP address from inside Obsidian at
+	 * all, and Android has refused cleartext by default since Android 9. This
+	 * asks, from whichever device you press it on, and goes away once the
+	 * answer is known.
+	 */
+	private hubProbe(containerEl: HTMLElement): void {
+		new Setting(containerEl)
+			.setName("Local hub")
+			.setDesc(
+				"Nothing is listening yet. Run node tools/probe-server.mjs on the computer, " +
+					"put the address it prints in here, and press Check on both devices. " +
+					"Skybox tries it two ways, its own request and the web view's, and says " +
+					"what each one answered."
+			)
+			.addText((text) =>
+				text
+					.setPlaceholder("192.168.1.20:8777")
+					.setValue(this.plugin.settings.hubProbe)
+					.onChange(async (value) => {
+						this.plugin.settings.hubProbe = value.trim();
+						await this.plugin.saveSettings();
+					})
+			)
+			.addButton((button) =>
+				button.setButtonText("Check").onClick(async () => {
+					const address = normalizeAddress(this.plugin.settings.hubProbe);
+					if (!address) {
+						new Notice("Skybox needs an address to try, like 192.168.1.20:8777.");
+						return;
+					}
+					button.setButtonText("Trying");
+					button.setDisabled(true);
+					const tries = await reachable(address);
+					// The console keeps the detail; the notice has to be read
+					// on a phone, where there is no console to open.
+					console.log("Skybox: local hub probe", address, tries);
+					new Notice(reachSentence(tries), 15000);
+					button.setButtonText("Check");
+					button.setDisabled(false);
+				})
+			);
+	}
+
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
@@ -400,6 +447,7 @@ export class SkyboxSettingTab extends PluginSettingTab {
 		this.bookmarkSettings(containerEl);
 		this.sharingSettings(containerEl);
 		this.mailSettings(containerEl);
+		this.hubProbe(containerEl);
 
 		new Setting(containerEl)
 			.setName("Images embedded in notes")
