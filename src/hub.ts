@@ -1,10 +1,11 @@
-import { Notice, Platform, TFile, normalizePath, type App } from "obsidian";
+import { Notice, Platform, TFile, TFolder, normalizePath, type App } from "obsidian";
 import type { SkyboxSettings } from "./types";
 import {
 	HUB_KEY_HEADER,
 	hex,
 	phraseKey,
 	sameKey,
+	hubComplaint,
 	hubFolders,
 	withinServed,
 	type HubEntry,
@@ -148,11 +149,17 @@ export class Hub {
 				server.listen(port, "0.0.0.0", () => {
 					this.server = server;
 					const where = ownAddresses(port);
-					const said =
+					const serving =
 						where.length > 0
 							? `Serving on ${where.join(", ")}.`
 							: `Serving on port ${port}.`;
-					if (aloud) new Notice(`Skybox: ${said}`);
+					// A hub with nothing to serve says so here, because every
+					// other part of it will look correct from the other device.
+					const trouble = this.complaint();
+					const said = trouble ? `${serving} ${trouble}` : serving;
+					if (aloud || trouble) {
+						new Notice(`Skybox: ${said}`, trouble ? 15000 : undefined);
+					}
 					done(said);
 				});
 			} catch (error) {
@@ -223,6 +230,20 @@ export class Hub {
 
 	private folders(): string[] {
 		return hubFolders(this.settings);
+	}
+
+	/**
+	 * What is wrong with the folders, for the switch to say. A hub serving an
+	 * empty list looks entirely healthy from the other device, so this is
+	 * checked here rather than left to be found out by a sync that takes
+	 * nothing and calls it being in step.
+	 */
+	complaint(): string {
+		const folders = this.folders();
+		const present = folders.filter(
+			(folder) => this.app.vault.getAbstractFileByPath(folder) instanceof TFolder
+		);
+		return hubComplaint(folders, present);
 	}
 
 	private async entries(): Promise<HubEntry[]> {

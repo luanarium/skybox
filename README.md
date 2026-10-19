@@ -703,6 +703,12 @@ intake, bookmarks and conversations. Nothing outside them is listed, and a reque
 outside them is refused on the way out as well as on the way in, so `..`, an absolute path, a drive
 letter, an address, and `.obsidian` are all simply not files this hub has.
 
+If a named folder is not in the vault, the switch says so, and so does the notice when the hub
+starts. This is worth saying out loud because a hub with nothing to serve looks healthy from every
+other angle: the switch reads Listening, the address answers, the phrase matches, and the sync takes
+nothing and calls it being in step. The empty case is a real one on a new vault, where the intake
+folder has not been chosen yet.
+
 A manifest is a path, a size, a time and the SHA-256 of the bytes. Hashes are kept by mtime, so a
 quiet vault costs nothing to describe and an unchanged file is never read twice. The puller compares
 hashes rather than clocks, which matters more than it sounds: a phone and a laptop do not agree

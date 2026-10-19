@@ -1,5 +1,6 @@
 import * as assert from "node:assert";
 import {
+	hubComplaint,
 	hubFolders,
 	hubUrl,
 	normalizePhrase,
@@ -48,6 +49,23 @@ assert.deepStrictEqual(
 	["notes"],
 	"what you named wins"
 );
+
+// A hub serving nothing is the one broken state that looks healthy from the
+// other device, so it is said out loud rather than discovered.
+assert.match(hubComplaint([], []), /^Serving nothing: no folders are named/);
+assert.strictEqual(
+	hubComplaint(["Skybox"], []),
+	'Serving nothing: "Skybox" is not in this vault.'
+);
+assert.strictEqual(
+	hubComplaint(["bookmarks", "mail"], []),
+	'Serving nothing: "bookmarks", "mail" are not in this vault.'
+);
+assert.strictEqual(
+	hubComplaint(["Skybox", "mail"], ["Skybox"]),
+	'"mail" is not in this vault, so nothing comes from it.'
+);
+assert.strictEqual(hubComplaint(["Skybox"], ["Skybox"]), "", "nothing to say");
 
 // What leaves the vault is checked on the way out as well as the way in.
 const served = ["Skybox", "bookmarks"];

@@ -377,6 +377,9 @@ export class SkyboxSettingTab extends PluginSettingTab {
 	 */
 	private hubSettings(containerEl: HTMLElement): void {
 		const serving = this.plugin.hub.listening;
+		// A hub that is listening and serving an empty folder list looks
+		// right from every other angle, so the switch says so itself.
+		const trouble = serving ? this.plugin.hub.complaint() : "";
 
 		new Setting(containerEl)
 			.setName("Local hub")
@@ -412,7 +415,7 @@ export class SkyboxSettingTab extends PluginSettingTab {
 					? serving
 						? `Listening. Addresses to use elsewhere: ${
 								ownAddresses(this.plugin.settings.hubPort).join(", ") || "none found"
-							}.`
+							}.${trouble ? ` ${trouble}` : ""}`
 						: "Off. Switch this on, on the computer that stays awake."
 					: "A phone cannot serve, only ask. Switch this on, on a computer."
 			)

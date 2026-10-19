@@ -118,6 +118,34 @@ export function withinServed(path: string, folders: string[]): boolean {
 	return folders.some((folder) => clean === folder || clean.startsWith(`${folder}/`));
 }
 
+/**
+ * What is wrong with what a hub would serve, in one sentence, or nothing at
+ * all when there is nothing wrong.
+ *
+ * A hub that is listening and serving an empty list is the worst of the
+ * possible states, because every part of it looks right: the switch is on,
+ * the address answers, the phrase matches, and the sync takes nothing and
+ * says it is already in step. So the folders are checked against the vault
+ * rather than taken on trust, and the answer is said next to the switch.
+ */
+export function hubComplaint(folders: string[], present: string[]): string {
+	if (folders.length === 0) {
+		return (
+			"Serving nothing: no folders are named below, and Skybox's own intake, " +
+			"bookmarks and conversation folders are not set either."
+		);
+	}
+	const missing = folders.filter((folder) => !present.includes(folder));
+	if (missing.length === 0) return "";
+	const names = missing.map((folder) => `"${folder}"`).join(", ");
+	const is = missing.length === 1 ? "is" : "are";
+	if (missing.length === folders.length) {
+		return `Serving nothing: ${names} ${is} not in this vault.`;
+	}
+	const them = missing.length === 1 ? "it" : "them";
+	return `${names} ${is} not in this vault, so nothing comes from ${them}.`;
+}
+
 /** Why a file is being asked for. */
 export type PullWhy = "new" | "changed";
 
