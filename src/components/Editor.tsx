@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import {
 	MarkdownView,
+	Platform,
 	WorkspaceSidedock,
 	type App,
 	type TFile,
 	type WorkspaceLeaf,
-	type WorkspaceSplit,
 } from "obsidian";
 import { EditorState } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
@@ -43,9 +43,8 @@ export function Editor({ file }: { file: TFile }) {
 			/*
 			 * Detaching unloads the file, which saves any unsaved changes, and
 			 * sends the workspace off to rearrange itself around the leaf that
-			 * has gone. On a phone that is the leaf the grid lives in, so the
-			 * work lands in the very frame that has to paint the grid: it
-			 * waits for the frame after instead.
+			 * has gone. That is work in the frame that has to paint the grid
+			 * again, so it waits for the frame after instead.
 			 */
 			window.setTimeout(() => {
 				spent?.detach();
@@ -54,7 +53,7 @@ export function Editor({ file }: { file: TFile }) {
 		};
 
 		const mount = async () => {
-			leaf = app.workspace.createLeafInParent(outOfSight(app), 0);
+			leaf = spareLeaf(app);
 			await leaf.setViewState({
 				type: "markdown",
 				// Live preview: the source mode that renders as it goes.
@@ -89,13 +88,24 @@ export function Editor({ file }: { file: TFile }) {
 }
 
 /**
- * Where the borrowed leaf is created: the right sidebar, which is collapsed in
- * standalone mode and usually out of the way otherwise. On mobile the sidebar
- * is a drawer rather than a split, so the root takes it instead.
+ * Where the borrowed leaf is made: somewhere out of sight, because only its
+ * view is wanted and the leaf itself should take no space.
+ *
+ * On a phone that has to be the drawer. The root split shows one leaf at a
+ * time, so a leaf made there becomes the visible one, which hides the grid
+ * behind the sheet and then shows an empty pane for as long as it takes to
+ * detach: the blank beat before the grid comes back. `getRightLeaf` puts it
+ * in the drawer instead, which is closed, so the grid stays painted the whole
+ * time the card is open and is simply there again when the sheet slides away.
  */
-function outOfSight(app: App): WorkspaceSplit {
+function spareLeaf(app: App): WorkspaceLeaf {
+	if (Platform.isMobile) {
+		const drawered = app.workspace.getRightLeaf(true);
+		if (drawered) return drawered;
+	}
 	const side = app.workspace.rightSplit;
-	return side instanceof WorkspaceSidedock ? side : app.workspace.rootSplit;
+	const parent = side instanceof WorkspaceSidedock ? side : app.workspace.rootSplit;
+	return app.workspace.createLeafInParent(parent, 0);
 }
 
 const SAVE_DELAY = 600;

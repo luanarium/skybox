@@ -267,7 +267,7 @@ export class Hub {
 	 * What is wrong with the folders, for the switch to say. A hub serving an
 	 * empty list looks entirely healthy from the other device, so this is
 	 * checked here rather than left to be found out by a sync that takes
-	 * nothing and calls it being in step.
+	 * nothing and calls it synced.
 	 */
 	complaint(): string {
 		const folders = this.folders();

@@ -1062,10 +1062,27 @@ body.skybox-standalone .titlebar-button-container:focus-within {
 	margin-top: 12px;
 }
 
+/*
+ * Tighter on a phone. The pane is above the note rather than beside it, so a
+ * pixel of padding here is a pixel of the note nobody can read.
+ */
 .is-mobile .skybox-meta {
 	width: auto;
+	padding: 8px 12px;
 	border-left: none;
 	border-top: 1px solid var(--background-modifier-border);
+}
+
+.is-mobile .skybox-meta-section + .skybox-meta-section {
+	margin-top: 10px;
+}
+
+.is-mobile .skybox-meta h4 {
+	margin-bottom: 4px;
+}
+
+.is-mobile .skybox-meta-input {
+	margin-top: 6px;
 }
 
 /*
@@ -1083,7 +1100,10 @@ body.skybox-standalone .titlebar-button-container:focus-within {
 	align-items: center;
 	gap: 6px;
 	width: 100%;
-	padding: 10px 0;
+	padding: 3px 0;
+	min-height: 0;
+	height: auto;
+	line-height: 1.3;
 	background: none;
 	border: none;
 	box-shadow: none;

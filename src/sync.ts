@@ -132,7 +132,7 @@ export function withinServed(path: string, folders: string[]): boolean {
  * A hub that is listening and serving an empty list is the worst of the
  * possible states, because every part of it looks right: the switch is on,
  * the address answers, the phrase matches, and the sync takes nothing and
- * says it is already in step. So the folders are checked against the vault
+ * says it is already synced. So the folders are checked against the vault
  * rather than taken on trust, and the answer is said next to the switch.
  */
 export function hubComplaint(folders: string[], present: string[]): string {
@@ -328,7 +328,7 @@ export function syncSentence(plan: PullPlan, tally: SyncTally): string {
 	const waiting = plan.ours.length - tally.sent;
 	if (waiting > 0) parts.push(`${waiting} the hub would not take`);
 	if (tally.trouble > 0) parts.push(`${tally.trouble} would not come across`);
-	if (parts.length === 0) return "Already in step.";
+	if (parts.length === 0) return "Already synced.";
 	const said = parts.join(", ");
 	return `${said.charAt(0).toUpperCase()}${said.slice(1)}.`;
 }

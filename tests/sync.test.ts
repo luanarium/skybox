@@ -183,7 +183,7 @@ const nothing: PushStep[] = [];
 const empty: PullPlan = { fetch: [], collided: [], ours: [], gone: [], sendGone: [], forget: [] };
 assert.strictEqual(
 	syncSentence({ ...empty, ours: nothing }, { taken: 0, sent: 0, asked: 0, trouble: 0 }),
-	"Already in step."
+	"Already synced."
 );
 assert.strictEqual(
 	syncSentence(
