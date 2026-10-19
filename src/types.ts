@@ -79,6 +79,8 @@ export interface SkyboxSettings {
 	hubAuto: boolean;
 	/** Folders the hub serves, one per line. Empty means Skybox's own. */
 	hubFolders: string;
+	/** Whether this hub takes changes from the devices that pull from it. */
+	hubAccept: boolean;
 	/** The Maildir to read mail from; empty means mail is off. */
 	mailMaildir: string;
 	/** Where a reply is left for the mail transfer agent to send. */
@@ -122,6 +124,7 @@ export const DEFAULT_SETTINGS: SkyboxSettings = {
 	hubAddress: "",
 	hubAuto: true,
 	hubFolders: "",
+	hubAccept: true,
 };
 
 /** The tag an image gets for being embedded in a note; nothing writes it. */

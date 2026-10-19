@@ -53,7 +53,7 @@ export default class SkyboxPlugin extends Plugin {
 		this.sharing = new Sharing(this.app, this.index, this.settings);
 		this.mail = new MailImport(this.app, this.settings);
 		this.dms = new DirectMessages(this.app, this.settings);
-		this.hub = new Hub(this.app, this.settings);
+		this.hub = new Hub(this.app, this.settings, this.index);
 		this.pull = new HubPull(this.app, this.settings, this.index, this);
 		// A listening socket outlives a reload unless something closes it.
 		this.register(() => this.hub.stop());

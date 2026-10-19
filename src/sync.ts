@@ -34,6 +34,13 @@ export interface HubManifest {
 export const HUB_KEY_HEADER = "x-skybox-key";
 
 /**
+ * What the sender believed the hub's copy was, sent with a change so the hub
+ * can refuse it. Without this a push is a blind overwrite: the manifest a
+ * device is working from is seconds old, and seconds are enough.
+ */
+export const HUB_BASE_HEADER = "x-skybox-base";
+
+/**
  * The phrase, as both devices mean it.
  *
  * Typed on two keyboards it will differ in case and spacing, and neither
@@ -155,6 +162,21 @@ export interface PullStep {
 	hash: string;
 }
 
+/** A change this device has and the hub does not. */
+export interface PushStep {
+	path: string;
+	why: PullWhy;
+	/** The hash of what is here, which is what the hub will end up holding. */
+	hash: string;
+	/**
+	 * The hash the two sides last agreed on, or nothing for a file the hub
+	 * has never heard of. The hub compares it with what it holds now and
+	 * refuses the change if they differ, so a push can never overwrite work
+	 * that arrived after the manifest was read.
+	 */
+	base?: string;
+}
+
 export interface PullPlan {
 	/** Files to ask the hub for. */
 	fetch: PullStep[];
@@ -164,8 +186,8 @@ export interface PullPlan {
 	 * would be the one mistake this cannot take back.
 	 */
 	collided: string[];
-	/** Files changed here and not there, which a later slice will push. */
-	ours: string[];
+	/** Changes here the hub has not got, which are pushed to it. */
+	ours: PushStep[];
 }
 
 /**
@@ -202,7 +224,7 @@ export function pullPlan(
 			continue;
 		}
 		if (base !== undefined && entry.hash === base) {
-			plan.ours.push(entry.path);
+			plan.ours.push({ path: entry.path, hash: here, base, why: "changed" });
 			continue;
 		}
 		plan.collided.push(entry.path);
@@ -213,7 +235,9 @@ export function pullPlan(
 		if (seen.has(path)) continue;
 		// Agreed and unchanged means the hub dropped it, and a deletion is
 		// nothing this slice carries in either direction.
-		if (agreed.get(path) !== hash) plan.ours.push(path);
+		if (agreed.get(path) === hash) continue;
+		const base = agreed.get(path);
+		plan.ours.push({ path, hash, base, why: base === undefined ? "new" : "changed" });
 	}
 
 	return plan;
@@ -223,25 +247,38 @@ function step(entry: HubEntry, why: PullWhy): PullStep {
 	return { path: entry.path, hash: entry.hash, why };
 }
 
-/** What a sync did, in one sentence, for a notice on a phone. */
-export function pullSentence(plan: PullPlan, taken: number, trouble: number): string {
-	if (trouble > 0) return `${said(taken)}, and ${trouble} would not come across.`;
-	if (plan.fetch.length === 0 && plan.collided.length === 0) {
-		return plan.ours.length > 0
-			? `Nothing to take. ${plan.ours.length} here the hub has not got.`
-			: "Already in step.";
-	}
-	const parts = [said(taken)];
+/** What a sync managed, in each direction. */
+export interface SyncTally {
+	taken: number;
+	sent: number;
+	/** Files the hub was asked for that did not arrive, or arrived wrong. */
+	trouble: number;
+}
+
+/**
+ * What a sync did, in one sentence, for a notice on a phone.
+ *
+ * It names both directions, and it names what did not happen as well as what
+ * did. A sync that quietly carries half of what you expected is worse than
+ * one that says it refused the other half.
+ */
+export function syncSentence(plan: PullPlan, tally: SyncTally): string {
+	const parts: string[] = [];
+	if (tally.taken > 0) parts.push(`took ${files(tally.taken)}`);
+	if (tally.sent > 0) parts.push(`sent ${files(tally.sent)}`);
 	if (plan.collided.length > 0) {
 		parts.push(`${plan.collided.length} changed on both sides, left alone`);
 	}
-	if (plan.ours.length > 0) parts.push(`${plan.ours.length} here the hub has not got`);
-	return `${parts.join(", ")}.`;
+	const waiting = plan.ours.length - tally.sent;
+	if (waiting > 0) parts.push(`${waiting} the hub would not take`);
+	if (tally.trouble > 0) parts.push(`${tally.trouble} would not come across`);
+	if (parts.length === 0) return "Already in step.";
+	const said = parts.join(", ");
+	return `${said.charAt(0).toUpperCase()}${said.slice(1)}.`;
 }
 
-function said(taken: number): string {
-	if (taken === 0) return "Took nothing";
-	return taken === 1 ? "Took one file" : `Took ${taken} files`;
+function files(count: number): string {
+	return count === 1 ? "one file" : `${count} files`;
 }
 
 /** The hub's own address, however it was typed, with a port if none was. */

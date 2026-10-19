@@ -714,11 +714,28 @@ quiet vault costs nothing to describe and an unchanged file is never read twice.
 hashes rather than clocks, which matters more than it sounds: a phone and a laptop do not agree
 about what time it is, and nothing here has to care.
 
+### Both directions
+
+The computer listens, but the files go both ways. A device that pulls also sends what it has and the
+hub has not, which is the only route a note written on a phone has to a computer. It is one setting
+on the serving side, **Take changes from your devices**, and switching it off makes the hub
+read-only again.
+
+A change goes up with the hash the two sides last agreed on, and the hub applies it only if that is
+still the copy it holds. So a push can never land on top of work that arrived while the sender was
+reading the manifest: the hub refuses it, the sender hears about it, and the file turns up as a
+collision on the next sync like any other. A refusal there is the protocol working rather than an
+error.
+
+Writes are the one thing the hub does that cannot be undone by closing a socket, so they are fenced
+in the same way as reads and then some: inside the named folders only, with the phrase, with the
+expected hash, and under a cap on how much one request can carry.
+
 ### What it will and will not do, for now
 
-It takes a file this device does not have. It replaces a file this device has not touched since the
-two last agreed. It does nothing at all to a file that has changed on both sides, and says how many
-of those there were.
+It takes a file this device does not have. It sends a file the hub does not have. It replaces either
+side's copy when only the other side changed it. It does nothing at all to a file that has changed
+on both sides, and says how many of those there were.
 
 That last line is why the agreed hashes exist. After each sync, every file the two sides hold
 identically is recorded as a baseline, kept beside the plugin in `.obsidian/plugins/skybox/` rather

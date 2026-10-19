@@ -6,11 +6,12 @@ import {
 	normalizePhrase,
 	phraseKey,
 	pullPlan,
-	pullSentence,
+	syncSentence,
 	sameKey,
 	servedFolders,
 	withinServed,
 	type HubEntry,
+	type PushStep,
 } from "../src/sync";
 
 // A phrase typed on two keyboards differs in case and spacing, and neither
@@ -120,7 +121,14 @@ assert.deepStrictEqual(
 	"a file nobody here has touched is safe to replace; a file nobody here has is new"
 );
 assert.deepStrictEqual(plan.collided, ["Skybox/both.md"], "changed on both sides, left alone");
-assert.deepStrictEqual(plan.ours.sort(), ["Skybox/mine.md", "Skybox/only here.md"]);
+assert.deepStrictEqual(
+	plan.ours.map((step) => [step.path, step.why, step.base ?? null]).sort(),
+	[
+		["Skybox/mine.md", "changed", "bbb"],
+		["Skybox/only here.md", "new", null],
+	],
+	"a change the hub does not have goes up with the hash it last agreed to"
+);
 
 // A file the two sides agreed on and the hub no longer lists was deleted
 // there, and a deletion is not something this slice carries either way.
@@ -137,22 +145,34 @@ assert.deepStrictEqual(gone.ours, [], "an untouched file the hub dropped is not 
 const deletedHere = pullPlan(new Map(), [entry("Skybox/old.md", "aaa")], new Map([["Skybox/old.md", "aaa"]]));
 assert.deepStrictEqual(deletedHere.fetch, [], "what was deleted here stays deleted");
 
-// What it says afterwards.
+// What it says afterwards, in both directions.
+const nothing: PushStep[] = [];
 assert.strictEqual(
-	pullSentence({ fetch: [], collided: [], ours: [] }, 0, 0),
+	syncSentence({ fetch: [], collided: [], ours: nothing }, { taken: 0, sent: 0, trouble: 0 }),
 	"Already in step."
 );
 assert.strictEqual(
-	pullSentence({ fetch: [], collided: [], ours: ["a", "b"] }, 0, 0),
-	"Nothing to take. 2 here the hub has not got."
+	syncSentence(
+		{ fetch: [], collided: [], ours: [{ path: "a", hash: "x", why: "new" }] },
+		{ taken: 0, sent: 1, trouble: 0 }
+	),
+	"Sent one file."
 );
 assert.strictEqual(
-	pullSentence({ fetch: [{ path: "a", hash: "x", why: "new" }], collided: ["b"], ours: [] }, 1, 0),
-	"Took one file, 1 changed on both sides, left alone."
+	syncSentence(
+		{
+			fetch: [{ path: "a", hash: "x", why: "new" }],
+			collided: ["b"],
+			ours: [{ path: "c", hash: "y", why: "changed", base: "z" }],
+		},
+		{ taken: 1, sent: 0, trouble: 0 }
+	),
+	"Took one file, 1 changed on both sides, left alone, 1 the hub would not take.",
+	"a refused push is said out loud rather than swallowed"
 );
 assert.strictEqual(
-	pullSentence({ fetch: [], collided: [], ours: [] }, 2, 1),
-	"Took 2 files, and 1 would not come across."
+	syncSentence({ fetch: [], collided: [], ours: nothing }, { taken: 2, sent: 3, trouble: 1 }),
+	"Took 2 files, sent 3 files, 1 would not come across."
 );
 
 // An address, however it was typed.

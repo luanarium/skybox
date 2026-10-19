@@ -2,16 +2,18 @@ import { Notice, TFile, normalizePath, requestUrl, type App, type Plugin } from 
 import type { VaultIndex } from "./index";
 import { readPhrase } from "./hub";
 import {
+	HUB_BASE_HEADER,
 	HUB_KEY_HEADER,
 	hex,
 	hubFolders,
 	hubUrl,
 	phraseKey,
 	pullPlan,
-	pullSentence,
+	syncSentence,
 	withinServed,
 	type HubManifest,
 	type PullPlan,
+	type SyncTally,
 } from "./sync";
 import type { SkyboxSettings } from "./types";
 import { guarded } from "./writes";
@@ -73,7 +75,9 @@ export class HubPull {
 			const local = await this.localHashes(folders, offered.map((entry) => entry.path));
 			const plan = pullPlan(local, offered, agreed);
 
-			const [taken, trouble] = await this.take(address, key, plan, agreed);
+			const tally: SyncTally = { taken: 0, sent: 0, trouble: 0 };
+			await this.take(address, key, plan, agreed, tally);
+			await this.send(address, key, plan, agreed, tally);
 
 			// Everything the two sides now hold identically is a baseline for
 			// next time, which is what tells somebody's edit from a stale copy.
@@ -85,8 +89,8 @@ export class HubPull {
 			this.agreed[manifest.vault] = Object.fromEntries(agreed);
 			await this.save();
 
-			if (aloud || taken > 0 || trouble > 0) {
-				new Notice(`Skybox: ${pullSentence(plan, taken, trouble)}`);
+			if (aloud || tally.taken > 0 || tally.sent > 0 || tally.trouble > 0) {
+				new Notice(`Skybox: ${syncSentence(plan, tally)}`);
 			}
 		} catch (error) {
 			console.error("Skybox: the hub pull failed", error);
@@ -150,10 +154,9 @@ export class HubPull {
 		address: string,
 		key: string,
 		plan: PullPlan,
-		agreed: Map<string, string>
-	): Promise<[number, number]> {
-		let taken = 0;
-		let trouble = 0;
+		agreed: Map<string, string>,
+		tally: SyncTally
+	): Promise<void> {
 		for (const step of plan.fetch) {
 			const url = `${hubUrl(address, this.settings.hubPort, "/file")}?path=${encodeURIComponent(step.path)}`;
 			try {
@@ -164,7 +167,7 @@ export class HubPull {
 					throw: false,
 				});
 				if (answer.status !== 200) {
-					trouble++;
+					tally.trouble++;
 					continue;
 				}
 				const bytes = answer.arrayBuffer;
@@ -172,18 +175,79 @@ export class HubPull {
 				if (got !== step.hash) {
 					// What arrived is not what was offered, so it is not written.
 					console.error("Skybox: hash mismatch pulling", step.path, got, step.hash);
-					trouble++;
+					tally.trouble++;
 					continue;
 				}
 				await this.write(step.path, bytes);
 				agreed.set(step.path, step.hash);
-				taken++;
+				tally.taken++;
 			} catch (error) {
 				console.error("Skybox: could not pull", step.path, error);
-				trouble++;
+				tally.trouble++;
 			}
 		}
-		return [taken, trouble];
+	}
+
+	/**
+	 * Sending what this device has and the hub has not.
+	 *
+	 * Every change goes up with the hash the two sides last agreed on, and
+	 * the hub applies it only if that is still what it holds. So a change
+	 * that would land on top of somebody else's work comes back refused
+	 * instead, and the next sync sees it as a collision like any other. A
+	 * refusal is not an error: it is the protocol working.
+	 */
+	private async send(
+		address: string,
+		key: string,
+		plan: PullPlan,
+		agreed: Map<string, string>,
+		tally: SyncTally
+	): Promise<void> {
+		for (const step of plan.ours) {
+			const file = this.app.vault.getAbstractFileByPath(step.path);
+			if (!(file instanceof TFile)) continue;
+			const url = `${hubUrl(address, this.settings.hubPort, "/file")}?path=${encodeURIComponent(step.path)}`;
+			try {
+				const bytes = await this.app.vault.readBinary(file);
+				// Read again rather than trusting the hash from the plan: the
+				// file may have been typed into since, and sending bytes under
+				// a hash that is not theirs is the one thing the hub cannot
+				// check for us.
+				const hash = hex(await crypto.subtle.digest("SHA-256", bytes));
+				const answer = await requestUrl({
+					url,
+					method: "PUT",
+					headers: {
+						[HUB_KEY_HEADER]: key,
+						[HUB_BASE_HEADER]: step.base ?? "",
+						"content-type": "application/octet-stream",
+					},
+					body: bytes,
+					throw: false,
+				});
+				if (answer.status === 200) {
+					agreed.set(step.path, hash);
+					tally.sent++;
+					continue;
+				}
+				if (answer.status === 403) {
+					// The hub is not taking changes at all, so neither is the
+					// rest of this list, and saying so once is enough.
+					new Notice(
+						"Skybox: the hub is not taking changes. Switch on " +
+							'"Take changes from your devices" on the computer that serves.',
+						15000
+					);
+					return;
+				}
+				if (answer.status !== 409) {
+					console.error("Skybox: the hub refused", step.path, answer.status);
+				}
+			} catch (error) {
+				console.error("Skybox: could not send", step.path, error);
+			}
+		}
 	}
 
 	/**

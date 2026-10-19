@@ -465,6 +465,23 @@ export class SkyboxSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
+			.setName("Take changes from your devices")
+			.setDesc(
+				"Whether a device that pulls from this hub can also send its own changes " +
+					"back. It is what makes a note written on a phone reach the computer. " +
+					"Only inside the folders above, only with the phrase, and only when the " +
+					"hub still holds the copy the sender expected: a change that would land " +
+					"on top of newer work here is refused rather than applied. Switch it off " +
+					"to make this hub read-only."
+			)
+			.addToggle((toggle) =>
+				toggle.setValue(this.plugin.settings.hubAccept).onChange(async (value) => {
+					this.plugin.settings.hubAccept = value;
+					await this.plugin.saveSettings();
+				})
+			);
+
+		new Setting(containerEl)
 			.setName("Pull from")
 			.setDesc(
 				"The hub this device asks, as an address with or without a port. Check says " +

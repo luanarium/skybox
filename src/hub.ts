@@ -1,6 +1,9 @@
 import { Notice, Platform, TFile, TFolder, normalizePath, type App } from "obsidian";
+import type { VaultIndex } from "./index";
+import { guarded } from "./writes";
 import type { SkyboxSettings } from "./types";
 import {
+	HUB_BASE_HEADER,
 	HUB_KEY_HEADER,
 	hex,
 	phraseKey,
@@ -48,6 +51,8 @@ interface NodeRequest {
 	url?: string;
 	headers: Record<string, string | string[] | undefined>;
 	socket: { remoteAddress?: string };
+	on(event: "data", listener: (chunk: Uint8Array) => void): void;
+	on(event: "end" | "error", listener: (error?: Error) => void): void;
 }
 
 interface NodeResponse {
@@ -113,7 +118,8 @@ export class Hub {
 
 	constructor(
 		private app: App,
-		private settings: SkyboxSettings
+		private settings: SkyboxSettings,
+		private index: VaultIndex
 	) {}
 
 	get listening(): boolean {
@@ -181,8 +187,8 @@ export class Hub {
 	private async answer(request: NodeRequest, response: NodeResponse): Promise<void> {
 		const head = {
 			"access-control-allow-origin": "*",
-			"access-control-allow-headers": `${HUB_KEY_HEADER}, content-type`,
-			"access-control-allow-methods": "GET, OPTIONS",
+			"access-control-allow-headers": `${HUB_KEY_HEADER}, ${HUB_BASE_HEADER}, content-type`,
+			"access-control-allow-methods": "GET, PUT, OPTIONS",
 			"cache-control": "no-store",
 		};
 		try {
@@ -209,7 +215,12 @@ export class Hub {
 				return;
 			}
 			if (url.pathname === "/file") {
-				await this.serveFile(url.searchParams.get("path") ?? "", head, response);
+				const asked = url.searchParams.get("path") ?? "";
+				if (request.method === "PUT") {
+					await this.takeFile(asked, request, head, response);
+					return;
+				}
+				await this.serveFile(asked, head, response);
 				return;
 			}
 
@@ -273,6 +284,89 @@ export class Hub {
 		return hash;
 	}
 
+	/**
+	 * Taking a change from another device.
+	 *
+	 * The hub is the only one of the two that can be written to over the
+	 * network, so this is the part that has to be careful. It takes nothing
+	 * unless the phrase matched, the switch is on, the path is inside a
+	 * served folder, the bytes hash to something, and the sender said what it
+	 * believed the hub was holding. That last one is the whole safety of it:
+	 * if the hub's copy is not what the sender thought, the change is refused
+	 * rather than applied, and the sender finds out on its next sync.
+	 */
+	private async takeFile(
+		asked: string,
+		request: NodeRequest,
+		head: Record<string, string>,
+		response: NodeResponse
+	): Promise<void> {
+		const refuse = (status: number, error: string) => {
+			response.writeHead(status, { ...head, "content-type": "application/json" });
+			response.end(JSON.stringify({ error }));
+		};
+
+		if (!this.settings.hubAccept) {
+			refuse(403, "this hub is not taking changes");
+			return;
+		}
+		const path = normalizePath(asked);
+		if (!withinServed(path, this.folders())) {
+			refuse(403, "not a file this hub serves");
+			return;
+		}
+
+		let bytes: Uint8Array;
+		try {
+			bytes = await body(request);
+		} catch (error) {
+			refuse(error instanceof TooMuch ? 413 : 400, String(error instanceof Error ? error.message : error));
+			return;
+		}
+
+		const sent = request.headers[HUB_BASE_HEADER];
+		const base = (Array.isArray(sent) ? (sent[0] ?? "") : (sent ?? "")).trim();
+		const existing = this.app.vault.getAbstractFileByPath(path);
+		const file = existing instanceof TFile ? existing : null;
+		const holding = file ? await this.hashOf(file) : "";
+
+		if (holding !== base) {
+			// Either somebody changed it here after the sender read the
+			// manifest, or the sender is working from a copy this hub has
+			// never agreed to. Both are the sender's to sort out, not this
+			// one's to overwrite.
+			refuse(409, file ? "the hub's copy has changed since" : "the hub has no such file");
+			return;
+		}
+
+		const hash = hex(await crypto.subtle.digest("SHA-256", bytes));
+		const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+		await guarded(async () => {
+			if (file) {
+				await this.app.vault.modifyBinary(file, buffer);
+				this.index.ensure(file);
+				return;
+			}
+			await this.mkdirs(path);
+			this.index.ensure(await this.app.vault.createBinary(path, buffer));
+		});
+		this.hashes.delete(path);
+
+		response.writeHead(200, { ...head, "content-type": "application/json" });
+		response.end(JSON.stringify({ hash }));
+	}
+
+	private async mkdirs(path: string): Promise<void> {
+		const parts = path.split("/").slice(0, -1);
+		let walked = "";
+		for (const part of parts) {
+			walked = walked ? `${walked}/${part}` : part;
+			if (!(await this.app.vault.adapter.exists(walked))) {
+				await this.app.vault.adapter.mkdir(walked);
+			}
+		}
+	}
+
 	private async serveFile(
 		asked: string,
 		head: Record<string, string>,
@@ -299,4 +393,35 @@ export class Hub {
 		});
 		response.end(bytes);
 	}
+}
+
+/** A file bigger than this is not something a sync should be moving blind. */
+const MOST = 128 * 1024 * 1024;
+
+class TooMuch extends Error {}
+
+/** The bytes of a request, or an error rather than an unbounded buffer. */
+function body(request: NodeRequest): Promise<Uint8Array> {
+	return new Promise((done, fail) => {
+		const chunks: Uint8Array[] = [];
+		let size = 0;
+		request.on("data", (chunk) => {
+			size += chunk.byteLength;
+			if (size > MOST) {
+				fail(new TooMuch("that file is too big for the hub to take"));
+				return;
+			}
+			chunks.push(chunk);
+		});
+		request.on("end", () => {
+			const all = new Uint8Array(size);
+			let at = 0;
+			for (const chunk of chunks) {
+				all.set(chunk, at);
+				at += chunk.byteLength;
+			}
+			done(all);
+		});
+		request.on("error", (error) => fail(error ?? new Error("the request broke")));
+	});
 }
