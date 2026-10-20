@@ -44,7 +44,9 @@ way of looking at them.
   all. The thread comes back beside the note, with a box to reply from. Untag it and the post goes.
 - **Your devices keep in step, with no cloud.** One computer serves the folders you name over
   whatever network your devices share, locked to a phrase typed on each of them, and the others pull
-  what they are missing. Files changed on both sides are left alone rather than guessed about.
+  what they are missing. Files changed on both sides are left alone rather than guessed about. What
+  syncs is those folders, so a picture travels with the note holding it only when it is in one of
+  them: see [where attachments go](#where-attachments-go-if-you-sync).
 - **Immersive.** Standalone mode gives the whole window to the pane, and the window controls hide
   until the pointer reaches the top.
 
@@ -88,6 +90,33 @@ the easiest route on a phone and the only one that updates itself.
 
 BRAT fetches the three files from the latest release and enables the plugin. It checks for new
 releases on startup, so a new version arrives on its own.
+
+### Where attachments go, if you sync
+
+Worth setting before you paste your first picture, because it decides whether pictures reach your
+other devices at all.
+
+The hub serves **folders**. A note is a file that points at other files, and anything it points at
+from outside those folders cannot travel with it: the note arrives on the other device with a hole
+where the picture should be. Obsidian puts a pasted or dropped attachment in the **vault root**
+until told otherwise, and the root is the one folder the hub must never serve, since `.obsidian`
+holds the hub phrase and the Mastodon token.
+
+So line the two up, in **Settings → Files and links → Default location for new attachments**:
+
+- **In subfolder under current folder**, leaving the name as `Attachments`, is the one to pick. A
+  picture pasted into a bookmark lands in `bookmarks/Attachments/`, inside a served folder.
+- **Same folder as current file** does the same with one box less, and mixes pictures in with notes.
+- **Path from vault folder**, say `Attachments`, works too if you add `Attachments` as a line in
+  Skybox's hub **Folders** box. Lining them up from either side is fine.
+
+That setting lives in each vault's own config and does not sync, so set it on the phone as well as
+on the computer. Pictures already in the root stay there: move them from Obsidian's file explorer,
+which rewrites the links, rather than from a file manager, which does not.
+
+Skybox says when this happens rather than leaving you to find out. A sync that leaves a picture
+behind counts them in its notice, and the hub's switch and the **Pull from** description name the
+folders they are sitting in.
 
 ## Layout of the source
 
@@ -750,13 +779,13 @@ folder has not been chosen yet.
 
 The other way a sync looks healthy and leaves a hole: images do travel, since every file in a served
 folder is sent as bytes, but a picture outside those folders does not, and the note holding it
-arrives on the other device with nothing where the picture should be. Obsidian writes a dropped
-attachment wherever its own **Files and links** setting says, which is the vault root until somebody
-changes it, and the vault root is a folder the hub must not serve. So the served notes are read for
-what they point at, anything outside is counted, and both ends say so: the switch where the hub is
-served, the **Pull from** description and the sync's own sentence on the device that asks, since a
-phone pastes a picture into the same place and has no switch to read it beside. The index answers
-the question, because it already knows what every note holds. Skybox's own intake has never been
+arrives on the other device with nothing where the picture should be. That is what [where
+attachments go](#where-attachments-go-if-you-sync) is about, and it is the one piece of setup the
+hub cannot do for you. The served notes are read for what they point at, anything outside is
+counted, and both ends say so: the switch where the hub is served, the **Pull from** description and
+the sync's own sentence on the device that asks, since a phone pastes a picture into the same place
+and has no switch to read it beside. The index answers the question, because it already knows what
+every note holds. Skybox's own intake has never been
 affected: it writes into the intake folder, which is served.
 
 A manifest is a path, a size, a time and the SHA-256 of the bytes. Hashes are kept by mtime, so a
