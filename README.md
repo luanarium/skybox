@@ -753,9 +753,11 @@ folder is sent as bytes, but a picture outside those folders does not, and the n
 arrives on the other device with nothing where the picture should be. Obsidian writes a dropped
 attachment wherever its own **Files and links** setting says, which is the vault root until somebody
 changes it, and the vault root is a folder the hub must not serve. So the served notes are read for
-what they point at, anything outside is counted, and the switch says where those pictures are
-sitting. Skybox's own intake has never been affected: it writes into the intake folder, which is
-served.
+what they point at, anything outside is counted, and both ends say so: the switch where the hub is
+served, the **Pull from** description and the sync's own sentence on the device that asks, since a
+phone pastes a picture into the same place and has no switch to read it beside. The index answers
+the question, because it already knows what every note holds. Skybox's own intake has never been
+affected: it writes into the intake folder, which is served.
 
 A manifest is a path, a size, a time and the SHA-256 of the bytes. Hashes are kept by mtime, so a
 quiet vault costs nothing to describe and an unchanged file is never read twice. The puller compares

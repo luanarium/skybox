@@ -219,7 +219,7 @@ assert.deepStrictEqual(bothGone.sendGone, []);
 // What it says afterwards, in both directions.
 const nothing: PushStep[] = [];
 const empty: PullPlan = { fetch: [], collided: [], ours: [], gone: [], sendGone: [], forget: [] };
-const nil: SyncTally = { taken: 0, sent: 0, asked: 0, merged: 0, split: 0, trouble: 0 };
+const nil: SyncTally = { taken: 0, sent: 0, asked: 0, merged: 0, split: 0, trouble: 0, stray: 0 };
 assert.strictEqual(
 	syncSentence({ ...empty, ours: nothing }, { ...nil }),
 	"Already synced."
@@ -247,6 +247,20 @@ assert.strictEqual(
 assert.strictEqual(
 	syncSentence({ ...empty, ours: nothing }, { ...nil, taken: 2, sent: 3, trouble: 1 }),
 	"Took 2 files, sent 3 files, 1 would not come across."
+);
+
+// A picture that cannot travel with the note holding it is said either way,
+// because the note arrives looking broken and nothing else mentions it.
+assert.strictEqual(
+	syncSentence({ ...empty, ours: nothing }, { ...nil, stray: 1 }),
+	"Already synced, but one picture stayed behind, outside the served folders."
+);
+assert.strictEqual(
+	syncSentence(
+		{ ...empty, ours: [{ path: "a", hash: "x", why: "new" }] },
+		{ ...nil, sent: 1, stray: 2 }
+	),
+	"Sent one file, 2 pictures stayed behind, outside the served folders."
 );
 
 assert.strictEqual(

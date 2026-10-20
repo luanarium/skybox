@@ -11,6 +11,7 @@ import {
 	hubUrl,
 	phraseKey,
 	pullPlan,
+	strayPictures,
 	reviewSentence,
 	syncSentence,
 	withinServed,
@@ -85,7 +86,21 @@ export class HubPull {
 			const local = await this.localHashes(folders, offered.map((entry) => entry.path));
 			const plan = pullPlan(local, offered, agreed);
 
-			const tally: SyncTally = { taken: 0, sent: 0, asked: 0, merged: 0, split: 0, trouble: 0 };
+			const tally: SyncTally = {
+				taken: 0,
+				sent: 0,
+				asked: 0,
+				merged: 0,
+				split: 0,
+				trouble: 0,
+				// A picture outside the served folders cannot travel with the
+				// note that holds it, and this is the only moment anybody is
+				// told. The hub says the same thing beside its own switch.
+				stray: strayPictures(
+					this.index.pictures((note) => withinServed(note, folders)),
+					folders
+				).length,
+			};
 			await this.take(address, key, plan, agreed, tally);
 			await this.send(address, key, plan, agreed, tally);
 			await this.sendGone(address, key, plan, agreed, tally);

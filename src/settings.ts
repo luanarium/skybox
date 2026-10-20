@@ -7,6 +7,7 @@ import type SkyboxPlugin from "./main";
 import { canServe, ownAddresses, readPhrase, writePhrase } from "./hub";
 import { normalizeAddress, reachable, reachSentence } from "./probe";
 import { hasWindowHandle } from "./window";
+import { hubFolders, strayComplaint, strayPictures, withinServed } from "./sync";
 
 export class SkyboxSettingTab extends PluginSettingTab {
 	constructor(
@@ -380,6 +381,16 @@ export class SkyboxSettingTab extends PluginSettingTab {
 		// A hub that is listening and serving an empty folder list looks
 		// right from every other angle, so the switch says so itself.
 		const trouble = serving ? this.plugin.hub.complaint() : "";
+		// A picture outside the served folders cannot travel with the note
+		// that holds it, which is as true on the device that asks as on the
+		// one that serves, and a phone has no switch to read it beside.
+		const folders = hubFolders(this.plugin.settings);
+		const behind = strayComplaint(
+			strayPictures(
+				this.plugin.index.pictures((note) => withinServed(note, folders)),
+				folders
+			)
+		);
 
 		new Setting(containerEl)
 			.setName("Local hub")
@@ -485,7 +496,8 @@ export class SkyboxSettingTab extends PluginSettingTab {
 			.setName("Pull from")
 			.setDesc(
 				"The hub this device asks, as an address with or without a port. Check says " +
-					"who answers; Sync now takes what it is safe to take."
+					"who answers; Sync now takes what it is safe to take." +
+					(behind ? ` ${behind}` : "")
 			)
 			.addText((text) =>
 				text

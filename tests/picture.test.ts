@@ -1,6 +1,7 @@
 import * as assert from "node:assert";
 import { type App, TFile } from "obsidian";
 import { VaultIndex } from "../src/index";
+import { strayPictures } from "../src/sync";
 import { DEFAULT_SETTINGS, type SkyboxSettings } from "../src/types";
 
 /**
@@ -179,4 +180,36 @@ const settings = (over: Partial<SkyboxSettings> = {}): SkyboxSettings => ({
 	const index = new VaultIndex(app, settings());
 	index.build();
 	assert.strictEqual(index.get("notes/E.md")?.preview, "https://host/pinned.gif");
+}
+
+// What the hub asks the index: every picture the notes it serves hold, so the
+// ones it cannot send with them can be counted. A picture pasted on a phone
+// lands wherever Obsidian keeps attachments, which is the vault root until
+// somebody changes it, and the note arrives on the other device without it.
+{
+	const { app } = vaultOf([
+		{
+			path: "bookmarks/A page.md",
+			embeds: ["pasted.png", "skybox/kept.png"],
+		},
+		{ path: "elsewhere/B note.md", embeds: ["elsewhere/own.png"] },
+		{ path: "pasted.png" },
+		{ path: "skybox/kept.png" },
+		{ path: "elsewhere/own.png" },
+	]);
+	const index = new VaultIndex(app, settings());
+	index.build();
+
+	const served = ["skybox", "bookmarks", "mail"];
+	const held = index.pictures((note) => served.some((folder) => note.startsWith(`${folder}/`)));
+	assert.deepStrictEqual(
+		held.sort(),
+		["pasted.png", "skybox/kept.png"],
+		"only what the served notes hold, and the folder it sits in is not the question yet"
+	);
+	assert.deepStrictEqual(
+		strayPictures(held, served),
+		["pasted.png"],
+		"the one that cannot travel with the note holding it"
+	);
 }

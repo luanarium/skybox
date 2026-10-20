@@ -379,6 +379,8 @@ export interface SyncTally {
 	split: number;
 	/** Files the hub was asked for that did not arrive, or arrived wrong. */
 	trouble: number;
+	/** Pictures these notes hold that the served folders do not cover. */
+	stray: number;
 }
 
 /**
@@ -403,7 +405,18 @@ export function syncSentence(plan: PullPlan, tally: SyncTally): string {
 	const waiting = plan.ours.length - tally.sent;
 	if (waiting > 0) parts.push(`${waiting} the hub would not take`);
 	if (tally.trouble > 0) parts.push(`${tally.trouble} would not come across`);
-	if (parts.length === 0) return "Already synced.";
+	// A note travels without the picture inside it when the picture sits
+	// outside the served folders, and nothing else in a sync says so.
+	const behind =
+		tally.stray === 0
+			? ""
+			: tally.stray === 1
+				? "one picture stayed behind, outside the served folders"
+				: `${tally.stray} pictures stayed behind, outside the served folders`;
+	if (parts.length === 0) {
+		return behind ? `Already synced, but ${behind}.` : "Already synced.";
+	}
+	if (behind) parts.push(behind);
 	const said = parts.join(", ");
 	return `${said.charAt(0).toUpperCase()}${said.slice(1)}.`;
 }

@@ -116,6 +116,20 @@ export class VaultIndex {
 		return [...this.items.values()].sort((a, b) => b.mtime - a.mtime);
 	}
 
+	/**
+	 * Every picture held by the notes this asks about, wherever the picture
+	 * itself lives. The hub uses it to find the ones that cannot travel with
+	 * the note that holds them.
+	 */
+	pictures(from: (notePath: string) => boolean): string[] {
+		const paths = new Set<string>();
+		for (const [note, embeds] of this.embedsBy) {
+			if (!from(note)) continue;
+			for (const path of embeds) paths.add(path);
+		}
+		return [...paths];
+	}
+
 	/** Every tag in the vault, for the tag box's suggestions. */
 	tags(): string[] {
 		const all = new Set<string>();

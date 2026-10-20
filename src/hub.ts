@@ -281,20 +281,8 @@ export class Hub {
 		// Nothing wrong with the folders themselves, which leaves the one
 		// thing a sync cannot tell anybody: a note that travels without
 		// the picture inside it.
-		return strayComplaint(strayPictures(this.pointed(folders), folders));
-	}
-
-	/** Every file the served notes point at, wherever it lives. */
-	private pointed(folders: string[]): string[] {
-		const paths = new Set<string>();
-		for (const file of this.app.vault.getFiles()) {
-			if (file.extension !== "md" || !withinServed(file.path, folders)) continue;
-			for (const embed of this.app.metadataCache.getFileCache(file)?.embeds ?? []) {
-				const target = this.app.metadataCache.getFirstLinkpathDest(embed.link, file.path);
-				if (target) paths.add(target.path);
-			}
-		}
-		return [...paths];
+		const held = this.index.pictures((note) => withinServed(note, folders));
+		return strayComplaint(strayPictures(held, folders));
 	}
 
 	private async entries(): Promise<HubEntry[]> {
