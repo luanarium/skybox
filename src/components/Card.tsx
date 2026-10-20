@@ -16,12 +16,14 @@ interface CardProps {
 	fresh: boolean;
 	/** Just arrived, so it drops in. */
 	dropped: boolean;
+	/** A drag is over this card, so a picture dropped now goes into it. */
+	targeted: boolean;
 	onOpen: (item: Item) => void;
 	/** A long press, or a right click: what can be done with this one. */
 	onMenu: (item: Item, x: number, y: number) => void;
 }
 
-export function Card({ item, index, named, fresh, dropped, onOpen, onMenu }: CardProps) {
+export function Card({ item, index, named, fresh, dropped, targeted, onOpen, onMenu }: CardProps) {
 	const { app, index: vaultIndex, settings } = useSkybox();
 	const [excerpt, setExcerpt] = useState("");
 	/** A picture found in the note's own text, as the note wrote it. */
@@ -79,7 +81,8 @@ export function Card({ item, index, named, fresh, dropped, onOpen, onMenu }: Car
 		<div
 			className={`skybox-card is-${item.kind}${fresh ? " is-fresh" : ""}${
 				dropped ? " is-dropped" : ""
-			}${item.remote ? " is-wall" : ""}`}
+			}${targeted ? " is-target" : ""}${item.remote ? " is-wall" : ""}`}
+			data-skybox-id={item.id}
 			style={style}
 			role="button"
 			tabIndex={0}

@@ -1,14 +1,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
-import { Menu, Platform } from "obsidian";
+import { Menu, Notice, Platform, TFile, requestUrl } from "obsidian";
 import { copyItem } from "./clipboard";
 import { ask } from "./confirm";
 import { useSkybox } from "./context";
+import {
+	draggedPicture,
+	pictureExtension,
+	pictureLink,
+	pictureName,
+	placePicture,
+} from "./drop";
 import { createNote, ingest } from "./ingest";
 import { openPluginSettings } from "./preferences";
 import { type Chip, search } from "./search";
 import { withTransition } from "./transition";
-import { UNREAD_TAG, type Item } from "./types";
+import { UNREAD_TAG, isImageExtension, type Item } from "./types";
 import { BottomBar } from "./components/BottomBar";
 import { Card } from "./components/Card";
 import { Composer } from "./components/Composer";
@@ -19,11 +26,28 @@ import { Masonry } from "./components/Masonry";
 import { WallOverlay } from "./components/WallOverlay";
 import { clientFor } from "./sharing";
 import { isKeptPost, narrowWall, wallItem, wallSourceOf } from "./wall";
+import { guarded } from "./writes";
 import { NoteOverlay } from "./components/NoteOverlay";
 import { Sheet } from "./components/Sheet";
 import { SearchBox } from "./components/SearchBox";
 
 const PAGE = 100;
+
+/** As much of a dropped picture as is worth fetching into a note. */
+const MOST_PICTURE = 32 * 1024 * 1024;
+
+/** A card a picture can be dropped into: a note in this vault, not a post. */
+function writable(item: Item | undefined): Item | null {
+	return item && item.kind === "note" && !item.remote ? item : null;
+}
+
+/** A header, whichever way the host spelled its name. */
+function headerOf(headers: Record<string, string>, name: string): string {
+	for (const [key, value] of Object.entries(headers ?? {})) {
+		if (key.toLowerCase() === name) return value;
+	}
+	return "";
+}
 
 /** The oldest post on the wall, which is where the next page starts. */
 function lastPostId(items: Item[]): string {
@@ -43,6 +67,8 @@ export function App() {
 	const [namedId, setNamedId] = useState<string | null>(null);
 	const [dropping, setDropping] = useState(false);
 	const [dropped, setDropped] = useState<Set<string>>(new Set());
+	/** The note a drag is hovering, which is where the picture will go. */
+	const [targetId, setTargetId] = useState<string | null>(null);
 	const [typing, setTyping] = useState(false);
 	const [composing, setComposing] = useState(false);
 	const [fresh, setFresh] = useState<Set<string>>(new Set());
@@ -299,6 +325,105 @@ export function App() {
 		[app, index, settings, open, landed]
 	);
 
+	/**
+	 * A picture dragged off a web page carries an address rather than a file,
+	 * so it is fetched here. The bytes are kept in the vault rather than the
+	 * address written into the note: the card then draws without reaching that
+	 * host again, and the picture is still there when the page is not.
+	 */
+	const fetchPicture = useCallback(async (address: string): Promise<File | null> => {
+		try {
+			const answer = await requestUrl({ url: address, method: "GET", throw: false });
+			if (answer.status >= 400) {
+				new Notice(`Skybox: that picture would not come (${answer.status}).`);
+				return null;
+			}
+			const extension = pictureExtension(headerOf(answer.headers, "content-type"));
+			if (!extension) {
+				new Notice("Skybox: that address does not answer with a picture.");
+				return null;
+			}
+			if (answer.arrayBuffer.byteLength > MOST_PICTURE) {
+				new Notice("Skybox: that picture is too large to take in.");
+				return null;
+			}
+			return new File([answer.arrayBuffer], pictureName(address, extension), {
+				type: `image/${extension}`,
+			});
+		} catch (error) {
+			console.error("Skybox: that picture could not be fetched", address, error);
+			new Notice("Skybox: that picture could not be fetched.");
+			return null;
+		}
+	}, []);
+
+	/**
+	 * A picture dropped on a note belongs in the note. It goes through intake
+	 * like anything else, so it is hashed and a copy of a picture already here
+	 * is embedded where it already is rather than written again, and then the
+	 * note is asked to hold it. The card draws it from there.
+	 */
+	const takeInto = useCallback(
+		async (files: File[], into: Item) => {
+			const note = into.file;
+			const pictures = files.filter((file) =>
+				isImageExtension(file.name.split(".").pop() ?? "")
+			);
+			if (pictures.length === 0) {
+				new Notice("Skybox: only a picture can be dropped on a card.");
+				return;
+			}
+			const added: string[] = [];
+			for (const file of pictures) {
+				const result = await ingest(app, index, settings, file);
+				if (!result) continue;
+				await guarded(() =>
+					app.vault.process(note, (text) => placePicture(text, pictureLink(result.path)))
+				);
+				added.push(result.path);
+			}
+			if (added.length === 0) {
+				new Notice("Skybox: that picture could not be added.");
+				return;
+			}
+			landed([into.id]);
+			const what =
+				added.length === 1
+					? (added[0].split("/").pop() ?? "the picture")
+					: `${added.length} pictures`;
+			new Notice(`Skybox: added ${what} to “${into.title}”.`);
+		},
+		[app, index, settings, landed]
+	);
+
+	/**
+	 * Every drop lands here: files from a file manager, or an address from a
+	 * web page. A drop that can do nothing says so, rather than looking like
+	 * the plugin ignored it.
+	 */
+	const accept = useCallback(
+		async (files: File[], address: string | null, into: Item | null) => {
+			let taken = files;
+			if (taken.length === 0 && address) {
+				const picture = await fetchPicture(address);
+				if (!picture) return;
+				taken = [picture];
+			}
+			if (taken.length === 0) {
+				new Notice("Skybox: nothing in that drop to add.");
+				return;
+			}
+			try {
+				if (into) await takeInto(taken, into);
+				else await take(taken);
+			} catch (error) {
+				console.error("Skybox: that drop could not be taken in", error);
+				new Notice("Skybox: that drop could not be taken in.");
+			}
+		},
+		[fetchPicture, take, takeInto]
+	);
+
 	/** A long press or a right click: copy the card, or throw it away. */
 	const itemMenu = useCallback(
 		(item: Item, x: number, y: number) => {
@@ -372,6 +497,21 @@ export function App() {
 	const theirs = (event: React.DragEvent) =>
 		event.target instanceof Element && event.target.closest(".skybox-overlay") !== null;
 
+	/**
+	 * The note a dropped picture would go into: the open card, or the card
+	 * under the cursor. A drop that lands on the editor itself is Obsidian's,
+	 * which writes the file and embeds it where the cursor is; everywhere else
+	 * on an open card, and anywhere on a card in the grid, is ours.
+	 */
+	const noteUnder = (event: React.DragEvent): Item | null => {
+		if (!(event.target instanceof Element)) return null;
+		if (event.target.closest(".cm-editor, .markdown-preview-view")) return null;
+		if (event.target.closest(".skybox-overlay")) return writable(expanded);
+		const card = event.target.closest("[data-skybox-id]");
+		const id = card?.getAttribute("data-skybox-id") ?? "";
+		return id ? writable(index.get(id)) : null;
+	};
+
 	const card = (item: Item) => {
 		// A post on the wall is read where it is, and kept only if asked.
 		if (item.remote) {
@@ -406,18 +546,32 @@ export function App() {
 				typing ? " is-typing" : ""
 			}`}
 			onDragOver={(event) => {
-				if (theirs(event)) return;
+				const into = noteUnder(event);
+				if (theirs(event) && !into) return;
 				event.preventDefault();
 				setDropping(true);
+				setTargetId(into?.id ?? null);
 			}}
 			onDragLeave={(event) => {
-				if (event.target === event.currentTarget) setDropping(false);
+				if (event.target !== event.currentTarget) return;
+				setDropping(false);
+				setTargetId(null);
 			}}
 			onDrop={(event) => {
-				if (theirs(event)) return;
+				const into = noteUnder(event);
+				if (theirs(event) && !into) return;
 				event.preventDefault();
 				setDropping(false);
-				void take([...event.dataTransfer.files]);
+				setTargetId(null);
+				// A drag is only readable while it is happening, so what it
+				// carries is read before anything is fetched or written.
+				const files = [...event.dataTransfer.files];
+				const address = draggedPicture({
+					uriList: event.dataTransfer.getData("text/uri-list"),
+					html: event.dataTransfer.getData("text/html"),
+					text: event.dataTransfer.getData("text/plain"),
+				});
+				void accept(files, address, into);
 			}}
 		>
 			<div className="skybox-head">
@@ -471,6 +625,7 @@ export function App() {
 							named={namedId === item.id && expandedId !== item.id}
 							fresh={fresh.has(item.id)}
 							dropped={dropped.has(item.id)}
+							targeted={targetId === item.id}
 							onOpen={open}
 							onMenu={itemMenu}
 						/>

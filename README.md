@@ -19,8 +19,9 @@ way of looking at them.
   preview and all. Right-click a card, or long-press on a phone, to copy or delete it.
 - **A note names itself** from its first line, once the typing settles. Rename it yourself and it is
   yours.
-- **Drag and drop,** from the desktop or straight out of a browser window. Anything already in the
-  vault asks before it writes a second copy.
+- **Drag and drop,** from the desktop or straight out of a browser window, where a picture is an
+  address rather than a file and gets fetched. Drop one on a card and it goes into that note;
+  anything already in the vault asks before it writes a second copy.
 - **Bookmarks arrive on their own,** with no browser extension: point it at your browser's bookmarks
   file and keep bookmarking as you do. Each page is read once for its description, its picture and
   the article itself, so a bookmark is searchable by what the page said. Importing happens on
@@ -650,10 +651,26 @@ writes a note into the intake folder and expands it straight into its editor, an
 which opens the file picker. Files also arrive by drag and drop or from the share sheet, and a card
 for a file that has just arrived drops into the grid.
 
-A drop that lands on an open card belongs to Obsidian's editor, not to intake: it writes the file to
-the attachment folder and embeds it where the cursor is. Taking it in as well would import the same
-image twice, once embedded and once as a card of its own, and the content hash cannot catch it,
-because Obsidian's copy has no sidecar to carry one.
+A drop that lands on the editor of an open card belongs to Obsidian, not to intake: it writes the
+file to the attachment folder and embeds it where the cursor is. Taking it in as well would import
+the same image twice, once embedded and once as a card of its own, and the content hash cannot catch
+it, because Obsidian's copy has no sidecar to carry one.
+
+A picture dropped anywhere else on a note, on its card in the grid or on an open card outside the
+editor, goes into that note. The card under the cursor is outlined while the drag is over it, so the
+drop is aimed rather than guessed. The picture goes through intake like anything else, which hashes
+it and embeds the copy already in the vault rather than writing a second one, and it is placed above
+any extracted article, in the part of the note somebody wrote. The card then draws it.
+
+Dragging a picture out of a browser window hands over an address rather than a file: no `File` is in
+the drag at all, which is why this used to look like nothing happening. The address is read from
+`text/uri-list`, from the `img` tag in the dragged HTML, or from plain text when the whole of it is
+one address, and `src/drop.ts` holds that reading with `tests/drop.test.ts` over it. It is then
+fetched with `requestUrl` and taken in as a file, so the vault holds the picture itself and the card
+draws it without reaching that host again. The host says what kind of picture it is sending, which
+is how a picture named by a number gets a sensible filename; anything that does not answer with a
+picture is refused out loud, and so is a drop with nothing in it to add. Nothing is fetched without
+a drag: this is one request to the host whose picture you dropped.
 
 A long press on a card, or a right click, offers **Copy** and **Delete**. Copy takes a note's text,
 or the image itself where the clipboard will have it and its path where it will not. Delete asks

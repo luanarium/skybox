@@ -72,6 +72,8 @@ The view is registered with `registerView` and opened from a ribbon icon, a comm
 - New note: `vault.create` in the folder set in settings, then the card expands straight into the editor
 - Add files: opens `<input type="file" multiple accept="image/*,.md">`, feeding the same handler as drag and drop
 - Desktop drag and drop: `dragover` and `drop` handlers on the view call `preventDefault`; each dropped `File` is read with `arrayBuffer()` and written with `vault.createBinary` (images) or `vault.create` (markdown) into the same folder; name collisions get a numeric suffix; other file types are ignored
+- A picture dragged out of a browser carries no `File`, only an address: it is read from `text/uri-list`, the dragged HTML's `img` tag or plain text, fetched with `requestUrl`, and taken in as a file, so the vault holds the picture rather than a link
+- A picture dropped on a note, on its card or anywhere on an open card but the editor, goes into that note: through `ingest`, then embedded above any extracted article. The card under the drag is outlined first, and a drop that can do nothing says so
 - Every route (plus menu, drag and drop, shared items) goes through `ingest`
 - A newly created or added file appears first because the empty-box order is most recently modified first, with the fade-in; adding chips applies normal filtering
 
