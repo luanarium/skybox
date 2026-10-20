@@ -1,7 +1,7 @@
 {
 	"id": "skybox",
 	"name": "Skybox",
-	"version": "0.1.26",
+	"version": "0.1.27",
 	"minAppVersion": "1.6.6",
 	"description": "Your vault as a searchable wall of cards, browser bookmarks included.",
 	"author": "luanarium",
