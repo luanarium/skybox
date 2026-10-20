@@ -31,7 +31,11 @@ export function Card({ item, index, named, fresh, dropped, targeted, onOpen, onM
 
 	useEffect(() => {
 		let current = true;
-		if (item.kind === "note" || item.sidecar) {
+		// A post carries its own words and has no file to read them from.
+		if (item.remote) {
+			setExcerpt(plainExcerpt(item.excerpt));
+			setWritten(null);
+		} else if (item.kind === "note" || item.sidecar) {
 			vaultIndex.content(item).then((content) => {
 				if (!current) return;
 				setExcerpt(plainExcerpt(content));
@@ -46,7 +50,7 @@ export function Card({ item, index, named, fresh, dropped, targeted, onOpen, onM
 		return () => {
 			current = false;
 		};
-	}, [item.id, item.mtime, vaultIndex]);
+	}, [item.id, item.mtime, item.excerpt, item.remote, vaultIndex]);
 
 	const held = useRef<number | null>(null);
 	const wasHeld = useRef(false);
@@ -70,6 +74,10 @@ export function Card({ item, index, named, fresh, dropped, targeted, onOpen, onM
 	// offered, and resolving it here rather than in the effect means the
 	// preview-images setting takes hold the moment it is switched.
 	const own = textPicture(app, settings, item, written);
+	// A card from a hashtag wall is the picture: the words are in the post,
+	// the hashtag is the search that found it, and a column of cards all
+	// repeating it is a column of cards nobody can see. A post with no
+	// picture still has to say something, so that one keeps its words.
 	const picture = own && (!item.preview || item.previewOffered) ? own : item.preview;
 
 	const style = {
@@ -137,19 +145,21 @@ export function Card({ item, index, named, fresh, dropped, targeted, onOpen, onM
 					draggable={false}
 				/>
 			)}
-			<div className="skybox-card-body">
-				<div className="skybox-card-title">{item.title}</div>
-				{excerpt && <div className="skybox-card-excerpt">{excerpt}</div>}
-				{item.tags.length > 0 && (
-					<div className="skybox-card-tags">
-						{item.tags.slice(0, 4).map((tag) => (
-							<span className="skybox-tag" key={tag}>
-								#{tag}
-							</span>
-						))}
-					</div>
-				)}
-			</div>
+			{!(item.remote && picture) && (
+				<div className="skybox-card-body">
+					<div className="skybox-card-title">{item.title}</div>
+					{excerpt && <div className="skybox-card-excerpt">{excerpt}</div>}
+					{!item.remote && item.tags.length > 0 && (
+						<div className="skybox-card-tags">
+							{item.tags.slice(0, 4).map((tag) => (
+								<span className="skybox-tag" key={tag}>
+									#{tag}
+								</span>
+							))}
+						</div>
+					)}
+				</div>
+			)}
 		</div>
 	);
 }

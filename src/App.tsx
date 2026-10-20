@@ -25,9 +25,11 @@ import { MailOverlay } from "./components/MailOverlay";
 import { Masonry } from "./components/Masonry";
 import { WallOverlay } from "./components/WallOverlay";
 import { clientFor } from "./sharing";
+import { videoId } from "./video";
 import { isKeptPost, narrowWall, wallItem, wallSourceOf } from "./wall";
 import { guarded } from "./writes";
 import { NoteOverlay } from "./components/NoteOverlay";
+import { VideoOverlay } from "./components/VideoOverlay";
 import { Sheet } from "./components/Sheet";
 import { SearchBox } from "./components/SearchBox";
 
@@ -528,6 +530,19 @@ export function App() {
 		// A conversation is read as a conversation, not edited as a note.
 		if (app.metadataCache.getFileCache(item.file)?.frontmatter?.thread_id) {
 			return <MailOverlay item={item} onClose={close} onOpenPath={openPath} />;
+		}
+		// A watch page has no article in it: the video is what the page is,
+		// so the card opens as the video rather than as the markup around it.
+		const video = videoId(app.metadataCache.getFileCache(item.file)?.frontmatter?.source);
+		if (video) {
+			return (
+				<VideoOverlay
+					item={item}
+					id={video}
+					onClose={close}
+					onOpenPath={openPath}
+				/>
+			);
 		}
 		return <NoteOverlay item={item} onClose={close} onOpenPath={openPath} />;
 	};

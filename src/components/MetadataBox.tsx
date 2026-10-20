@@ -1,11 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Notice, Platform, TFile } from "obsidian";
 import { useSkybox } from "../context";
+import { Comments } from "./Comments";
 import { Conversation } from "./Conversation";
 import { Icon } from "./Icon";
-import { useBack } from "./useBack";
-import { clientFor } from "../sharing";
-import { unreadTotal } from "../mastodon";
 import { coverClass } from "../cover";
 import { coverLink, sameCover } from "../preview";
 import { isImageExtension } from "../types";
@@ -23,7 +21,7 @@ interface MetadataBoxProps {
 }
 
 export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: MetadataBoxProps) {
-	const { app, index, settings, interactions } = useSkybox();
+	const { app, index } = useSkybox();
 	const [draft, setDraft] = useState("");
 	/**
 	 * Shown straight away, then reconciled with the index: a tag written to
@@ -162,13 +160,6 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 	const statusId = frontmatter.mastodon_id ? String(frontmatter.mastodon_id) : "";
 	const [tab, setTab] = useState<"note" | "thread">(statusId ? "thread" : "note");
 	/*
-	 * A phone stacks the pane under the editor, which puts a thread a long
-	 * way down a scroll. There it opens as a sheet of its own instead, from a
-	 * button that says how much is waiting.
-	 */
-	const [sheeted, setSheeted] = useState(false);
-	const [typingHere, setTypingHere] = useState(false);
-	/*
 	 * On a phone the pane sits above the note, so everything in it is screen
 	 * the note does not get. A clipped page carries eight or ten properties,
 	 * which fills the view on its own and leaves the article below the fold,
@@ -176,44 +167,7 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 	 * the pane is a column beside the note and has the room for the lot.
 	 */
 	const [details, setDetails] = useState(!Platform.isMobile);
-	/*
-	 * How many comments there are, which is what the button should say: the
-	 * thread is read once when the card opens and again when the panel
-	 * closes, since replying is the usual reason for the number to change.
-	 * Nested replies count too, so this is the thread rather than Mastodon's
-	 * own `replies_count`, which only counts what answers the post directly.
-	 */
-	const [comments, setComments] = useState<number | null>(null);
-	/*
-	 * Back closes the thread rather than the card it is drawn over, which
-	 * takes a modal standing in Obsidian's stack of closeable things. A modal
-	 * keeps focus to itself, though, so while the reply box has the cursor
-	 * the stand-in steps aside: Android's own first back closes the keyboard,
-	 * and the one after that closes the thread.
-	 */
-	const closeSheet = useCallback(() => setSheeted(false), []);
-	useBack(app, sheeted && !typingHere, closeSheet);
 
-	useEffect(() => {
-		if (!statusId || !Platform.isMobile || sheeted) return;
-		const client = clientFor(app, settings);
-		if (!client) return;
-		let live = true;
-		void client
-			.replies(statusId)
-			.then((thread) => {
-				if (live) setComments(thread.length);
-			})
-			.catch(() => {
-				// A count nobody could fetch is a button that says Comments.
-				if (live) setComments(null);
-			});
-		return () => {
-			live = false;
-		};
-	}, [app, settings, statusId, sheeted]);
-
-	const waiting = statusId ? unreadTotal(interactions.unreadFor(statusId)) : 0;
 	/*
 	 * A shared card opens on its conversation, because that is the part that
 	 * is somewhere else and may have moved since you last looked. An empty
@@ -227,45 +181,7 @@ export function MetadataBox({ note, file, tags, onOpenPath, ensureNote }: Metada
 	return (
 		<aside className="skybox-meta">
 			{statusId && note && Platform.isMobile && (
-				<section className="skybox-meta-section">
-					<button className="skybox-thread-open" onClick={() => setSheeted(true)}>
-						{waiting > 0
-							? `${waiting} unread ${waiting === 1 ? "comment" : "comments"}`
-							: comments === null
-								? "Comments"
-								: `${comments} ${comments === 1 ? "comment" : "comments"}`}
-					</button>
-				</section>
-			)}
-
-			{statusId && note && sheeted && (
-				/*
-				 * A panel over the card rather than a second modal. The card
-				 * is already one on a phone, and opening another on top of it
-				 * puts a keyboard into a stack of modals, which ends with an
-				 * empty sheet and nothing to type into.
-				 */
-				<div
-					className="skybox-thread-panel"
-					onFocusCapture={() => setTypingHere(true)}
-					onBlurCapture={() => setTypingHere(false)}
-				>
-					<div className="skybox-thread-panel-head">
-						<button
-							className="skybox-back-arrow"
-							aria-label="Back to the card"
-							onClick={closeSheet}
-						>
-							<Icon name="arrow-left" />
-						</button>
-						<h2>
-							{comments === null
-								? "Comments"
-								: `${comments} ${comments === 1 ? "comment" : "comments"}`}
-						</h2>
-					</div>
-					<Conversation title={note.basename} statusId={statusId} />
-				</div>
+				<Comments title={note.basename} statusId={statusId} />
 			)}
 
 			{statusId && note && !Platform.isMobile && (

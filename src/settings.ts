@@ -140,6 +140,38 @@ export class SkyboxSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
+			.setName("Play videos in the card")
+			.setDesc(
+				"A bookmarked video opens as the video, with what the page said about " +
+					"itself underneath. The player is YouTube's own, loaded from " +
+					"youtube-nocookie.com when you open that card and never before; off, " +
+					"the card is a link and nothing is loaded."
+			)
+			.addToggle((toggle) =>
+				toggle.setValue(this.plugin.settings.videoEmbeds).onChange(async (value) => {
+					this.plugin.settings.videoEmbeds = value;
+					await this.plugin.saveSettings();
+				})
+			);
+
+		new Setting(containerEl)
+			.setName("Read the comments under a video")
+			.setDesc(
+				"Show the top five comments in the card, read only: nothing is posted, " +
+					"voted on or nested. Reading them asks YouTube twice when the card " +
+					"opens, for the watch page and then for the endpoint that page's own " +
+					"scripts call, which is not an API YouTube documents or promises to " +
+					"keep. There is no key and no account; it may simply stop working one " +
+					"day, and the card says so when it does."
+			)
+			.addToggle((toggle) =>
+				toggle.setValue(this.plugin.settings.videoComments).onChange(async (value) => {
+					this.plugin.settings.videoComments = value;
+					await this.plugin.saveSettings();
+				})
+			);
+
+		new Setting(containerEl)
 			.setName("Preview images")
 			.setDesc(
 				"Show the picture a page offers for its own social cards, where it offers one, " +

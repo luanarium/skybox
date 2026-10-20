@@ -69,6 +69,10 @@ export interface SkyboxSettings {
 	bookmarkImages: boolean;
 	/** Keep the article itself in the note, not only what the page says of it. */
 	bookmarkArticle: boolean;
+	/** Play a bookmarked video in its card, rather than linking out to it. */
+	videoEmbeds: boolean;
+	/** Read the top comments under a bookmarked video, which asks YouTube. */
+	videoComments: boolean;
 	/** The Mastodon instance to post to; empty means sharing is off. */
 	mastodonInstance: string;
 	/** The tag that means "share this", without its hash. */
@@ -117,6 +121,8 @@ export const DEFAULT_SETTINGS: SkyboxSettings = {
 	bookmarksFolder: "bookmarks",
 	bookmarkImages: true,
 	bookmarkArticle: true,
+	videoEmbeds: true,
+	videoComments: true,
 	mastodonInstance: "",
 	mastodonTag: "share",
 	mastodonVisibility: "unlisted",

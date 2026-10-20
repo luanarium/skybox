@@ -3,7 +3,7 @@ import { Notice } from "obsidian";
 import { useSkybox } from "../context";
 import type { WallPost } from "../mastodon";
 import { clientFor } from "../sharing";
-import { Conversation } from "./Conversation";
+import { Thread } from "./Comments";
 
 /**
  * A post, drawn the same way wherever it is met.
@@ -135,7 +135,7 @@ export function Post({
 			</article>
 
 			<aside className="skybox-meta">
-				<Conversation title={post.author || `@${post.handle}`} statusId={post.id} />
+				<Thread title={post.author || `@${post.handle}`} statusId={post.id} />
 			</aside>
 		</div>
 	);

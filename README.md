@@ -317,6 +317,43 @@ startup, and never reached on a phone, where the fetch that feeds it does not ru
 A card never shows the article. The excerpt stops at the `## Page text` heading and reads what the
 note says above it, which is the page's own description; the text below is for searching.
 
+### A bookmarked video
+
+A watch page has no article in it. Defuddle finds the one thing on the page that is not navigation,
+which is the player's own `iframe`, so a clipped video used to open as a heading, a link and a line
+of raw HTML: everything except the thing the page is about.
+
+Now a bookmark whose `source` is a YouTube address opens as the video. The player is first and the
+only thing above it is the card's own properties. Underneath it sits what the page said about
+itself, which is the description, and under that the top five comments. `src/video.ts` reads the id
+out of an address however it was written, a watch link, a `youtu.be` link, a short, a live page or
+an embed, and refuses a channel or a playlist; `tests/video.test.ts` covers it.
+
+The player is YouTube's own, from `youtube-nocookie.com`, which is their host for an embed that
+stores nothing until something is played. It loads when you open that card and never before, and
+**Play videos in the card** turns it back into a link.
+
+The comments are the second external service this plugin talks to, and a different kind of talking
+from the first. Mastodon has an API and a token. YouTube's comments are not in the page it serves:
+the page carries a continuation token and a public key, and the comments come back from a POST to
+`youtubei/v1/next`, the endpoint the page's own scripts call and one YouTube documents nowhere. That
+trade was put on the table before any of it was written, against the alternative of a Google API key
+you would have to make yourself, and taken knowingly: no key, no quota and no account, against a
+shape that can change without warning.
+
+So everything in `src/youtube.ts` is written to come back empty rather than wrong. The token is
+found by the section that names itself rather than by position. Two comment shapes are read, the
+entity payloads YouTube serves now and the renderers it served before. Anything unrecognised is an empty
+list, a line in the console, and a card that says which way it failed: `429`, "comments are turned
+off, or there are none", "that page is not the one YouTube usually serves". `tests/youtube.test.ts`
+covers both shapes, the brace counting that finds the end of the page's state blob, the ranking
+order and each of those failures.
+
+They are read only, and that is deliberate rather than unfinished: nothing here posts a comment,
+votes on one, or says who is reading. A comment with answers under it says how many and leaves them
+where they are. **Read the comments under a video** switches the whole of it off, and then the card
+is a player and a description.
+
 ### Where this is going
 
 A bookmark now carries what its page says about itself and the page's own text. What is left, in
