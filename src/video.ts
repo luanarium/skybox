@@ -46,11 +46,43 @@ function keep(id: string | null | undefined): string | null {
 }
 
 /**
- * Where the player comes from. The nocookie host is YouTube's own, and it is
- * the one that stores nothing for a video nobody plays.
+ * Where the player comes from, in the order worth trying.
+ *
+ * The nocookie host is YouTube's own and the one that stores nothing for a
+ * video nobody plays, so it is first. It is also the stricter of the two and
+ * refuses in places the ordinary host does not, and a reader would rather
+ * watch the video than hold a principle, so `youtube.com` is second.
  */
+export const EMBED_HOSTS = ["https://www.youtube-nocookie.com", "https://www.youtube.com"] as const;
+
+/**
+ * The three ways to ask, tried in turn until one of them answers.
+ *
+ * `driven` is an embed that will take instructions, which is what the skinned
+ * player needs and the one thing in the address that an embed can object to.
+ * Without it the player is YouTube's own, with its own controls, which is how
+ * every other plugin embeds a video and the configuration most likely to play
+ * anywhere.
+ */
+export interface EmbedStep {
+	host: string;
+	driven: boolean;
+}
+
+export const EMBED_LADDER: EmbedStep[] = [
+	{ host: EMBED_HOSTS[0], driven: true },
+	{ host: EMBED_HOSTS[1], driven: true },
+	{ host: EMBED_HOSTS[1], driven: false },
+];
+
+export function embedAt(step: EmbedStep, id: string): string {
+	const driven = step.driven ? "&enablejsapi=1&playsinline=1" : "";
+	return `${step.host}/embed/${id}?rel=0${driven}`;
+}
+
+/** The plain embed, for a card that does not need to drive anything. */
 export function embedUrl(id: string): string {
-	return `https://www.youtube-nocookie.com/embed/${id}?rel=0`;
+	return `${EMBED_HOSTS[0]}/embed/${id}?rel=0`;
 }
 
 /** The page the video is on, for the link beside the player. */
@@ -58,14 +90,9 @@ export function watchUrl(id: string): string {
 	return `https://www.youtube.com/watch?v=${id}`;
 }
 
-/**
- * The same player, with its own scripts answering ours. `enablejsapi` is what
- * lets a page drive an embed by posting messages at it, which is how the
- * skinned player works: YouTube draws the picture, the skin holds the
- * buttons.
- */
+/** The first rung: the private host, taking instructions. */
 export function playerUrl(id: string): string {
-	return `https://www.youtube-nocookie.com/embed/${id}?rel=0&enablejsapi=1&playsinline=1`;
+	return embedAt(EMBED_LADDER[0], id);
 }
 
 /**

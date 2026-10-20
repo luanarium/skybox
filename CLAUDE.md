@@ -19,6 +19,7 @@ Skybox is an Obsidian plugin that opens onto a masonry search pane over the vaul
 - Clicking a note expands it into its editor, with a metadata box on the right
 - A bookmarked video opens as the video: the player first, what the page said about itself underneath, then the top five comments, with nothing above the player but the card's own properties
 - A video tagged `music`, or one from a host that only serves music, gets a transport bar instead of a frame: an homage to a desktop player drawn in CSS with no artwork and no product's name on it, keeping the picture as its own visualisation, driven by posting messages at the embed rather than by any library loaded from Google, and showing dashes rather than zeros where the embed says nothing back
+- A YouTube embed refuses with one flat message for several reasons, so the frame climbs down rather than guessing: the private host taking instructions, then `youtube.com` taking instructions, then `youtube.com` plainly with its own controls, three seconds a rung. `src/components/useEmbed.ts` holds it and both the plain card and the skinned player use it
 - A card from a hashtag wall is its picture alone: the words are in the post and the hashtag is the search that found it
 - Images open as a lightbox with tags on the right and a text area below for thoughts and annotations
 - A plus button on desktop and mobile creates a new note or adds files through a file picker; desktop also accepts drag and drop

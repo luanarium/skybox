@@ -2,12 +2,13 @@ import { useEffect } from "react";
 import { ItemView, Platform } from "obsidian";
 import { useSkybox } from "../context";
 import type { Item } from "../types";
-import { embedUrl, watchUrl } from "../video";
+import { watchUrl } from "../video";
 import { MUSIC_TAG } from "../types";
 import { Icon } from "./Icon";
 import { MetadataBox } from "./MetadataBox";
 import { VideoComments } from "./VideoComments";
 import { useDismiss } from "./Sheet";
+import { Frame } from "./Frame";
 import { Winamp } from "./Winamp";
 
 /**
@@ -105,15 +106,7 @@ export function VideoOverlay({
 						{settings.videoEmbeds && music ? (
 							<Winamp id={id} title={item.title} />
 						) : settings.videoEmbeds ? (
-							<div className="skybox-video-frame">
-								<iframe
-									src={embedUrl(id)}
-									title={item.title}
-									allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-									allowFullScreen
-									referrerPolicy="strict-origin-when-cross-origin"
-								/>
-							</div>
+							<Frame id={id} title={item.title} />
 						) : (
 							<p className="skybox-video-off">
 								Playing videos in a card is switched off.{" "}

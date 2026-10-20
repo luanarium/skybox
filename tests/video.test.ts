@@ -1,6 +1,8 @@
 import * as assert from "node:assert";
 import {
 	clock,
+	EMBED_LADDER,
+	embedAt,
 	embedUrl,
 	listenMessage,
 	playerMessage,
@@ -48,10 +50,6 @@ assert.strictEqual(watchUrl("jQNeYbBiCKw"), "https://www.youtube.com/watch?v=jQN
 
 // The skinned player drives the embed by posting messages at it, with no
 // library and nothing loaded from Google to do it.
-assert.strictEqual(
-	playerUrl("jQNeYbBiCKw"),
-	"https://www.youtube-nocookie.com/embed/jQNeYbBiCKw?rel=0&enablejsapi=1&playsinline=1"
-);
 assert.deepStrictEqual(JSON.parse(playerMessage("playVideo")), {
 	event: "command",
 	func: "playVideo",
@@ -99,3 +97,14 @@ assert.strictEqual(clock(36000), "10:00:00");
 assert.strictEqual(clock(null), "--:--", "nothing is not zero");
 assert.strictEqual(clock(-1), "--:--");
 assert.strictEqual(clock(Number.NaN), "--:--");
+
+// Three ways to ask, tried in turn: the private host taking instructions, the
+// ordinary host taking instructions, then the ordinary host with its own
+// controls, which is how every other plugin embeds a video.
+assert.deepStrictEqual(EMBED_LADDER.map((step) => embedAt(step, "jQNeYbBiCKw")), [
+	"https://www.youtube-nocookie.com/embed/jQNeYbBiCKw?rel=0&enablejsapi=1&playsinline=1",
+	"https://www.youtube.com/embed/jQNeYbBiCKw?rel=0&enablejsapi=1&playsinline=1",
+	"https://www.youtube.com/embed/jQNeYbBiCKw?rel=0",
+]);
+assert.strictEqual(playerUrl("jQNeYbBiCKw"), embedAt(EMBED_LADDER[0], "jQNeYbBiCKw"));
+assert.strictEqual(EMBED_LADDER.filter((step) => step.driven).length, 2);

@@ -143,9 +143,11 @@ export class SkyboxSettingTab extends PluginSettingTab {
 			.setName("Play videos in the card")
 			.setDesc(
 				"A bookmarked video opens as the video, with what the page said about " +
-					"itself underneath. The player is YouTube's own, loaded from " +
-					"youtube-nocookie.com when you open that card and never before; off, " +
-					"the card is a link and nothing is loaded."
+					"itself underneath. The player is YouTube's own, asked for when you " +
+					"open that card and never before: from youtube-nocookie.com, which " +
+					"stores nothing for a video nobody plays, and from youtube.com where " +
+					"that stricter host refuses to play at all. Off, the card is a link " +
+					"and nothing is loaded."
 			)
 			.addToggle((toggle) =>
 				toggle.setValue(this.plugin.settings.videoEmbeds).onChange(async (value) => {

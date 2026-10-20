@@ -330,9 +330,23 @@ itself, which is the description, and under that the top five comments. `src/vid
 out of an address however it was written, a watch link, a `youtu.be` link, a short, a live page or
 an embed, and refuses a channel or a playlist; `tests/video.test.ts` covers it.
 
-The player is YouTube's own, from `youtube-nocookie.com`, which is their host for an embed that
-stores nothing until something is played. It loads when you open that card and never before, and
-**Play videos in the card** turns it back into a link.
+The player is YouTube's own. It loads when you open that card and never before, and **Play videos
+in the card** turns it back into a link.
+
+Which embed, though, took three goes to get right. A YouTube embed can refuse for reasons that all
+look the same from inside the frame, a flat "Video unavailable": `youtube-nocookie.com` is stricter
+than `youtube.com` and refuses where it does not, an embed that takes instructions is checked more
+closely than one that does not, and an app's own origin is not a domain anybody registered. So the
+frame climbs down rather than guessing. It asks the private host for an embed it can drive, waits
+three seconds for a word back, and hearing none asks the ordinary host, and then the ordinary host
+plainly, with YouTube's own controls, which is how every other plugin embeds a video and the
+configuration most likely to play anywhere. `src/components/useEmbed.ts` holds the climb, and both
+the plain card and the skinned player use it.
+
+The last rung cannot be checked, because an embed with no instructions has no way to answer. It is
+also the one most likely to work, so there is nowhere further to fall. On it, the skinned panel
+hands the frame back to YouTube's controls and says so where the transport was, rather than offering
+buttons that do nothing.
 
 The comments are the second external service this plugin talks to, and a different kind of talking
 from the first. Mastodon has an API and a token. YouTube's comments are not in the page it serves:
