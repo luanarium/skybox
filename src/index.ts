@@ -7,7 +7,9 @@ import {
 	UNREAD_TAG,
 	type Item,
 	type SkyboxSettings,
+	isAudioExtension,
 	isImageExtension,
+	isMediaExtension,
 	sidecarPathFor,
 	sidecarTargetPath,
 } from "./types";
@@ -56,13 +58,17 @@ export class VaultIndex {
 		this.notify();
 	}
 
-	/** The images a note embeds, by path. */
+	/**
+	 * The pictures and tracks a note embeds, by path. Both are files a note
+	 * holds rather than files kept for their own sake, which is what decides
+	 * whether they stand as cards; only a picture can be drawn on one.
+	 */
 	private embedsOf(note: TFile): string[] {
 		const cache = this.app.metadataCache.getFileCache(note);
 		const paths: string[] = [];
 		for (const embed of cache?.embeds ?? []) {
 			const target = this.app.metadataCache.getFirstLinkpathDest(embed.link, note.path);
-			if (target instanceof TFile && isImageExtension(target.extension)) {
+			if (target instanceof TFile && isMediaExtension(target.extension)) {
 				paths.push(target.path);
 				continue;
 			}
@@ -261,8 +267,8 @@ export class VaultIndex {
 			}
 			return;
 		}
-		if (isImageExtension(file.extension)) {
-			this.items.set(file.path, this.imageItem(file));
+		if (isMediaExtension(file.extension)) {
+			this.items.set(file.path, this.mediaItem(file));
 		}
 	}
 
@@ -290,7 +296,8 @@ export class VaultIndex {
 		};
 	}
 
-	private imageItem(file: TFile): Item {
+	/** A picture or a track: a file that is its own card, with a sidecar. */
+	private mediaItem(file: TFile): Item {
 		const sidecarFile = this.app.vault.getAbstractFileByPath(sidecarPathFor(file.path));
 		const sidecar = sidecarFile instanceof TFile ? sidecarFile : null;
 		const cache = sidecar ? this.app.metadataCache.getFileCache(sidecar) : null;
@@ -301,7 +308,7 @@ export class VaultIndex {
 		if (embedded && !tags.includes(EMBEDDED_TAG)) tags.push(EMBEDDED_TAG);
 		return {
 			id: file.path,
-			kind: "image",
+			kind: isAudioExtension(file.extension) ? "audio" : "image",
 			file,
 			sidecar,
 			title: this.titleOf(file, cache?.frontmatter?.title),
@@ -341,7 +348,9 @@ export class VaultIndex {
 		if (pinned) return { picture: pinned, offered: false };
 		const remote = this.settings.bookmarkImages ? webImage(front?.image) : null;
 		if (remote) return { picture: remote, offered: true };
-		const first = this.embedsBy.get(file.path)?.[0];
+		const first = this.embedsBy
+			.get(file.path)
+			?.find((path) => isImageExtension(path.split(".").pop() ?? ""));
 		if (!first) return { picture: null, offered: false };
 		const embedded = this.app.vault.getAbstractFileByPath(first);
 		const picture =

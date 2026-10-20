@@ -4,7 +4,7 @@ import { ask } from "./confirm";
 import type { VaultIndex } from "./index";
 import { hashOf } from "./ingest";
 import { ensureSidecar } from "./sidecar";
-import { isImageExtension, type SkyboxSettings } from "./types";
+import { isMediaExtension, type SkyboxSettings } from "./types";
 import { guarded, isWriting } from "./writes";
 
 /** How long after the app comes back a vault write counts as a shared item. */
@@ -66,7 +66,7 @@ export class ShareIntake {
 			await this.surface(file.path);
 			return;
 		}
-		if (!isImageExtension(file.extension)) return;
+		if (!isMediaExtension(file.extension)) return;
 
 		const hash = await hashOf(this.app, file);
 		const known = hash ? this.index.hashes().get(hash) : undefined;

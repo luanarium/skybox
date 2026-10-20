@@ -3,13 +3,11 @@ import { ItemView, Platform } from "obsidian";
 import { useSkybox } from "../context";
 import type { Item } from "../types";
 import { watchUrl } from "../video";
-import { MUSIC_TAG } from "../types";
 import { Icon } from "./Icon";
 import { MetadataBox } from "./MetadataBox";
 import { VideoComments } from "./VideoComments";
 import { useDismiss } from "./Sheet";
 import { Frame } from "./Frame";
-import { Winamp } from "./Winamp";
 
 /**
  * A bookmarked video, opened as the video.
@@ -40,14 +38,6 @@ export function VideoOverlay({
 	const front = app.metadataCache.getFileCache(item.file)?.frontmatter ?? {};
 	const description = typeof front.description === "string" ? front.description.trim() : "";
 	const site = typeof front.site === "string" ? front.site.trim() : "";
-	/*
-	 * A video tagged music is something to put on rather than something to
-	 * watch, so it gets a transport bar instead of a frame. The tag is the
-	 * reader's word for it; a host that only serves music says so itself.
-	 */
-	const music =
-		item.tags.some((tag) => tag.toLowerCase() === MUSIC_TAG) ||
-		item.kinds.includes("music");
 
 	useEffect(() => {
 		const onKey = (event: KeyboardEvent) => {
@@ -103,9 +93,7 @@ export function VideoOverlay({
 				</header>
 				<div className="skybox-expanded-body">
 					<div className="skybox-video-main">
-						{settings.videoEmbeds && music ? (
-							<Winamp id={id} title={item.title} />
-						) : settings.videoEmbeds ? (
+						{settings.videoEmbeds ? (
 							<Frame id={id} title={item.title} />
 						) : (
 							<p className="skybox-video-off">

@@ -1,6 +1,6 @@
 import { type App, Notice, TFile, TFolder, normalizePath } from "obsidian";
 import type { VaultIndex } from "./index";
-import { isImageExtension, sidecarPathFor, type Item, type SkyboxSettings } from "./types";
+import { isMediaExtension, sidecarPathFor, type Item, type SkyboxSettings } from "./types";
 import { guarded } from "./writes";
 
 export interface IngestResult {
@@ -33,9 +33,11 @@ export async function ingest(
 	askAnyway?: DuplicateAnswer
 ): Promise<IngestResult | null> {
 	const extension = extensionOf(file.name);
-	const isImage = isImageExtension(extension);
+	// A picture and a track are both files kept for themselves, written
+	// as bytes with a sidecar note beside them to hold their tags.
+	const isMedia = isMediaExtension(extension);
 	const isNote = extension === "md";
-	if (!isImage && !isNote) return null;
+	if (!isMedia && !isNote) return null;
 
 	const data = await file.arrayBuffer();
 	const hash = await sha256(data);
@@ -48,7 +50,7 @@ export async function ingest(
 	return guarded(async () => {
 		const folder = await ensureFolder(app, settings.intakeFolder);
 		const path = await uniquePath(app, folder, file.name);
-		if (isImage) {
+		if (isMedia) {
 			await app.vault.createBinary(path, data);
 			await app.vault.create(sidecarPathFor(path), sidecarNote(hash));
 			return { path, created: true, duplicate: known };

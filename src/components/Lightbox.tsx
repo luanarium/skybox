@@ -3,6 +3,7 @@ import { Platform, type TFile } from "obsidian";
 import { useSkybox } from "../context";
 import { ensureSidecar, readBody, writeBody } from "../sidecar";
 import type { Item } from "../types";
+import { Amp } from "./Amp";
 import { Icon } from "./Icon";
 import { useDismiss } from "./Sheet";
 import { MetadataBox } from "./MetadataBox";
@@ -15,7 +16,10 @@ interface LightboxProps {
 	onOpenPath: (path: string) => void;
 }
 
-/** An image opens as a lightbox: tags beside it, thoughts below. */
+/**
+ * A file opens in its own window: a picture to look at or a track to play,
+ * with tags beside it and thoughts below.
+ */
 export function Lightbox({ item, onClose, onOpenPath }: LightboxProps) {
 	const { app } = useSkybox();
 	// Inside a sheet, closing means letting the sheet slide away.
@@ -104,11 +108,15 @@ export function Lightbox({ item, onClose, onOpenPath }: LightboxProps) {
 				</header>
 				<div className="skybox-expanded-body">
 					<div className="skybox-lightbox-main">
-						<img
-							className="skybox-lightbox-image"
-							src={app.vault.getResourcePath(item.file)}
-							alt={item.title}
-						/>
+						{item.kind === "audio" ? (
+							<Amp file={item.file} title={item.title} />
+						) : (
+							<img
+								className="skybox-lightbox-image"
+								src={app.vault.getResourcePath(item.file)}
+								alt={item.title}
+							/>
+						)}
 						<textarea
 							className="skybox-thoughts"
 							placeholder="thoughts and annotations"

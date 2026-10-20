@@ -15,7 +15,7 @@ import { createNote, ingest } from "./ingest";
 import { openPluginSettings } from "./preferences";
 import { type Chip, search } from "./search";
 import { withTransition } from "./transition";
-import { UNREAD_TAG, isImageExtension, type Item } from "./types";
+import { UNREAD_TAG, isMediaExtension, type Item } from "./types";
 import { BottomBar } from "./components/BottomBar";
 import { Card } from "./components/Card";
 import { Composer } from "./components/Composer";
@@ -368,15 +368,15 @@ export function App() {
 	const takeInto = useCallback(
 		async (files: File[], into: Item) => {
 			const note = into.file;
-			const pictures = files.filter((file) =>
-				isImageExtension(file.name.split(".").pop() ?? "")
+			const held = files.filter((file) =>
+				isMediaExtension(file.name.split(".").pop() ?? "")
 			);
-			if (pictures.length === 0) {
-				new Notice("Skybox: only a picture can be dropped on a card.");
+			if (held.length === 0) {
+				new Notice("Skybox: only a picture or a track can be dropped on a card.");
 				return;
 			}
 			const added: string[] = [];
-			for (const file of pictures) {
+			for (const file of held) {
 				const result = await ingest(app, index, settings, file);
 				if (!result) continue;
 				await guarded(() =>
@@ -519,7 +519,7 @@ export function App() {
 		if (item.remote) {
 			return <WallOverlay item={item} onClose={close} />;
 		}
-		if (item.kind === "image") {
+		if (item.kind !== "note") {
 			return <Lightbox item={item} onClose={close} onOpenPath={openPath} />;
 		}
 		// A post kept from the wall is still somebody else's words, so it is
@@ -655,7 +655,7 @@ export function App() {
 				className="skybox-picker"
 				type="file"
 				multiple
-				accept="image/*,.md"
+				accept="image/*,audio/*,.md"
 				onChange={(event) => {
 					void take([...(event.target.files ?? [])]);
 					event.target.value = "";

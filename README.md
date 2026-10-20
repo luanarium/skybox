@@ -28,8 +28,10 @@ way of looking at them.
   the article itself, so a bookmark is searchable by what the page said. Importing happens on
   desktop, where the browser's file is; on a phone the notes simply arrive with the rest of the
   vault.
-- **Images are notes too,** each with a sidecar beside it holding its tags and thoughts. An image a
-  note embeds belongs to that note, and stays out of the way.
+- **Images and audio are notes too,** each with a sidecar beside it holding its tags and thoughts.
+  A file a note embeds belongs to that note, and stays out of the way.
+- **A track in the vault plays in its card,** in a transport bar with a real analyser on it, since
+  the file is right there.
 - **Notes show what they hold.** A note that embeds an image puts the first one on its card, and the
   right pane lets you pick another. A note with no picture draws one, a gradient of its own.
 - **Mail arrives as conversations.** Point it at a Maildir that mbsync fills and threads become
@@ -444,13 +446,43 @@ rough order of how much it would change things, none of it built yet:
 On a phone none of this applies, since there is no file to read. Bookmarks arrive there the way
 everything else does, by syncing the vault.
 
-## Images a note embeds
+## Audio files
+
+An audio file in the vault is a card like a picture is: something you kept, with a sidecar note
+beside it holding its tags and your thoughts. `mp3`, `m4a`, `aac`, `ogg`, `oga`, `opus`, `flac`,
+`wav` and `3gp`, which is what Obsidian itself will play. A format the vault holds but the browser
+cannot decode would be a card with a dead button on it.
+
+A track cannot be drawn, so its card draws a cover of its own from its path, the same gradients
+notes use, and wears a small mark saying what it is. Opening one gives the same window a picture
+gets, with the player where the picture would be: tags beside it, thoughts below.
+
+The player is an homage to the desktop music players of 1999, drawn in CSS. No artwork, no skin
+files, no product's name on it. What makes it worth having here rather than around an embed is that
+the file is in the vault, which is the same origin as the pane drawing it: the time, the length and
+the volume are the element's own rather than a guess, seeking is instant, and the bars are the sound
+itself read through an `AnalyserNode` instead of an animation pretending to be one. The analyser is
+built on the first press rather than on load, because a graph built before any gesture starts
+suspended and draws a flat line.
+
+This panel was first tried around a YouTube embed, where a `music` tag turned a video card into a
+transport bar. It was dropped on 2026-10-20 and that is the honest reason: an embed from another
+origin will not say where it is, cannot be analysed at all, and in Obsidian would not take
+instructions in the first place. The buttons looked right and did nothing. A video card is a video
+card now, and the panel went where it can tell the truth.
+
+Everything that already worked for images works for a track without a second code path, because the
+sidecar, the hash, the dedupe and the embedded rule were never about pixels: drag one in, add one
+through the plus button, share one to Obsidian from a phone, drop one onto a note to embed it.
+
+## Images and audio a note embeds
 
 Drop an image into a note and Obsidian writes it into the vault, so the grid has every right to show
 it a card, but an image embedded in a note is part of that note's page rather than something kept
 for its own sake. `metadataCache` already knows which is which: every note's `embeds` are resolved
-on build, and an image some note embeds is marked `embedded` and given a tag nothing wrote,
-`#embedded`.
+on build, and a file some note embeds is marked `embedded` and given a tag nothing wrote,
+`#embedded`. A track counts the same way, though only a picture is ever drawn on the note's card: a
+note holding both shows the picture.
 
 What that buys is one rule rather than two settings: embedded images stay out of the everything
 view, and nothing else changes. Any search still reaches them, `#embedded` asks for exactly those,
@@ -460,7 +492,7 @@ rule off.
 
 ## Ignored folders
 
-The grid shows every note and every image in the vault, which is the point: a picture is something
+The grid shows every note, image and track in the vault, which is the point: a picture is something
 you kept, not an attachment belonging to a note. But a vault holds things that are not cards: an
 attachment folder of images that live inside notes, a templates folder, or another vault nested
 inside this one, whose every note would otherwise appear twice.

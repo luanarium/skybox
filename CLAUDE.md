@@ -15,13 +15,13 @@ Skybox is an Obsidian plugin that opens onto a masonry search pane over the vaul
 - Typed words become chips on space; chips are removable and removing one widens the search
 - A chip beginning `!` asks for what a bookmarked address is for rather than for a word: `!video`, `!music`, `!code`, `!social`, `!shop`, `!wiki`, `!read`. The kind is worked out from the host in `src/kinds.ts` and never written into a note, so a note that says "video" is not a video and a video whose address says nothing is still one
 - Results fade in as they surface when chips are added
-- An empty search box shows all markdown notes and images
+- An empty search box shows all markdown notes, images and audio files
 - Clicking a note expands it into its editor, with a metadata box on the right
 - A bookmarked video opens as the video: the player first, what the page said about itself underneath, then the top five comments, with nothing above the player but the card's own properties
-- A video tagged `music`, or one from a host that only serves music, gets a transport bar instead of a frame: an homage to a desktop player drawn in CSS with no artwork and no product's name on it, keeping the picture as its own visualisation, driven by posting messages at the embed rather than by any library loaded from Google, and showing dashes rather than zeros where the embed says nothing back
+- Audio files are cards like images: a sidecar note beside each one for its tags and thoughts, a drawn cover and a mark on the card, and a transport bar when opened. The panel is an homage to a desktop player drawn in CSS, with no artwork and no product's name on it, and because the file is in the vault the readouts are the element's own and the bars are the sound itself through an `AnalyserNode`. Tried first on a YouTube embed and dropped on 2026-10-20: an embed from somewhere else will not say where it is, cannot be analysed, and refuses to be driven at all in Obsidian
 - A YouTube embed refuses with one flat message for several reasons, so the frame climbs down rather than guessing: the private host taking instructions, then `youtube.com` taking instructions, then `youtube.com` plainly with its own controls, three seconds a rung. `src/components/useEmbed.ts` holds it and both the plain card and the skinned player use it
 - A card from a hashtag wall is its picture alone: the words are in the post and the hashtag is the search that found it
-- Images open as a lightbox with tags on the right and a text area below for thoughts and annotations
+- Images and audio files open in the same window: the picture or the player, tags on the right, and a text area below for thoughts and annotations
 - A plus button on desktop and mobile creates a new note or adds files through a file picker; desktop also accepts drag and drop
 - Intake is deduplicated by content hash: an image or file already imported opens its existing card and creates nothing; one never imported gets a new note
 - On mobile, items shared to Obsidian from the OS share sheet are reacted to by the plugin, which then drops the user back into the plugin once the note is created or appended to
@@ -66,11 +66,12 @@ The view is registered with `registerView` and opened from a ribbon icon, a comm
 - Expanded note is an embedded CodeMirror 6 editor writing through `vault.process`, with an "Open in Obsidian" button (`leaf.openFile`) for live preview
 - Right box shows tags and properties (`processFrontMatter`), links and backlinks (`metadataCache`), and dates (file stat)
 
-## Images
+## Images and audio
 
-- Images are not notes, so the lightbox edits a sidecar note `<name>.<ext>.md`
+- Neither is a note, so the window edits a sidecar note `<name>.<ext>.md`
 - Tags go in the sidecar's frontmatter, so Obsidian's tag pane sees them; thoughts go in its body
-- The image and its sidecar are one card in results
+- The file and its sidecar are one card in results
+- An image a note embeds is part of that note's page and stays out of the everything view; so is a track, though only an image is drawn on the note's card
 
 ## Creating and adding files
 

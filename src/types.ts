@@ -2,7 +2,14 @@ import type { TFile } from "obsidian";
 
 export const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "bmp", "svg", "webp", "avif"];
 
-export type ItemKind = "note" | "image";
+/**
+ * The sound files Obsidian itself will play, which is what a card can offer
+ * to play. A format the vault holds but the browser cannot decode would be a
+ * card with a dead button on it.
+ */
+export const AUDIO_EXTENSIONS = ["mp3", "m4a", "aac", "ogg", "oga", "opus", "flac", "wav", "3gp"];
+
+export type ItemKind = "note" | "image" | "audio";
 
 /** One card in the grid: a markdown note, or an image plus its sidecar note. */
 export interface Item {
@@ -155,9 +162,6 @@ export const EMBEDDED_TAG = "embedded";
  */
 export const COLLISION_TAG = "collision";
 
-/** The tag that says a video is something to put on rather than to watch. */
-export const MUSIC_TAG = "music";
-
 /** The tag a shared card wears while something is waiting; nothing writes it. */
 export const UNREAD_TAG = "comments";
 
@@ -177,13 +181,22 @@ export function isImageExtension(ext: string): boolean {
 	return IMAGE_EXTENSIONS.includes(ext.toLowerCase());
 }
 
-/** `foo.png.md` is the sidecar of `foo.png`. */
+export function isAudioExtension(ext: string): boolean {
+	return AUDIO_EXTENSIONS.includes(ext.toLowerCase());
+}
+
+/** A file that is a card of its own rather than a note: a picture or a track. */
+export function isMediaExtension(ext: string): boolean {
+	return isImageExtension(ext) || isAudioExtension(ext);
+}
+
+/** `foo.png.md` is the sidecar of `foo.png`, and `foo.mp3.md` of `foo.mp3`. */
 export function sidecarTargetPath(notePath: string): string | null {
 	if (!notePath.endsWith(".md")) return null;
 	const stem = notePath.slice(0, -3);
 	const dot = stem.lastIndexOf(".");
 	if (dot <= stem.lastIndexOf("/") + 1) return null;
-	return isImageExtension(stem.slice(dot + 1)) ? stem : null;
+	return isMediaExtension(stem.slice(dot + 1)) ? stem : null;
 }
 
 export function sidecarPathFor(imagePath: string): string {

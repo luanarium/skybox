@@ -30,6 +30,24 @@ const png = () => new File([new Uint8Array([1, 2, 3, 4])], "cat.png", { type: "i
 	);
 }
 
+// A track comes in the same way: bytes in the vault, a sidecar beside it.
+{
+	const { app, files } = fakeVault();
+	const mp3 = new File([new Uint8Array([1, 2, 3, 4])], "a loop.mp3", { type: "audio/mpeg" });
+	const result = await ingest(app, indexWith(), settings, mp3);
+	assert.ok(result?.created);
+	assert.strictEqual(result?.path, "a loop.mp3");
+	assert.deepStrictEqual([...files.keys()], ["a loop.mp3", "a loop.mp3.md"]);
+}
+
+// Something that is neither a note nor a file Skybox can show stays out.
+{
+	const { app, files } = fakeVault();
+	const pdf = new File([new Uint8Array([1, 2, 3, 4])], "paper.pdf", { type: "application/pdf" });
+	assert.strictEqual(await ingest(app, indexWith(), settings, pdf), null);
+	assert.strictEqual(files.size, 0);
+}
+
 // A known hash with nobody to ask: the existing card stands.
 {
 	const { app, files } = fakeVault();

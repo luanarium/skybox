@@ -54,6 +54,8 @@ export const COVER_HEIGHT = 120;
 
 export function estimateHeight(item: Item, cover = false): number {
 	if (item.kind === "image") return 260;
+	// A track is a drawn cover and a title, the same shape every time.
+	if (item.kind === "audio") return COVER_HEIGHT + 96;
 	// A cover or a preview is drawn above the title, so the first guess has to
 	// carry it. A preview's real height arrives with the picture.
 	const top = item.preview ? COVER_HEIGHT : cover ? COVER_HEIGHT : 0;

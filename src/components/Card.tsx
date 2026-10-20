@@ -147,6 +147,20 @@ export function Card({
 					draggable={false}
 				/>
 			)}
+			{item.kind === "audio" && (
+				// A track cannot be drawn, so it draws a cover of its own and
+				// wears a mark saying what it is.
+				<div className="skybox-card-sound">
+					<div
+						className={coverClass(item.id)}
+						style={coverVars(item.id) as React.CSSProperties}
+						aria-hidden="true"
+					/>
+					<span className="skybox-card-note" aria-hidden="true">
+						♪
+					</span>
+				</div>
+			)}
 			{!(item.remote && picture) && (
 				<div className="skybox-card-body">
 					<div className="skybox-card-title">{item.title}</div>

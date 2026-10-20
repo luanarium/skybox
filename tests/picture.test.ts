@@ -213,3 +213,40 @@ const settings = (over: Partial<SkyboxSettings> = {}): SkyboxSettings => ({
 		"the one that cannot travel with the note holding it"
 	);
 }
+
+// A note can hold a track as well as a picture. Both belong to the note rather
+// than standing as cards of their own, and only the picture can be drawn on
+// one: a note that embeds a track and a picture shows the picture.
+{
+	const { app } = vaultOf([
+		{
+			path: "Skybox/a page.md",
+			embeds: ["a loop.mp3", "shot.png"],
+		},
+		{ path: "a loop.mp3" },
+		{ path: "shot.png" },
+	]);
+	const index = new VaultIndex(app, settings());
+	index.build();
+
+	assert.strictEqual(
+		index.get("Skybox/a page.md")?.preview,
+		"app://local/shot.png",
+		"the picture it holds, not the track"
+	);
+	assert.strictEqual(index.get("a loop.mp3")?.kind, "audio");
+	assert.strictEqual(index.get("a loop.mp3")?.embedded, true, "it belongs to that note");
+	assert.strictEqual(index.get("shot.png")?.embedded, true);
+}
+
+// A track kept for its own sake is a card, and knows its own kind.
+{
+	const { app } = vaultOf([{ path: "music/a track.flac" }, { path: "music/a track.flac.md" }]);
+	const index = new VaultIndex(app, settings());
+	index.build();
+	const item = index.get("music/a track.flac");
+	assert.strictEqual(item?.kind, "audio");
+	assert.strictEqual(item?.embedded, false);
+	assert.strictEqual(item?.sidecar?.path, "music/a track.flac.md", "its tags live beside it");
+	assert.strictEqual(index.get("music/a track.flac.md"), undefined, "the sidecar is not a card");
+}

@@ -21,12 +21,14 @@ const items: Item[] = [
 	note("n1.md", "Grocery list", ["food"], [], 3),
 	note("n2.md", "Trip notes", ["travel", "food"], ["Lisbon"], 2),
 	image("i1.png", ["travel"], 1),
+	track("a1.mp3", ["demo"], 0),
 ];
 
 const bodies: Record<string, string> = {
 	"n1.md": "apples and bread",
 	"n2.md": "lisbon pastries",
 	"i1.png": "a tram",
+	"a1.mp3": "a loop I made",
 };
 
 const index = {
@@ -39,7 +41,7 @@ const found = async (...words: string[]) =>
 
 assert.deepStrictEqual(
 	await found(),
-	["n1.md", "n2.md", "i1.png"],
+	["n1.md", "n2.md", "i1.png", "a1.mp3"],
 	"an empty box shows everything, most recently modified first"
 );
 assert.deepStrictEqual(await found("lisbon"), ["n2.md"], "a word matches a heading or the body");
@@ -47,6 +49,11 @@ assert.deepStrictEqual(await found("#travel"), ["n2.md", "i1.png"], "#word match
 assert.deepStrictEqual(await found("#food", "pastries"), ["n2.md"], "chips are ANDed");
 assert.deepStrictEqual(await found("#travel", "apples"), [], "an AND that cannot hold is empty");
 assert.deepStrictEqual(await found("tram"), ["i1.png"], "an image is searched through its sidecar");
+assert.deepStrictEqual(
+	await found("#demo"),
+	["a1.mp3"],
+	"a track is a card of its own, found by the tags in its sidecar"
+);
 
 function note(path: string, title: string, tags: string[], headings: string[], mtime: number): Item {
 	return {
@@ -64,6 +71,10 @@ function note(path: string, title: string, tags: string[], headings: string[], m
 		preview: null,
 		unread: false,
 	};
+}
+
+function track(path: string, tags: string[], mtime: number): Item {
+	return { ...image(path, tags, mtime), kind: "audio" };
 }
 
 function image(path: string, tags: string[], mtime: number, embedded = false): Item {
