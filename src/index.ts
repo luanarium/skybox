@@ -25,6 +25,13 @@ export class VaultIndex {
 	/** What each note embeds, and every image some note embeds. */
 	private embedsBy = new Map<string, string[]>();
 	private embedded = new Set<string>();
+	/**
+	 * Notes holding a picture that is not in the vault yet, by the name they
+	 * are waiting on. A picture dropped from a browser arrives as an address,
+	 * and whoever fetches it may write the note's line before the bytes land,
+	 * so the embed resolves to nothing at the moment the note is read.
+	 */
+	private awaited = new Map<string, Set<string>>();
 
 	constructor(
 		private app: App,
@@ -36,6 +43,7 @@ export class VaultIndex {
 	build(): void {
 		this.items.clear();
 		this.embedsBy.clear();
+		this.awaited.clear();
 		this.ignored = parseIgnored(this.settings.ignoredFolders);
 		const files = this.app.vault.getFiles();
 		// Embeds first: an image's card says whether a note holds it.
@@ -55,9 +63,40 @@ export class VaultIndex {
 			const target = this.app.metadataCache.getFirstLinkpathDest(embed.link, note.path);
 			if (target instanceof TFile && isImageExtension(target.extension)) {
 				paths.push(target.path);
+				continue;
 			}
+			// Nothing there to embed, so this note is read again if it
+			// turns up: otherwise the card keeps the gradient it drew
+			// while the file was missing, and only a restart mends it.
+			if (!target) this.awaitPicture(embed.link, note.path);
 		}
 		return paths;
+	}
+
+	/** Remember that this note is waiting on a picture by that name. */
+	private awaitPicture(link: string, notePath: string): void {
+		const name = (link.split("/").pop() ?? "").split("#")[0].split("|")[0].trim();
+		if (!isImageExtension(name.split(".").pop() ?? "")) return;
+		const waiting = this.awaited.get(name.toLowerCase()) ?? new Set<string>();
+		waiting.add(notePath);
+		this.awaited.set(name.toLowerCase(), waiting);
+	}
+
+	/**
+	 * A picture some note was written around has arrived, so that note is
+	 * read again: its card draws the picture, and the picture stops standing
+	 * as a card of its own.
+	 */
+	private picturesArrived(file: TFile): void {
+		if (!isImageExtension(file.extension)) return;
+		const name = file.name.toLowerCase();
+		const waiting = this.awaited.get(name);
+		if (!waiting) return;
+		this.awaited.delete(name);
+		for (const path of waiting) {
+			const note = this.app.vault.getAbstractFileByPath(path);
+			if (note instanceof TFile && this.items.has(path)) this.index(note);
+		}
 	}
 
 	private refreshEmbedded(): void {
@@ -134,6 +173,7 @@ export class VaultIndex {
 	onCreate(file: TAbstractFile): void {
 		if (!(file instanceof TFile)) return;
 		this.add(file);
+		this.picturesArrived(file);
 		this.notify();
 	}
 
@@ -168,6 +208,7 @@ export class VaultIndex {
 			this.items.delete(oldPath);
 		}
 		this.add(file);
+		this.picturesArrived(file);
 		this.notify();
 	}
 

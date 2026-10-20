@@ -1,0 +1,182 @@
+import * as assert from "node:assert";
+import { type App, TFile } from "obsidian";
+import { VaultIndex } from "../src/index";
+import { DEFAULT_SETTINGS, type SkyboxSettings } from "../src/types";
+
+/**
+ * The index over a vault that is only a few objects. Enough of Obsidian to
+ * answer what a card shows, which is the one thing under test here: a note
+ * that embeds a picture should show it, wherever the picture sits in the
+ * vault, and whatever else the note's properties offer.
+ */
+function vaultOf(files: { path: string; text?: string; embeds?: string[]; front?: Record<string, unknown> }[]) {
+	const made = files.map((entry) => {
+		const file = new TFile() as TFile & { stat: { mtime: number; ctime: number; size: number } };
+		const name = entry.path.split("/").pop() ?? entry.path;
+		const dot = name.lastIndexOf(".");
+		Object.assign(file, {
+			path: entry.path,
+			name,
+			basename: dot > 0 ? name.slice(0, dot) : name,
+			extension: dot > 0 ? name.slice(dot + 1) : "",
+			stat: { mtime: 1, ctime: 1, size: 1 },
+		});
+		return { entry, file };
+	});
+	const byPath = new Map(made.map(({ entry, file }) => [entry.path, file]));
+	/** A file arriving after the index was built, as a download does. */
+	const add = (entry: { path: string; text?: string; embeds?: string[] }) => {
+		const file = new TFile() as TFile;
+		const name = entry.path.split("/").pop() ?? entry.path;
+		const dot = name.lastIndexOf(".");
+		Object.assign(file, {
+			path: entry.path,
+			name,
+			basename: dot > 0 ? name.slice(0, dot) : name,
+			extension: dot > 0 ? name.slice(dot + 1) : "",
+			stat: { mtime: 2, ctime: 2, size: 1 },
+		});
+		made.push({ entry, file });
+		byPath.set(entry.path, file);
+		return file;
+	};
+	const app = {
+		vault: {
+			getFiles: () => made.map(({ file }) => file),
+			getAbstractFileByPath: (path: string) => byPath.get(path) ?? null,
+			getResourcePath: (file: TFile) => `app://local/${file.path}`,
+			cachedRead: async (file: TFile) =>
+				made.find(({ file: other }) => other === file)?.entry.text ?? "",
+		},
+		metadataCache: {
+			getFileCache: (file: TFile) => {
+				const found = made.find(({ file: other }) => other === file);
+				if (!found) return null;
+				return {
+					frontmatter: found.entry.front,
+					embeds: (found.entry.embeds ?? []).map((link) => ({ link })),
+					headings: [],
+					tags: [],
+				};
+			},
+			// Obsidian resolves a bare name against the whole vault, which is
+			// how an attachment in the root is found from a note in a folder,
+			// and a size or an alias on the end is not part of the name.
+			getFirstLinkpathDest: (link: string) => {
+				const path = link.split("#")[0].split("|")[0].trim();
+				return (
+					byPath.get(path) ??
+					made.find(({ file }) => file.name === path.split("/").pop())?.file ??
+					null
+				);
+			},
+		},
+	} as unknown as App;
+	return { app, byPath, add };
+}
+
+const settings = (over: Partial<SkyboxSettings> = {}): SkyboxSettings => ({
+	...DEFAULT_SETTINGS,
+	...over,
+});
+
+// A bookmark note that embeds a picture Obsidian wrote to the vault root, which
+// is what dropping one on the editor of an open card leaves behind.
+{
+	const { app } = vaultOf([
+		{
+			path: "bookmarks/A page.md",
+			text: "# A page\n\n![[blue065.gif]]",
+			embeds: ["blue065.gif"],
+			front: { title: "A page", tags: ["bookmark"] },
+		},
+		{ path: "blue065.gif" },
+	]);
+	const index = new VaultIndex(app, settings());
+	index.build();
+	const item = index.get("bookmarks/A page.md");
+	assert.strictEqual(item?.preview, "app://local/blue065.gif", "the picture it embeds");
+	assert.strictEqual(item?.previewOffered, false, "nothing offered it; the note holds it");
+	assert.strictEqual(
+		index.get("blue065.gif")?.embedded,
+		true,
+		"and the picture belongs to that note rather than standing as its own card"
+	);
+}
+
+// The line before the bytes, which is the order a dropped address arrives in
+// when whoever fetches it writes the note first. The card cannot draw a
+// picture that is not there yet, and it must draw it the moment it is.
+{
+	const { app, add } = vaultOf([
+		{ path: "bookmarks/A page.md", text: "![[later.gif]]", embeds: ["later.gif|300"] },
+	]);
+	const index = new VaultIndex(app, settings());
+	index.build();
+	assert.strictEqual(index.get("bookmarks/A page.md")?.preview, null, "nothing resolves yet");
+
+	const picture = add({ path: "later.gif" });
+	index.onCreate(picture);
+	assert.strictEqual(
+		index.get("bookmarks/A page.md")?.preview,
+		"app://local/later.gif",
+		"the note was waiting on that name, so it is read again"
+	);
+	assert.strictEqual(
+		index.get("later.gif")?.embedded,
+		true,
+		"and the picture joins the note rather than standing beside it"
+	);
+}
+
+// A picture the page offered, and a picture the note holds. The index reports
+// which is which, so the card can prefer the one somebody put there.
+{
+	const { app } = vaultOf([
+		{
+			path: "bookmarks/B page.md",
+			front: { image: "https://host/offered.jpg" },
+		},
+	]);
+	const index = new VaultIndex(app, settings());
+	index.build();
+	const item = index.get("bookmarks/B page.md");
+	assert.strictEqual(item?.preview, "https://host/offered.jpg");
+	assert.strictEqual(item?.previewOffered, true);
+}
+
+// Preview images off means nothing is loaded from anywhere.
+{
+	const { app } = vaultOf([
+		{ path: "bookmarks/C page.md", front: { image: "https://host/offered.jpg" } },
+	]);
+	const index = new VaultIndex(app, settings({ bookmarkImages: false }));
+	index.build();
+	assert.strictEqual(index.get("bookmarks/C page.md")?.preview, null);
+}
+
+// A cover picked by hand wins, and it can be an address as well as a file.
+{
+	const { app } = vaultOf([
+		{
+			path: "notes/D.md",
+			front: { cover: "[[pictures/mine.png]]", image: "https://host/offered.jpg" },
+			embeds: ["pictures/other.png"],
+		},
+		{ path: "pictures/mine.png" },
+		{ path: "pictures/other.png" },
+	]);
+	const index = new VaultIndex(app, settings());
+	index.build();
+	const item = index.get("notes/D.md");
+	assert.strictEqual(item?.preview, "app://local/pictures/mine.png");
+	assert.strictEqual(item?.previewOffered, false);
+}
+{
+	const { app } = vaultOf([
+		{ path: "notes/E.md", front: { cover: "https://host/pinned.gif" } },
+	]);
+	const index = new VaultIndex(app, settings());
+	index.build();
+	assert.strictEqual(index.get("notes/E.md")?.preview, "https://host/pinned.gif");
+}

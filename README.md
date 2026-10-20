@@ -656,6 +656,15 @@ file to the attachment folder and embeds it where the cursor is. Taking it in as
 the same image twice, once embedded and once as a card of its own, and the content hash cannot catch
 it, because Obsidian's copy has no sidecar to carry one.
 
+Whoever fetches a dropped address may write the note's line before the bytes land, which is the
+order Obsidian's editor works in for a picture dragged out of Firefox but not out of a Chromium
+browser, and it is why the same drop looked like it worked in one and half worked in the other. The
+index keeps the names of pictures a note is waiting on, and reads the note again the moment one
+arrives, so the card stops drawing the gradient it drew while the file was missing. `index.build()`
+on `metadataCache`'s `resolved` would mend it eventually; waiting for that is what made it look
+browser-dependent. `tests/picture.test.ts` runs the index over a vault of a few objects and covers
+both orders.
+
 A picture dropped anywhere else on a note, on its card in the grid or on an open card outside the
 editor, goes into that note. The card under the cursor is outlined while the drag is over it, so the
 drop is aimed rather than guessed. The picture goes through intake like anything else, which hashes
