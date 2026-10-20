@@ -13,10 +13,12 @@ Skybox is an Obsidian plugin that opens onto a masonry search pane over the vaul
 - Entry point is a masonry search pane over the vault
 - Search box is large, with an italic grayed placeholder "search my vault"
 - Typed words become chips on space; chips are removable and removing one widens the search
+- A chip beginning `!` asks for what a bookmarked address is for rather than for a word: `!video`, `!music`, `!code`, `!social`, `!shop`, `!wiki`, `!read`. The kind is worked out from the host in `src/kinds.ts` and never written into a note, so a note that says "video" is not a video and a video whose address says nothing is still one
 - Results fade in as they surface when chips are added
 - An empty search box shows all markdown notes and images
 - Clicking a note expands it into its editor, with a metadata box on the right
 - A bookmarked video opens as the video: the player first, what the page said about itself underneath, then the top five comments, with nothing above the player but the card's own properties
+- A video tagged `music`, or one from a host that only serves music, gets a transport bar instead of a frame: an homage to a desktop player drawn in CSS with no artwork and no product's name on it, keeping the picture as its own visualisation, driven by posting messages at the embed rather than by any library loaded from Google, and showing dashes rather than zeros where the embed says nothing back
 - A card from a hashtag wall is its picture alone: the words are in the post and the hashtag is the search that found it
 - Images open as a lightbox with tags on the right and a text area below for thoughts and annotations
 - A plus button on desktop and mobile creates a new note or adds files through a file picker; desktop also accepts drag and drop
@@ -44,10 +46,10 @@ The view is registered with `registerView` and opened from a ribbon icon, a comm
 
 ## Search pane
 
-- Space commits the typed word to a chip; backspace on an empty box pops the last chip; each chip has a × that removes it; chips are ANDed; `#word` matches tags only
+- Space commits the typed word to a chip; backspace on an empty box pops the last chip; each chip has a × that removes it; chips are ANDed; `#word` matches tags only; `!kind` matches what the bookmarked address is for and nothing else
 - Empty box shows all markdown notes and images, most recently modified first, in pages (first 100, more on scroll via `IntersectionObserver`)
 - Index is in memory: `getMarkdownFiles()` and image files, with tags, frontmatter and headings from `metadataCache`; note content is read with `cachedRead`, cached by mtime, and matched with `prepareSimpleSearch`; updated on vault `create`, `modify`, `delete` and `rename`
-- Cards: title and plain excerpt for notes, a thumbnail (`getResourcePath`) for images; heights vary
+- Cards: one title for notes, plain rather than bold, with no excerpt under it, since a clipped page carries its own heading in its body as well as in its properties; a thumbnail (`getResourcePath`) for images; tags only while chips are in the box, because that is when they say why a card is in the results; heights vary
 
 ## Masonry
 

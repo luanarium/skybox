@@ -1,5 +1,6 @@
 import * as assert from "node:assert";
-import { plainExcerpt, search, toChip, unembedded } from "../src/search";
+import { chipLabel, plainExcerpt, search, toChip, unembedded } from "../src/search";
+import { kindsOf } from "../src/kinds";
 import type { VaultIndex } from "../src/index";
 import type { Chip } from "../src/search";
 import type { Item } from "../src/types";
@@ -56,6 +57,7 @@ function note(path: string, title: string, tags: string[], headings: string[], m
 		title,
 		mtime,
 		tags,
+		kinds: [],
 		headings,
 		excerpt: "",
 		embedded: false,
@@ -73,6 +75,7 @@ function image(path: string, tags: string[], mtime: number, embedded = false): I
 		title: path,
 		mtime,
 		tags,
+		kinds: [],
 		headings: [],
 		excerpt: "",
 		embedded,
@@ -117,3 +120,55 @@ assert.deepStrictEqual(
 	unembedded([image("a.png", [], 2, true), image("b.png", [], 1)]).map((item) => item.id),
 	["b.png"]
 );
+
+// A kind is asked for with `!`, and asking for one is not asking for the word.
+// Searching "video" finds a note that says it; `!video` finds what came from a
+// site that serves video, whatever the note says.
+{
+	const videos = [
+		video("watched.md", "A camera review", "https://www.youtube.com/watch?v=jQNeYbBiCKw"),
+		video("heard.md", "An album", "https://artist.bandcamp.com/album/one"),
+		video("read.md", "Why video killed the radio", "https://pixelmoondust.neocities.org/x"),
+	];
+	const index = {
+		all: () => videos,
+		content: async (item: Item) => item.title,
+	} as unknown as VaultIndex;
+
+	assert.deepStrictEqual(
+		(await search(index, [toChip("!video")!])).map((item) => item.id),
+		["watched.md"],
+		"the video, not the note about video"
+	);
+	assert.deepStrictEqual(
+		(await search(index, [toChip("!music")!])).map((item) => item.id),
+		["heard.md"]
+	);
+	assert.deepStrictEqual(
+		(await search(index, [toChip("video")!])).map((item) => item.id),
+		["read.md"],
+		"and the plain word is still the word: it finds the essay and misses the video"
+	);
+	assert.deepStrictEqual(
+		(await search(index, [toChip("!video")!, toChip("camera")!])).map((item) => item.id),
+		["watched.md"],
+		"a kind narrows with the rest"
+	);
+}
+
+// What a chip is, read off what was typed.
+assert.deepStrictEqual(toChip("!video"), { text: "video", tagOnly: false, kindOnly: true });
+assert.deepStrictEqual(toChip("!VIDEO"), { text: "video", tagOnly: false, kindOnly: true });
+assert.deepStrictEqual(
+	toChip("!amazing"),
+	{ text: "!amazing", tagOnly: false },
+	"a bang on a word nobody serves is part of the word"
+);
+assert.deepStrictEqual(toChip("#!tea"), { text: "!tea", tagOnly: true }, "the wall keeps its own");
+assert.strictEqual(chipLabel(toChip("!video")!), "!video");
+assert.strictEqual(chipLabel(toChip("#food")!), "#food");
+
+function video(path: string, title: string, source: string): Item {
+	const item = note(path, title, [], [], 1);
+	return { ...item, kinds: kindsOf(source) };
+}

@@ -16,6 +16,12 @@ export interface Item {
 	title: string;
 	mtime: number;
 	tags: string[];
+	/**
+	 * What the bookmarked address is for: `video`, `music`, `code`. Worked
+	 * out from the address, never written into the note, and asked for with
+	 * a chip rather than matched as a word.
+	 */
+	kinds: string[];
 	headings: string[];
 	/** Plain excerpt for notes; empty for images. */
 	excerpt: string;
@@ -148,6 +154,9 @@ export const EMBEDDED_TAG = "embedded";
  * Searching `#collision` is then the whole of finding them.
  */
 export const COLLISION_TAG = "collision";
+
+/** The tag that says a video is something to put on rather than to watch. */
+export const MUSIC_TAG = "music";
 
 /** The tag a shared card wears while something is waiting; nothing writes it. */
 export const UNREAD_TAG = "comments";

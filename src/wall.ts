@@ -184,6 +184,8 @@ export function wallItem(post: WallPost): Item {
 		title: post.author || `@${post.handle}`,
 		mtime: post.at,
 		tags: post.tags,
+		// A post is not a bookmark: there is no address of its own to read.
+		kinds: [],
 		headings: [],
 		excerpt: post.text,
 		embedded: false,
@@ -196,7 +198,7 @@ export function wallItem(post: WallPost): Item {
 /** Posts the other chips also ask for, since a wall can be narrowed too. */
 export function narrowWall(posts: WallPost[], chips: Chip[], tag: string): WallPost[] {
 	const words = chips
-		.filter((chip) => wallTag(chip) === null)
+		.filter((chip) => wallTag(chip) === null && !chip.kindOnly)
 		.map((chip) => (chip.tagOnly ? chip.text : chip.text).toLowerCase())
 		.filter(Boolean);
 	if (words.length === 0) return posts;

@@ -296,20 +296,15 @@ input[type="text"].skybox-search-input:active {
 	padding: 12px 14px 14px;
 }
 
+/*
+ * One title, plain. A clipped page carries its own heading in its body as
+ * well as in its properties, so a card with an excerpt under the title said
+ * the same thing twice; and a wall of bold is a wall of shouting.
+ */
 .skybox-card-title {
-	font-weight: 600;
-	line-height: 1.3;
+	font-weight: 400;
+	line-height: 1.35;
 	color: var(--text-normal);
-}
-
-.skybox-card-excerpt {
-	font-size: var(--font-ui-smaller);
-	line-height: 1.5;
-	color: var(--text-muted);
-	display: -webkit-box;
-	-webkit-line-clamp: 6;
-	-webkit-box-orient: vertical;
-	overflow: hidden;
 }
 
 .skybox-card-tags,
@@ -517,6 +512,188 @@ input[type="text"].skybox-search-input:active {
 	padding: 24px 0;
 	text-align: center;
 	color: var(--text-muted);
+}
+
+/*
+ * A music video, in the clothes of a desktop player: beveled grey, a green
+ * readout and a picture kept as its own visualisation. Drawn here in full,
+ * since the look is the point and there is no artwork behind it. The colours
+ * are literal rather than themed on purpose: this panel is meant to look like
+ * itself in a light theme and a dark one.
+ */
+.skybox-amp {
+	border: 1px solid #000;
+	border-radius: 3px;
+	background: #2b2b2b;
+	box-shadow: inset 1px 1px 0 #4a4a4a, inset -1px -1px 0 #101010;
+	padding: 3px;
+	font-family: var(--font-monospace);
+	user-select: none;
+}
+
+.skybox-amp-bar {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	height: 16px;
+	padding: 0 4px;
+	background: linear-gradient(#4f4f6a, #2e2e42);
+	border: 1px solid #000;
+	box-shadow: inset 1px 1px 0 #6f6f8d;
+}
+
+.skybox-amp-grip {
+	width: 9px;
+	height: 9px;
+	background: repeating-linear-gradient(#8f8fb0 0 1px, transparent 1px 2px);
+	border: 1px solid #1a1a28;
+}
+
+.skybox-amp-name {
+	font-size: 9px;
+	letter-spacing: 2px;
+	text-transform: uppercase;
+	color: #c9c9e3;
+}
+
+.skybox-amp-screen {
+	position: relative;
+	width: 100%;
+	padding-top: 56.25%;
+	margin-top: 3px;
+	border: 1px solid #000;
+	box-shadow: inset 1px 1px 0 #101010, inset -1px -1px 0 #4a4a4a;
+	background: #000;
+	overflow: hidden;
+}
+
+.skybox-amp-screen iframe {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	border: 0;
+}
+
+.skybox-amp-readout {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 3px;
+	padding: 3px 5px;
+	background: #0d0d0d;
+	border: 1px solid #000;
+	box-shadow: inset 1px 1px 0 #262626;
+	color: #16e04b;
+	font-size: 11px;
+	text-shadow: 0 0 4px rgba(22, 224, 75, 0.45);
+}
+
+.skybox-amp-length {
+	color: #0fa838;
+}
+
+/* The title, running past the window the way a track name always did. */
+.skybox-amp-marquee {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.skybox-amp-marquee > span {
+	display: inline-block;
+	padding-left: 100%;
+	animation: skybox-amp-scroll 18s linear infinite;
+}
+
+@keyframes skybox-amp-scroll {
+	to {
+		transform: translateX(-50%);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.skybox-amp-marquee > span {
+		animation: none;
+		padding-left: 0;
+		text-overflow: ellipsis;
+	}
+}
+
+.skybox-amp-seek,
+.skybox-amp-volume input {
+	-webkit-appearance: none;
+	appearance: none;
+	width: 100%;
+	height: 10px;
+	margin: 4px 0 0;
+	background: #1b1b1b;
+	border: 1px solid #000;
+	box-shadow: inset 1px 1px 0 #0a0a0a, inset -1px -1px 0 #3d3d3d;
+}
+
+.skybox-amp-seek::-webkit-slider-thumb,
+.skybox-amp-volume input::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	appearance: none;
+	width: 11px;
+	height: 14px;
+	margin-top: -2px;
+	background: linear-gradient(#d2d2d2, #8f8f8f);
+	border: 1px solid #000;
+	box-shadow: inset 1px 1px 0 #fff, inset -1px -1px 0 #5a5a5a;
+}
+
+.skybox-amp-seek:disabled {
+	opacity: 0.5;
+}
+
+.skybox-amp-buttons {
+	display: flex;
+	align-items: center;
+	gap: 3px;
+	margin-top: 4px;
+}
+
+.skybox-amp-buttons button {
+	width: 26px;
+	height: 20px;
+	padding: 0;
+	font-size: 10px;
+	line-height: 1;
+	color: #e8e8e8;
+	background: linear-gradient(#5a5a5a, #343434);
+	border: 1px solid #000;
+	border-radius: 2px;
+	box-shadow: inset 1px 1px 0 #7d7d7d, inset -1px -1px 0 #1c1c1c;
+	cursor: pointer;
+}
+
+.skybox-amp-buttons button:active {
+	background: linear-gradient(#343434, #5a5a5a);
+	box-shadow: inset 1px 1px 0 #1c1c1c, inset -1px -1px 0 #7d7d7d;
+}
+
+.skybox-amp-play {
+	color: #16e04b !important;
+}
+
+.skybox-amp-volume {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	flex: 1 1 auto;
+	min-width: 0;
+	margin-left: 6px;
+	font-size: 9px;
+	letter-spacing: 1px;
+	text-transform: uppercase;
+	color: #9f9fb4;
+}
+
+.skybox-amp-volume input {
+	margin: 0;
 }
 
 /*

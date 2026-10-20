@@ -57,5 +57,8 @@ export function estimateHeight(item: Item, cover = false): number {
 	// A cover or a preview is drawn above the title, so the first guess has to
 	// carry it. A preview's real height arrives with the picture.
 	const top = item.preview ? COVER_HEIGHT : cover ? COVER_HEIGHT : 0;
-	return top + 96 + Math.min(180, Math.ceil(item.excerpt.length / 40) * 22);
+	// A card is its picture and its title. Words under the title are the
+	// wall's, where a post without a picture is only what it says.
+	const words = item.preview ? 0 : Math.min(180, Math.ceil(item.excerpt.length / 40) * 22);
+	return top + 96 + words;
 }

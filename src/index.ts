@@ -1,4 +1,5 @@
 import { isIgnored, parseIgnored } from "./ignore";
+import { kindsOf } from "./kinds";
 import { coverTarget, webImage } from "./preview";
 import { type App, type CachedMetadata, type TAbstractFile, TFile, getAllTags } from "obsidian";
 import {
@@ -277,6 +278,8 @@ export class VaultIndex {
 			title: this.titleOf(file, cache?.frontmatter?.title),
 			mtime: file.stat.mtime,
 			tags: this.noteTags(cache),
+			// Worked out from the address, never written into the note.
+			kinds: kindsOf(cache?.frontmatter?.source),
 			headings: (cache?.headings ?? []).map((h) => h.heading),
 			excerpt: "",
 			embedded: false,
@@ -304,6 +307,7 @@ export class VaultIndex {
 			title: this.titleOf(file, cache?.frontmatter?.title),
 			mtime: Math.max(file.stat.mtime, sidecar?.stat.mtime ?? 0),
 			tags,
+			kinds: [],
 			headings: [],
 			excerpt: "",
 			embedded,

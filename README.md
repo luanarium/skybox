@@ -11,7 +11,8 @@ way of looking at them.
 ![Typing narrows the grid as you go](docs/images/scroll.gif)
 
 - **One pane over the whole vault.** Notes and images, most recently modified first. Typing makes
-  chips, chips narrow the search, `#word` matches tags alone.
+  chips, chips narrow the search, `#word` matches tags alone, and `!video` matches what a bookmark
+  points at rather than what it says.
 - **The plus button opens a box to write in** on a desktop, which takes files too: dropped into an
   empty box a file becomes a card of its own, dropped into one with words in it, it is embedded in
   what you are writing.
@@ -360,10 +361,58 @@ usually serves". `tests/youtube.test.ts`
 covers both shapes, the brace counting that finds the end of the page's state blob, the ranking
 order and each of those failures.
 
+### A video tagged music
+
+A video tagged `music` is not something to watch, it is something to put on, and a plain frame is
+the wrong shape for that: no time, nowhere to drop the needle, nothing to turn down. So it gets a
+transport bar instead, in the clothes of the desktop players everyone had in 1999: beveled grey, a
+green readout, a title running past the window, and the picture kept as its own visualisation.
+
+It is an homage drawn in CSS. No artwork, no skin files, no product's name on it, and nothing added
+to the dependencies to get it. YouTube still draws the picture and still counts the view, because
+the embed is still doing the playing.
+
+What the panel adds is control, and it gets that by posting messages at the embed rather than by
+loading any library from Google: `enablejsapi=1` on the player's address, one message to say we are
+listening, and then `playVideo`, `pauseVideo`, `seekTo` and `setVolume` as the buttons are pressed.
+`src/video.ts` holds the shape of those messages, the reading of what comes back, and the clock, all
+of it pure and covered in `tests/video.test.ts`.
+
+Where the embed says nothing back, the readouts show `--:--` rather than `00:00` and the seek bar is
+disabled, while the buttons still work: a player that cannot say where it is can still be told what
+to do. The tag is the reader's word for it, and a host that only serves music, such as
+`music.youtube.com`, says so itself.
+
 They are read only, and that is deliberate rather than unfinished: nothing here posts a comment,
 votes on one, or says who is reading. A comment with answers under it says how many and leaves them
 where they are. **Read the comments under a video** switches the whole of it off, and then the card
 is a player and a description.
+
+### Asking for a kind, not a word
+
+Searching for a video by typing `watch?` works until it does not. It finds every note with that in
+its text, misses every video whose address is written another way, and there is no word that means
+"from a site that serves video" because the note never says it.
+
+So a chip beginning `!` asks for a kind: `!video`, `!music`, `!code`, `!social`, `!shop`, `!wiki`,
+`!read`. It matches the host a bookmark was saved from and nothing else. Not the title, not the
+tags, not a word in the text. An essay called "Why video killed the radio" is not a video, and a
+`youtu.be` link with nothing in it but an id is one.
+
+`src/kinds.ts` holds the table, by what a host is for rather than by who owns it, and a host can
+answer twice: `music.youtube.com` is music, and it is still video. A bare name covers everything
+under it, so `old.reddit.com` is social, `en.wikipedia.org` is a wiki and `amazon.co.uk` is a shop,
+while `youtube.com.evil.example` is nothing at all. `tests/kinds.test.ts` covers the matching and
+the lookalikes.
+
+Nothing is written into the vault for this. The kinds are worked out from the `source` property when
+the index reads it, so no note is retagged behind your back, nothing new syncs, and the day the
+table learns a new site every bookmark already saved knows its kind. A chip is ANDed with the rest
+like any other, so `!video camera` is the videos about cameras.
+
+A kind is not a tag and cannot be one: Obsidian's tags have no room for a `!`, which is why the
+prefix was free to take. `#!tea` still asks the fediverse, since that is a `#` chip whose text
+begins with a bang rather than a bang of its own.
 
 ### Where this is going
 
@@ -653,6 +702,15 @@ limit and building the multipart body an upload wants, are pure functions with t
 
 ## What a card shows
 
+A card is a picture and one title. The title is plain rather than bold, nothing is written under it,
+and the tags appear only while there are chips in the box.
+
+That is a change from showing the first words of the note under its title, which read well for a
+note somebody wrote and badly for a clipped page: a bookmark carries its heading in its body as well
+as in its properties, so the card said the same thing twice, in two weights. Tags went the same way.
+On the everything view they are a line of noise under every title; while a search is running they
+are the one thing worth saying, because they are often why the card is in the results at all.
+
 A note that embeds an image has a picture already, and the first one is almost always what the note
 is about, so it becomes the card and the drawn gradient steps aside. A note that would rather show a
 different one says so in a `cover` property, which the right pane writes when you pick from the
@@ -664,7 +722,7 @@ from somewhere else, which is what a page's own picture usually is. That counts 
 holds, so the card shows it, and it comes above a picture fetched for a bookmark because somebody put
 it there while the fetched one was read off the page and might be a logo. Only the text above the
 extracted article counts: the pictures inside an article arrived with it and nobody chose them. The
-card already reads the note for its excerpt, so finding this costs no extra read.
+card reads the note once for this, which is the only read it does now the excerpt has gone.
 
 The order a card follows is the cover you chose, then a picture written into the note, then a picture
 fetched for a bookmark, then the first thing the note embeds, then the drawn one. `src/preview.ts`

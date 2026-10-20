@@ -3,7 +3,6 @@ import { type App, TFile } from "obsidian";
 import { useSkybox } from "../context";
 import { coverClass, coverVars } from "../cover";
 import { bodyImage, webImage } from "../preview";
-import { plainExcerpt } from "../search";
 import type { Item, SkyboxSettings } from "../types";
 
 interface CardProps {
@@ -18,39 +17,42 @@ interface CardProps {
 	dropped: boolean;
 	/** A drag is over this card, so a picture dropped now goes into it. */
 	targeted: boolean;
+	/** Chips are in the box, so a card says what put it here. */
+	searching: boolean;
 	onOpen: (item: Item) => void;
 	/** A long press, or a right click: what can be done with this one. */
 	onMenu: (item: Item, x: number, y: number) => void;
 }
 
-export function Card({ item, index, named, fresh, dropped, targeted, onOpen, onMenu }: CardProps) {
+export function Card({
+	item,
+	index,
+	named,
+	fresh,
+	dropped,
+	targeted,
+	searching,
+	onOpen,
+	onMenu,
+}: CardProps) {
 	const { app, index: vaultIndex, settings } = useSkybox();
-	const [excerpt, setExcerpt] = useState("");
 	/** A picture found in the note's own text, as the note wrote it. */
 	const [written, setWritten] = useState<string | null>(null);
 
 	useEffect(() => {
 		let current = true;
-		// A post carries its own words and has no file to read them from.
-		if (item.remote) {
-			setExcerpt(plainExcerpt(item.excerpt));
-			setWritten(null);
-		} else if (item.kind === "note" || item.sidecar) {
+		// A post has no file to read, and an image's picture is itself.
+		if (!item.remote && item.kind === "note") {
 			vaultIndex.content(item).then((content) => {
-				if (!current) return;
-				setExcerpt(plainExcerpt(content));
-				// The text is here for the excerpt either way, so a picture in it
-				// costs nothing more to find.
-				setWritten(item.kind === "note" && !item.remote ? bodyImage(content) : null);
+				if (current) setWritten(bodyImage(content));
 			});
 		} else {
-			setExcerpt("");
 			setWritten(null);
 		}
 		return () => {
 			current = false;
 		};
-	}, [item.id, item.mtime, item.excerpt, item.remote, vaultIndex]);
+	}, [item.id, item.mtime, item.remote, item.kind, vaultIndex]);
 
 	const held = useRef<number | null>(null);
 	const wasHeld = useRef(false);
@@ -148,8 +150,12 @@ export function Card({ item, index, named, fresh, dropped, targeted, onOpen, onM
 			{!(item.remote && picture) && (
 				<div className="skybox-card-body">
 					<div className="skybox-card-title">{item.title}</div>
-					{excerpt && <div className="skybox-card-excerpt">{excerpt}</div>}
-					{!item.remote && item.tags.length > 0 && (
+					{/*
+					 * Tags while a search is on, and not otherwise. They are what
+					 * says why a card is in these results; on the everything view
+					 * they are a line of noise under every title.
+					 */}
+					{searching && !item.remote && item.tags.length > 0 && (
 						<div className="skybox-card-tags">
 							{item.tags.slice(0, 4).map((tag) => (
 								<span className="skybox-tag" key={tag}>

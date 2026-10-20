@@ -641,6 +641,7 @@ export function App() {
 							fresh={fresh.has(item.id)}
 							dropped={dropped.has(item.id)}
 							targeted={targetId === item.id}
+							searching={chips.length > 0}
 							onOpen={open}
 							onMenu={itemMenu}
 						/>

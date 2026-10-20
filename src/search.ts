@@ -1,25 +1,38 @@
 import { prepareSimpleSearch } from "obsidian";
 import type { VaultIndex } from "./index";
 import { ARTICLE_HEADING } from "./article";
+import { isKind } from "./kinds";
 import { MAIL_TAG } from "./thread";
 import type { Item } from "./types";
 
 export interface Chip {
-	/** The word as typed, without a leading `#`. */
+	/** The word as typed, without a leading `#` or `!`. */
 	text: string;
 	/** `#word` matches tags only. */
 	tagOnly: boolean;
+	/**
+	 * `!video` matches what the bookmarked address is for, and nothing else:
+	 * not the title, not the tags, not a word in the text. A note that says
+	 * "video" is not a video.
+	 */
+	kindOnly?: boolean;
 }
 
 export function toChip(word: string): Chip | null {
 	const trimmed = word.trim();
 	if (!trimmed) return null;
-	return trimmed.startsWith("#")
-		? { text: trimmed.slice(1), tagOnly: true }
-		: { text: trimmed, tagOnly: false };
+	if (trimmed.startsWith("#")) return { text: trimmed.slice(1), tagOnly: true };
+	// `!` is the kind of thing, where there is a kind of that name. Anything
+	// else beginning with it is a word somebody typed, bang and all.
+	const asked = trimmed.slice(1);
+	if (trimmed.startsWith("!") && isKind(asked)) {
+		return { text: asked.toLowerCase(), tagOnly: false, kindOnly: true };
+	}
+	return { text: trimmed, tagOnly: false };
 }
 
 export function chipLabel(chip: Chip): string {
+	if (chip.kindOnly) return `!${chip.text}`;
 	return chip.tagOnly ? `#${chip.text}` : chip.text;
 }
 
@@ -51,7 +64,7 @@ export async function search(
 	const wantsMail = chips.some((chip) => chip.tagOnly && chip.text.toLowerCase() === MAIL_TAG);
 
 	const matchers = chips.map((chip) =>
-		chip.tagOnly ? null : prepareSimpleSearch(chip.text)
+		chip.tagOnly || chip.kindOnly ? null : prepareSimpleSearch(chip.text)
 	);
 	const scored: { item: Item; score: number }[] = [];
 
@@ -62,7 +75,12 @@ export async function search(
 			const chip = chips[i];
 			const matcher = matchers[i];
 			if (!matcher) {
-				if (!matchesTag(item, chip.text)) {
+				// A kind is asked for exactly: it is not a word to be found
+				// in a note, which is the whole point of asking for it.
+				const yes = chip.kindOnly
+					? item.kinds.includes(chip.text)
+					: matchesTag(item, chip.text);
+				if (!yes) {
 					matched = false;
 					break;
 				}
