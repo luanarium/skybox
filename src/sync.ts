@@ -207,6 +207,27 @@ function folderOf(path: string): string {
 	return cut === -1 ? "" : path.slice(0, cut);
 }
 
+/**
+ * Files a device will not carry, whichever way they were going.
+ *
+ * A file crosses this hub whole: the serving side reads all of it into memory,
+ * the asking side holds all of it again while it arrives, and on a phone that
+ * is one buffer passed through a bridge built for small things. A hundred
+ * megabytes of audio is not a sync, it is a stall with no message, so the size
+ * is read off the manifest first and anything past the limit is left where it
+ * is and said out loud.
+ */
+export function tooHeavy(sizes: Map<string, number>, paths: string[], most: number): string[] {
+	if (most <= 0) return [];
+	return paths.filter((path) => (sizes.get(path) ?? 0) > most);
+}
+
+/** Megabytes, as somebody would say them. */
+export function megabytes(bytes: number): string {
+	const mb = bytes / (1024 * 1024);
+	return `${mb >= 10 ? Math.round(mb) : Math.round(mb * 10) / 10} MB`;
+}
+
 /** Why a file is being asked for. */
 export type PullWhy = "new" | "changed";
 
@@ -381,6 +402,8 @@ export interface SyncTally {
 	trouble: number;
 	/** Pictures these notes hold that the served folders do not cover. */
 	stray: number;
+	/** Files left where they are, because they are too large to carry. */
+	heavy: number;
 }
 
 /**
@@ -405,6 +428,13 @@ export function syncSentence(plan: PullPlan, tally: SyncTally): string {
 	const waiting = plan.ours.length - tally.sent;
 	if (waiting > 0) parts.push(`${waiting} the hub would not take`);
 	if (tally.trouble > 0) parts.push(`${tally.trouble} would not come across`);
+	if (tally.heavy > 0) {
+		parts.push(
+			tally.heavy === 1
+				? "one file too large to carry"
+				: `${tally.heavy} files too large to carry`
+		);
+	}
 	// A note travels without the picture inside it when the picture sits
 	// outside the served folders, and nothing else in a sync says so.
 	const behind =

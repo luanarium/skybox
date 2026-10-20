@@ -1,8 +1,10 @@
 import * as assert from "node:assert";
 import {
 	hubComplaint,
+	megabytes,
 	strayComplaint,
 	strayPictures,
+	tooHeavy,
 	hubFolders,
 	hubUrl,
 	normalizePhrase,
@@ -219,7 +221,16 @@ assert.deepStrictEqual(bothGone.sendGone, []);
 // What it says afterwards, in both directions.
 const nothing: PushStep[] = [];
 const empty: PullPlan = { fetch: [], collided: [], ours: [], gone: [], sendGone: [], forget: [] };
-const nil: SyncTally = { taken: 0, sent: 0, asked: 0, merged: 0, split: 0, trouble: 0, stray: 0 };
+const nil: SyncTally = {
+	taken: 0,
+	sent: 0,
+	asked: 0,
+	merged: 0,
+	split: 0,
+	trouble: 0,
+	stray: 0,
+	heavy: 0,
+};
 assert.strictEqual(
 	syncSentence({ ...empty, ours: nothing }, { ...nil }),
 	"Already synced."
@@ -291,3 +302,39 @@ assert.strictEqual(
 	"a name with a certificate keeps its own port"
 );
 assert.strictEqual(hubUrl("  ", 8777, "/manifest"), "");
+
+// A file crosses whole, through memory on both sides, so the size decides
+// whether it can cross at all. The limit is read off the manifest rather than
+// discovered by stalling.
+const sizes = new Map([
+	["Skybox/a note.md", 2_000],
+	["Skybox/a track.mp3", 102_483_310],
+	["Skybox/a photo.png", 4 * 1024 * 1024],
+]);
+const asked = ["Skybox/a note.md", "Skybox/a track.mp3", "Skybox/a photo.png"];
+assert.deepStrictEqual(
+	tooHeavy(sizes, asked, 25 * 1024 * 1024),
+	["Skybox/a track.mp3"],
+	"the track stays where it is; the photo is fine"
+);
+assert.deepStrictEqual(tooHeavy(sizes, asked, 200 * 1024 * 1024), [], "two computers can take it");
+assert.deepStrictEqual(tooHeavy(sizes, asked, 0), [], "no limit set is no limit");
+assert.deepStrictEqual(
+	tooHeavy(new Map(), asked, 25),
+	[],
+	"a file whose size nobody said is not assumed to be huge"
+);
+
+assert.strictEqual(megabytes(102_483_310), "98 MB");
+assert.strictEqual(megabytes(1024 * 1024), "1 MB");
+assert.strictEqual(megabytes(1_600_000), "1.5 MB", "small enough to want a decimal");
+assert.strictEqual(megabytes(0), "0 MB");
+
+assert.strictEqual(
+	syncSentence({ ...empty, ours: nothing }, { ...nil, taken: 1, heavy: 1 }),
+	"Took one file, one file too large to carry."
+);
+assert.strictEqual(
+	syncSentence({ ...empty, ours: nothing }, { ...nil, heavy: 2 }),
+	"2 files too large to carry."
+);

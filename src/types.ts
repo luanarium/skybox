@@ -94,6 +94,11 @@ export interface SkyboxSettings {
 	mastodonVisibility: string;
 	/** Serve this vault's Skybox folders to your other devices. Desktop only. */
 	hubServe: boolean;
+	/**
+	 * The largest file this device will carry across the hub, in megabytes.
+	 * A file crosses whole, through memory on both sides.
+	 */
+	hubMostMB: number;
 	/** The port the hub listens on, and the one a puller assumes. */
 	hubPort: number;
 	/** The hub this device pulls from, as an address, with or without a port. */
@@ -145,6 +150,7 @@ export const DEFAULT_SETTINGS: SkyboxSettings = {
 	mailAddress: "",
 	dmEnabled: false,
 	hubServe: false,
+	hubMostMB: 25,
 	hubPort: 8777,
 	hubAddress: "",
 	hubAuto: true,

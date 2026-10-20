@@ -493,6 +493,28 @@ export class SkyboxSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
+			.setName("Largest file to carry")
+			.setDesc(
+				"In megabytes. A file crosses this hub whole: the serving side reads all " +
+					"of it into memory and the asking side holds all of it again while it " +
+					"arrives, which a phone is not built for. Anything larger is left where " +
+					"it is, on both devices, and the sync says how many. Raise it if your " +
+					"devices are two computers; a hundred megabytes of audio will stall a " +
+					"phone rather than arrive on it."
+			)
+			.addText((text) =>
+				text
+					.setPlaceholder("25")
+					.setValue(String(this.plugin.settings.hubMostMB))
+					.onChange(async (value) => {
+						const most = Number(value.trim());
+						if (!Number.isFinite(most) || most < 0) return;
+						this.plugin.settings.hubMostMB = Math.round(most);
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
 			.setName("Folders")
 			.setDesc(
 				"What the hub serves, one folder per line. Empty means the folders Skybox " +

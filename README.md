@@ -940,6 +940,19 @@ and has no switch to read it beside. The index answers the question, because it 
 every note holds. Skybox's own intake has never been
 affected: it writes into the intake folder, which is served.
 
+A file crosses this hub whole: the serving side reads all of it into memory, and the asking side
+holds all of it again while it arrives. On two computers that is fine. On a phone it is one buffer
+passed through a bridge built for small things, and a hundred megabytes of audio is not a sync, it
+is a stall with nothing said. So the size is read off the manifest before anything is fetched:
+**Largest file to carry** in the settings, 25 MB by default, and whatever is past it is left where
+it is on both devices while the sync says how many and the console names them. Raise it if both
+your devices are computers.
+
+The asking side also keeps its hashes by modified time and size, the way the serving side already
+kept its own. A vault where nothing changed now costs a stat per file rather than a read, which
+started to matter the moment a served folder could hold a photograph or a track rather than only
+notes.
+
 A manifest is a path, a size, a time and the SHA-256 of the bytes. Hashes are kept by mtime, so a
 quiet vault costs nothing to describe and an unchanged file is never read twice. The puller compares
 hashes rather than clocks, which matters more than it sounds: a phone and a laptop do not agree

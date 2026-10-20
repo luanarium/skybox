@@ -11,7 +11,9 @@ import {
 	hubUrl,
 	phraseKey,
 	pullPlan,
+	megabytes,
 	strayPictures,
+	tooHeavy,
 	reviewSentence,
 	syncSentence,
 	withinServed,
@@ -49,6 +51,15 @@ export class HubPull {
 	 * sync so a merge does not read the whole vault again.
 	 */
 	private text = new Map<string, string>();
+	/**
+	 * What each served file hashed to, by the time and size it had then.
+	 * Lives as long as the session: a hash is cheap to recompute and
+	 * nothing here is worth writing to disk.
+	 */
+	private hashes = new Map<
+		string,
+		{ mtime: number; size: number; hash: string; text: string | null }
+	>();
 
 	constructor(
 		private app: App,
@@ -85,6 +96,30 @@ export class HubPull {
 			const offered = manifest.files.filter((entry) => withinServed(entry.path, folders));
 			const local = await this.localHashes(folders, offered.map((entry) => entry.path));
 			const plan = pullPlan(local, offered, agreed);
+			// A file crosses whole, through memory on both sides, so what is
+			// past the limit is left where it is rather than stalling the sync
+			// with nothing said.
+			const most = Math.max(0, this.settings.hubMostMB) * 1024 * 1024;
+			const sizes = new Map(offered.map((entry) => [entry.path, entry.size]));
+			for (const file of this.app.vault.getFiles()) {
+				if (withinServed(file.path, folders)) sizes.set(file.path, file.stat.size);
+			}
+			const heavy = new Set(
+				tooHeavy(
+					sizes,
+					[...plan.fetch, ...plan.ours].map((step) => step.path),
+					most
+				)
+			);
+			for (const path of heavy) {
+				console.error(
+					"Skybox: too large to carry across the hub",
+					path,
+					megabytes(sizes.get(path) ?? 0)
+				);
+			}
+			plan.fetch = plan.fetch.filter((step) => !heavy.has(step.path));
+			plan.ours = plan.ours.filter((step) => !heavy.has(step.path));
 
 			const tally: SyncTally = {
 				taken: 0,
@@ -93,6 +128,7 @@ export class HubPull {
 				merged: 0,
 				split: 0,
 				trouble: 0,
+				heavy: heavy.size,
 				// A picture outside the served folders cannot travel with the
 				// note that holds it, and this is the only moment anybody is
 				// told. The hub says the same thing beside its own switch.
@@ -415,18 +451,42 @@ export class HubPull {
 		}
 	}
 
-	/** The hashes of what is here now, for the paths that matter. */
+	/**
+	 * The hashes of what is here now, for the paths that matter.
+	 *
+	 * Kept by modified time and size, the way the serving side keeps its
+	 * own: a vault where nothing changed costs a stat per file rather than a
+	 * read, which matters the moment a served folder holds a photograph or a
+	 * track rather than only notes.
+	 */
 	private async localHashes(folders: string[], offered: string[]): Promise<Map<string, string>> {
 		const wanted = new Set(offered);
 		const hashes = new Map<string, string>();
 		for (const file of this.app.vault.getFiles()) {
 			if (!wanted.has(file.path) && !withinServed(file.path, folders)) continue;
+			const known = this.hashes.get(file.path);
+			if (known && known.mtime === file.stat.mtime && known.size === file.stat.size) {
+				hashes.set(file.path, known.hash);
+				if (known.text !== null) this.text.set(file.path, known.text);
+				continue;
+			}
 			const bytes = await this.app.vault.readBinary(file);
-			hashes.set(file.path, hex(await crypto.subtle.digest("SHA-256", bytes)));
+			const hash = hex(await crypto.subtle.digest("SHA-256", bytes));
+			hashes.set(file.path, hash);
 			// Kept in passing: a merge needs the text, and reading it here
 			// costs nothing because the bytes are already in hand.
 			const said = mergeable(file.path, bytes);
 			if (said !== null) this.text.set(file.path, said);
+			this.hashes.set(file.path, {
+				mtime: file.stat.mtime,
+				size: file.stat.size,
+				hash,
+				text: said,
+			});
+		}
+		// A file that has gone stops being remembered.
+		for (const path of [...this.hashes.keys()]) {
+			if (!hashes.has(path)) this.hashes.delete(path);
 		}
 		return hashes;
 	}
