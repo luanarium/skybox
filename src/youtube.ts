@@ -34,23 +34,71 @@ export interface VideoComment {
 export interface WatchPage {
 	/** The key the page's own scripts use, which is public and in the HTML. */
 	key: string;
+	/** `WEB` for the page a computer is served, `MWEB` for a phone's. */
+	clientName: string;
 	clientVersion: string;
 	/** The token that stands for "the comments under this video". */
 	token: string | null;
 }
 
-/** The blob of state the watch page ships its whole UI in. */
+/**
+ * The blob of state the watch page ships its whole UI in.
+ *
+ * Two pages, two ways of writing it. The desktop page assigns the object as
+ * it stands. The page served to a phone assigns it as a quoted string with
+ * every brace and quote hex-escaped, so reading only the first form found
+ * nothing on a phone and said the comments were turned off.
+ */
 export function initialData(html: string): unknown {
 	for (const start of ["var ytInitialData = ", 'window["ytInitialData"] = ']) {
 		const at = html.indexOf(start);
 		if (at === -1) continue;
-		const json = balanced(html, at + start.length);
+		const from = at + start.length;
+		const quote = html[from];
+		const json = quote === "'" || quote === '"' ? literal(html, from) : balanced(html, from);
 		if (!json) continue;
 		try {
 			return JSON.parse(json);
 		} catch {
 			return null;
 		}
+	}
+	return null;
+}
+
+/**
+ * A JavaScript string literal, read to its closing quote and unescaped. The
+ * phone's page is all `\x7b` and `\x22` rather than braces and quotes, which
+ * is a legal way to write the same JSON and an unreadable one until this
+ * undoes it.
+ */
+function literal(text: string, at: number): string | null {
+	const quote = text[at];
+	let out = "";
+	for (let index = at + 1; index < text.length; index++) {
+		const letter = text[index];
+		if (letter === quote) return out;
+		if (letter !== "\\") {
+			out += letter;
+			continue;
+		}
+		const next = text[index + 1];
+		if (next === "x" || next === "u") {
+			const width = next === "x" ? 2 : 4;
+			const code = text.slice(index + 2, index + 2 + width);
+			if (!/^[0-9a-f]+$/i.test(code)) return null;
+			out += String.fromCharCode(parseInt(code, 16));
+			index += 1 + width;
+			continue;
+		}
+		// An escaped quote, slash or backslash is the character itself. A
+		// newline or a tab inside JSON has to stay escaped for the parser.
+		if (next === "n" || next === "t" || next === "r" || next === "b" || next === "f") {
+			out += `\\${next}`;
+		} else {
+			out += next;
+		}
+		index += 1;
 	}
 	return null;
 }
@@ -96,6 +144,10 @@ export function watchPage(html: string): WatchPage | null {
 	if (!key) return null;
 	return {
 		key,
+		// The endpoint is asked as whichever client was served, since a
+		// token from one page and the name of the other is a mismatch
+		// nobody has to explain to us twice.
+		clientName: /"INNERTUBE_CONTEXT_CLIENT_NAME":2/.test(html) ? "MWEB" : "WEB",
 		clientVersion: version ?? "2.20240101.00.00",
 		token: commentToken(initialData(html)),
 	};
@@ -296,7 +348,11 @@ export async function topComments(
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
 				context: {
-					client: { clientName: "WEB", clientVersion: watch.clientVersion, hl: "en" },
+					client: {
+						clientName: watch.clientName,
+						clientVersion: watch.clientVersion,
+						hl: "en",
+					},
 				},
 				continuation: watch.token,
 			}),

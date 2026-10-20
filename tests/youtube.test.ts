@@ -48,8 +48,48 @@ assert.deepStrictEqual(
 );
 assert.strictEqual(initialData("<html>nothing here</html>"), null);
 
+/*
+ * The page a phone is served writes the same object as a quoted string with
+ * every brace and quote hex-escaped. It is legal JavaScript and unreadable
+ * JSON until it is unescaped, and reading only the plain form is why comments
+ * loaded on a computer and not on a phone.
+ */
+const escaped = JSON.stringify(data)
+	.replace(/\{/g, "\\x7b")
+	.replace(/\}/g, "\\x7d")
+	.replace(/\[/g, "\\x5b")
+	.replace(/\]/g, "\\x5d")
+	.replace(/"/g, "\\x22");
+const phoneHtml =
+	`<script>var ytInitialData = '${escaped}';</script>` +
+	'<script>ytcfg.set({"INNERTUBE_API_KEY":"AIzaSy-test_key",' +
+	'"INNERTUBE_CONTEXT_CLIENT_NAME":2,"INNERTUBE_CLIENT_VERSION":"2.20260101.01.00"});</script>';
+
+assert.deepStrictEqual(initialData(phoneHtml), data, "unescaped back to the same object");
+assert.deepStrictEqual(
+	initialData(`var ytInitialData = '\\x7b\\x22a\\x22:\\x22one\\\\ntwo\\x22\\x7d';`),
+	{ a: "one\ntwo" },
+	"a newline inside the text is still a newline"
+);
+assert.deepStrictEqual(
+	initialData(`var ytInitialData = '\\x7b\\x22a\\x22:\\x22it\\'s\\x22\\x7d';`),
+	{ a: "it's" },
+	"an escaped quote is the quote"
+);
+assert.strictEqual(
+	initialData(`var ytInitialData = '\\x7b\\x22a\\x22:1`),
+	null,
+	"a literal with no end is nothing"
+);
+
+const phone = watchPage(phoneHtml);
+assert.strictEqual(phone?.token, "TOKEN-123", "the same token, read out of the escaped page");
+assert.strictEqual(phone?.clientName, "MWEB", "and asked for as the client that was served");
+assert.strictEqual(phone?.clientVersion, "2.20260101.01.00");
+
 const page = watchPage(html);
 assert.strictEqual(page?.key, "AIzaSy-test_key");
+assert.strictEqual(page?.clientName, "WEB", "a computer is served the web page");
 assert.strictEqual(page?.clientVersion, "2.20260101.00.00");
 assert.strictEqual(page?.token, "TOKEN-123", "the token is found by its section, not its place");
 assert.strictEqual(watchPage("<html>a consent page</html>"), null, "nothing to ask with");
@@ -188,6 +228,7 @@ assert.deepStrictEqual(comments(null), []);
 		if (options.url.includes("/watch")) return { status: 200, text: html };
 		assert.ok(options.body?.includes("TOKEN-123"), "the token the page gave us");
 		assert.ok(options.url.includes("AIzaSy-test_key"), "the key the page carries");
+		assert.ok(options.body?.includes('"clientName":"WEB"'), "asked for as the page it read");
 		return { status: 200, text: JSON.stringify(modern) };
 	}, "jQNeYbBiCKw");
 	assert.strictEqual(found.comments.length, 2);
@@ -224,4 +265,17 @@ assert.deepStrictEqual(comments(null), []);
 	console.error = said;
 	assert.deepStrictEqual(broke.comments, []);
 	assert.match(broke.why, /could not be read/);
+}
+
+// A phone reads the escaped page, and the answer it gets back for MWEB is the
+// older renderer shape rather than the entity payloads, which is why both are
+// read rather than only the newest.
+{
+	const found = await topComments(async (options) => {
+		if (options.url.includes("/watch")) return { status: 200, text: phoneHtml };
+		assert.ok(options.body?.includes('"clientName":"MWEB"'), "the client it was served");
+		return { status: 200, text: JSON.stringify(older) };
+	}, "jQNeYbBiCKw");
+	assert.strictEqual(found.comments.length, 1);
+	assert.strictEqual(found.comments[0].text, "Half a line.");
 }

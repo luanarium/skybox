@@ -343,9 +343,20 @@ shape that can change without warning.
 
 So everything in `src/youtube.ts` is written to come back empty rather than wrong. The token is
 found by the section that names itself rather than by position. Two comment shapes are read, the
-entity payloads YouTube serves now and the renderers it served before. Anything unrecognised is an empty
-list, a line in the console, and a card that says which way it failed: `429`, "comments are turned
-off, or there are none", "that page is not the one YouTube usually serves". `tests/youtube.test.ts`
+entity payloads YouTube serves now and the renderers it served before, and both are needed rather
+than one being history: a computer is served the first and a phone the second, from the same video
+within a second of each other.
+
+The two pages differ again in how they carry that state at all. A computer gets the object as it
+stands; a phone gets it as a quoted string with every brace and quote written `\x7b` and `\x22`,
+which is legal JavaScript and unreadable JSON until it is unescaped. Reading only the plain form is
+why comments loaded on a desktop and said "comments are turned off, or there are none" on a phone.
+The endpoint is also asked as whichever client was served, `WEB` or `MWEB`, since a token from one
+page and the name of the other is a mismatch nobody has to explain twice.
+
+Anything unrecognised is an empty list, a line in the console, and a card that says which way it
+failed: `429`, "comments are turned off, or there are none", "that page is not the one YouTube
+usually serves". `tests/youtube.test.ts`
 covers both shapes, the brace counting that finds the end of the page's state blob, the ranking
 order and each of those failures.
 
