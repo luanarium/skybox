@@ -556,6 +556,35 @@ input[type="text"].skybox-search-input:active {
 	color: #c9c9e3;
 }
 
+.skybox-amp-out {
+	margin-left: auto;
+	font-size: 9px;
+	letter-spacing: 1px;
+	text-transform: uppercase;
+	color: #8f8fb0;
+	text-decoration: none;
+}
+
+.skybox-amp-out:hover {
+	color: #16e04b;
+}
+
+/* Said in the panel's own voice when the panel cannot drive the player. */
+.skybox-amp-note {
+	margin: 4px 0 0;
+	padding: 4px 5px;
+	font-size: 10px;
+	line-height: 1.4;
+	color: #9f9fb4;
+	background: #1b1b1b;
+	border: 1px solid #000;
+	box-shadow: inset 1px 1px 0 #2e2e2e;
+}
+
+.skybox-amp-note a {
+	color: #16e04b;
+}
+
 .skybox-amp-screen {
 	position: relative;
 	width: 100%;
