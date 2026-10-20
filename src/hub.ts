@@ -10,6 +10,8 @@ import {
 	phraseKey,
 	sameKey,
 	hubComplaint,
+	strayComplaint,
+	strayPictures,
 	reviewSentence,
 	hubFolders,
 	withinServed,
@@ -274,7 +276,25 @@ export class Hub {
 		const present = folders.filter(
 			(folder) => this.app.vault.getAbstractFileByPath(folder) instanceof TFolder
 		);
-		return hubComplaint(folders, present);
+		const missing = hubComplaint(folders, present);
+		if (missing) return missing;
+		// Nothing wrong with the folders themselves, which leaves the one
+		// thing a sync cannot tell anybody: a note that travels without
+		// the picture inside it.
+		return strayComplaint(strayPictures(this.pointed(folders), folders));
+	}
+
+	/** Every file the served notes point at, wherever it lives. */
+	private pointed(folders: string[]): string[] {
+		const paths = new Set<string>();
+		for (const file of this.app.vault.getFiles()) {
+			if (file.extension !== "md" || !withinServed(file.path, folders)) continue;
+			for (const embed of this.app.metadataCache.getFileCache(file)?.embeds ?? []) {
+				const target = this.app.metadataCache.getFirstLinkpathDest(embed.link, file.path);
+				if (target) paths.add(target.path);
+			}
+		}
+		return [...paths];
 	}
 
 	private async entries(): Promise<HubEntry[]> {

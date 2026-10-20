@@ -748,6 +748,15 @@ other angle: the switch reads Listening, the address answers, the phrase matches
 nothing and calls it being in step. The empty case is a real one on a new vault, where the intake
 folder has not been chosen yet.
 
+The other way a sync looks healthy and leaves a hole: images do travel, since every file in a served
+folder is sent as bytes, but a picture outside those folders does not, and the note holding it
+arrives on the other device with nothing where the picture should be. Obsidian writes a dropped
+attachment wherever its own **Files and links** setting says, which is the vault root until somebody
+changes it, and the vault root is a folder the hub must not serve. So the served notes are read for
+what they point at, anything outside is counted, and the switch says where those pictures are
+sitting. Skybox's own intake has never been affected: it writes into the intake folder, which is
+served.
+
 A manifest is a path, a size, a time and the SHA-256 of the bytes. Hashes are kept by mtime, so a
 quiet vault costs nothing to describe and an unchanged file is never read twice. The puller compares
 hashes rather than clocks, which matters more than it sounds: a phone and a laptop do not agree

@@ -1,6 +1,8 @@
 import * as assert from "node:assert";
 import {
 	hubComplaint,
+	strayComplaint,
+	strayPictures,
 	hubFolders,
 	hubUrl,
 	normalizePhrase,
@@ -71,8 +73,37 @@ assert.strictEqual(
 );
 assert.strictEqual(hubComplaint(["Skybox"], ["Skybox"]), "", "nothing to say");
 
-// What leaves the vault is checked on the way out as well as the way in.
+// The other way a sync can look healthy and leave a hole: the note travels and
+// the picture inside it does not, because Obsidian keeps attachments wherever
+// its own setting says, which is the vault root until somebody changes it.
 const served = ["Skybox", "bookmarks"];
+assert.deepStrictEqual(
+	strayPictures(["Skybox/a.png", "blue065.gif", "attachments/b.png", "blue065.gif"], served),
+	["attachments/b.png", "blue065.gif"],
+	"what the notes point at from outside, once each"
+);
+assert.deepStrictEqual(strayPictures(["Skybox/a.png"], served), []);
+assert.strictEqual(strayComplaint([]), "", "nothing to say");
+const remedy =
+	"Obsidian's own setting for where new attachments go decides that folder, " +
+	"under Files and links.";
+assert.strictEqual(
+	strayComplaint(["blue065.gif"]),
+	"One picture these notes hold is outside the served folders, in the vault root, " +
+		`so the note arrives without it. ${remedy}`
+);
+assert.strictEqual(
+	strayComplaint(["blue065.gif", "attachments/b.png", "attachments/c.png"]),
+	"3 pictures these notes hold are outside the served folders, in the vault root " +
+		`and "attachments", so those notes arrive without them. ${remedy}`
+);
+assert.match(
+	strayComplaint(["a.png", "x/b.png", "y/c.png", "z/d.png"]),
+	/in the vault root, "x" and 2 more,/,
+	"the places, not all of them"
+);
+
+// What leaves the vault is checked on the way out as well as the way in.
 assert.ok(withinServed("Skybox/a note.md", served));
 assert.ok(withinServed("bookmarks/page.md", served));
 assert.ok(withinServed("Skybox", served), "the folder itself is in it");

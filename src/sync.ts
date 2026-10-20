@@ -153,6 +153,60 @@ export function hubComplaint(folders: string[], present: string[]): string {
 	return `${names} ${is} not in this vault, so nothing comes from ${them}.`;
 }
 
+/**
+ * Pictures the served notes point at from outside the served folders.
+ *
+ * A note travels and the picture inside it does not, so the note arrives on
+ * the other device with a hole where a picture should be, and nothing about
+ * the sync looks wrong: it took the note, and the note is what it asked for.
+ * Obsidian writes a dropped attachment wherever its own setting says, which is
+ * the vault root until somebody changes it, and that is a folder the hub must
+ * not serve. So this is counted and said next to the switch.
+ */
+export function strayPictures(pointed: Iterable<string>, folders: string[]): string[] {
+	const stray = new Set<string>();
+	for (const path of pointed) {
+		if (!withinServed(path, folders)) stray.add(path);
+	}
+	return [...stray].sort();
+}
+
+/** What to say about them, which is nothing when there are none. */
+export function strayComplaint(stray: string[]): string {
+	if (stray.length === 0) return "";
+	const where = places(stray);
+	if (stray.length === 1) {
+			return (
+			`One picture these notes hold is outside the served folders, in ${where}, ` +
+			"so the note arrives without it. Obsidian's own setting for where new " +
+			"attachments go decides that folder, under Files and links."
+		);
+	}
+	return (
+		`${stray.length} pictures these notes hold are outside the served folders, ` +
+		`in ${where}, so those notes arrive without them. Obsidian's own setting ` +
+		"for where new attachments go decides that folder, under Files and links."
+	);
+}
+
+/** Where they are, named as somebody would name them, and not all of them. */
+function places(stray: string[]): string {
+	const folders: string[] = [];
+	for (const path of stray) {
+		const folder = folderOf(path);
+		if (!folders.includes(folder)) folders.push(folder);
+	}
+	const named = folders.map((folder) => (folder ? `"${folder}"` : "the vault root"));
+	if (named.length === 1) return named[0];
+	if (named.length === 2) return `${named[0]} and ${named[1]}`;
+	return `${named.slice(0, 2).join(", ")} and ${named.length - 2} more`;
+}
+
+function folderOf(path: string): string {
+	const cut = path.lastIndexOf("/");
+	return cut === -1 ? "" : path.slice(0, cut);
+}
+
 /** Why a file is being asked for. */
 export type PullWhy = "new" | "changed";
 
